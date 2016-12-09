@@ -1,20 +1,25 @@
 …or create a new repository on the command line
 
+```
 echo "# Test" >> README.md
 git init
 git add README.md
 git commit -m "first commit"
 git remote add origin https://github.com/kunSong/Test.git
 git push -u origin master
+```
 
 …or push an existing repository from the command line
 
+```
 git remote add origin https://github.com/kunSong/Test.git
 git push -u origin master
+```
 
 …or import code from another repository
 You can initialize this repository with code from a Subversion, Mercurial, or TFS project.
 
+```
 git init
 git remote add origin https://github.com/kunSong/Test.git
 git pull origin master
@@ -31,4 +36,4 @@ git commit
 git push origin HEAD:master
 git commit -amend
 git push origin HEAD:master
-
+```
