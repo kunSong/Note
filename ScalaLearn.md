@@ -22,6 +22,10 @@ Hello, World!
 `scalac -d classes/ HelloWorld.scala`
 + 执行并找到指定路径下的文件(alias -cp)
 `scala -classpath classes/ HelloWorld`
++ 部署eclipse ide
+  - `Help-->Install New Software`
+  - `add http://download.scala-ide.org/sdk/lithium/e44/scala211/dev/site/`
+  - `http://scala-ide.org/download/current.html`
 
 ## Unified Types
 
@@ -353,4 +357,6 @@ object XMLTest2 extends App {
 }
 ```
 
-+ schema2src tool 
++ schema2src tool
+
+
