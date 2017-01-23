@@ -88,8 +88,8 @@ http://www.cnblogs.com/devinzhang/archive/2011/12/14/2287675.html Java核心卷I
 + 静态代码块只能访问类的静态成员，而不允许访问实例成员。
 
 ```java
-static {  
-//静态代码块中的语句  
+static {
+//静态代码块中的语句
 }
 ```
 
@@ -207,9 +207,10 @@ StringBuilder 是在Java 1.5以后引用，区别在于StringBuffer多一个Sync
 + Callable: 与Runnable类似，call方法可以返回具体的类型以及抛出checkedException。
 + Future: 可异步计算并可从get方法得到结果，同时可以cancellable能力的。
 + RunnableFuture: 继承自Runnable和Future。
-+ Exector: 对Runnable对象的execute
++ Exector: a simple interface that supports launching new tasks.
++ ExecutorService: a subinterface of Executor, which adds features that help manage the lifecycle, both of the individual tasks and of the executor itself.
++ ScheduledExecutorService: a subinterface of ExecutorService, supports future and/or periodic execution of tasks.
 + ThreadFactory: 创建新的线程接口
-+ ExecutorService: 继承自Executor，
 
 ### Class
 
@@ -219,17 +220,16 @@ StringBuilder 是在Java 1.5以后引用，区别在于StringBuffer多一个Sync
 
 + AbstractExecutorService: 是ExectorService的实现类。
 
-1. ThreadPoolExecutor
-2. ScheduledThreadPoolExecutor 
-3. newCachedThreadPool
-4. newFixedThreadPool
-5. newSingleThreadExecutor
-6. setCorePoolSize
-7. setMaximumPoolSize
-8. BlockingQueue
-9. SynchronousQueue
-10. LinkedBlockingQueue
-11. ArrayBlockingQueue
++ ThreadPoolExecutor
+  1. newCachedThreadPool, SynchronousQueue<Runnable>
+  2. newFixedThreadPool, LinkedBlockingQueue<Runnable>
+  4. newSingleThreadExecutor, FinalizableDelegatedExecutorService(ThreadPoolExecutor(LinkedBlockingQueue<Runnable>))
+  5. newSingleThreadScheduledExecutor, DelegatedScheduledExecutorService(ScheduledThreadPoolExecutor());
+  6. setCorePoolSize
+  7. setMaximumPoolSize
+
++ ScheduledThreadPoolExecutor
+  1. newScheduledThreadPool
 
 + worker: 检查是否可以创建线程
 
