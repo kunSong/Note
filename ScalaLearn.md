@@ -1,26 +1,5 @@
 # Getting Started
 
-```scala
-object HelloWorld {
-    def main(args: Array[String]): Unit = {
-        println("Hello, World!")
-    }
-}
-
-object HelloWorld extends App {
-    println("Hello, World!")
-}
-
-/*
-1. various format
-  def main(args: Array[String]) {
-  def main(args: Array[String]) =
-  def main(args: Array[String]) = {
-2. Unit like void
-3. implement App trait(like interfaces in java),no main,expect using args
-*/
-```
-
 + build and output classes path
 `scalac -d classes/ HelloWorld.scala`
 + start program in specifica path (alias -cp)
