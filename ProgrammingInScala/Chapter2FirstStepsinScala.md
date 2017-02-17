@@ -81,7 +81,7 @@
   + A result type of Unit indicates the function returns no interesting value. Similar to Java's void.
   + `:quit` or `:q`: quit
 
-  ![Figure2.1](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/res/drawable/Figure2.1.jpg)
+  ![Figure 2.1 - The basic form of a function definition in Scala.](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/res/drawable/Figure2.1.jpg)
 
   ```scala
   scala> def max(x: Int, y: Int):Int = {
@@ -132,7 +132,7 @@
 
   + function literal
 
-  ![Figure2.2](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/res/drawable/Figure2.2.jpg)
+  ![Figure 2.2 - The syntax of a function literal in Scala.](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/res/drawable/Figure2.2.jpg)
 
   + a new arg val will be created and initialized to the element value, not a var. (ahead to Section 7.3 Chapter 7)
 
