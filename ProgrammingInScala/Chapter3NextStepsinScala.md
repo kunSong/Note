@@ -45,7 +45,7 @@
 
   + Scala doesn't technically have operator overloading, because it doesn't actually have operators in the traditional sense. Instead, characters such as +, -, *, and / can be used in method names. Thus, written 1 + 2 using traditional method invocation syntax, (1).+(2).
 
-  [Figure 3.1 - All operations are method calls in Scala.]()
+  ![Figure 3.1 - All operations are method calls in Scala.](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/res/drawable/Figure3.1.jpg)
 
   + Another important idea illustrated by this example will give you insight into why arrays are accessed with parentheses in Scala. Scala has fewer special cases than Java. Arrays are simply instances of classes like any other class in Scala. When you apply parentheses surrounding one or more values to a variable, Scala will transform the code into an invocation of a method named apply on that variable. So greetStrings(i) gets transformed into greetStrings.apply(i). Thus accessing an element of an array in Scala is simply a method call like any other. This principle is not restricted to arrays: any application of an object to some arguments in parentheses will be transformed to an apply method call. Of course this will compile only if that type of object actually defines an apply method. So it's not a special case; it's a general rule.
 
@@ -191,7 +191,7 @@ For example, the Scala API contains a base trait for sets, where a trait is simi
 Listing 3.5 - Creating, initializing, and using an immutable set.
 
 image images/sets53.jpg
-Figure 3.2 - Class hierarchy for Scala sets.
+  ![Figure 3.2 - Class hierarchy for Scala sets.](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/res/drawable/Figure3.2.jpg)
 
 In the first line of code in Listing 3.5, you define a new var named jetSet, and initialize it with an immutable set containing the two strings, "Boeing" and "Airbus". As this example shows, you can create sets in Scala similarly to how you create lists and arrays: by invoking a factory method named apply on a Set companion object. In Listing 3.5, you invoke apply on the companion object for scala.collection.immutable.Set, which returns an instance of a default, immutable Set. The Scala compiler infers jetSet's type to be the immutable Set[String].
 
@@ -223,7 +223,7 @@ Although the default set implementations produced by the mutable and immutable S
 Another useful collection class in Scala is Map. As with sets, Scala provides mutable and immutable versions of Map, using a class hierarchy. As you can see in Figure 3.3, the class hierarchy for maps looks a lot like the one for sets. There's a base Map trait in package scala.collection, and two subtrait Maps: a mutable Map in scala.collection.mutable and an immutable one in scala.collection.immutable.
 
 image images/maps53.jpg
-Figure 3.3 - Class hierarchy for Scala maps.
+  ![Figure 3.3 - Class hierarchy for Scala maps.](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/res/drawable/Figure3.3.jpg)
 
 Implementations of Map, such as the HashMaps shown in the class hierarchy in Figure 3.3, extend either the mutable or immutable trait. You can create and initialize maps using factory methods similar to those used for arrays, lists, and sets. For example, Listing 3.7 shows a mutable map in action:
 
