@@ -1,10 +1,26 @@
 ## Next Steps in Scala
 
 ### Vocabulary
-  + 
+  + incur
+  + concise
+  + mutate
+  + concatenation
+  + prepend
+  + operand
+  + amiss
+  + associativity
+  + notation
+  + whereas
+  + imperative styles
+  + inherently
+  + akin
+  + blasphemy
+  + ultimately
+  + error-prone
+  + telltale
   
 ### Step 7. Parameterize arrays with types
-  + Using "new" to instantiate objects, or class instances.
+  + Using **new** to instantiate objects, or class instances.
   + Parameterize an instance with values by passing objects to a constructor in parentheses.
   
   ```scala
@@ -30,7 +46,7 @@
   val greetStrings: Array[String] = new Array[String](3)
   ```
   
-  + The type of greetStrings is Array[String], not Array[String](3)
+  + The type of greetStrings is Array[String], not `Array[String](3)`
 
   + Scala are accessed by placing the index inside parentheses, not square brackets as in Java. Thus the zeroth element of the array is greetStrings(0), not greetStrings[0].
 
@@ -41,14 +57,14 @@
     print(greetStrings(i))
   ```
 
-  + Another general rule of Scala: if a method takes only one parameter, you can call that 0 to 2 is transformed into the method call (0).to(2). Note that this syntax only works if you explicitly specify the receiver of the method call. You cannot write "println 10", but you can write "Console println 10".
+  + Another general rule of Scala: if a method takes only one parameter, you can call that 0 to 2 is transformed into the method call (0).to(2)[1]. Note that this syntax only works if you explicitly specify the receiver of the method call. You cannot write "println 10", but you can write "Console println 10".
 
   + Scala doesn't technically have operator overloading, because it doesn't actually have operators in the traditional sense. Instead, characters such as +, -, *, and / can be used in method names. Thus, written 1 + 2 using traditional method invocation syntax, (1).+(2).
 
   ![Figure 3.1 - All operations are method calls in Scala.](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/res/drawable/Figure3.1.jpg)
 
-  + Another important idea illustrated by this example will give you insight into why arrays are accessed with parentheses in Scala. Scala has fewer special cases than Java. Arrays are simply instances of classes like any other class in Scala. When you apply parentheses surrounding one or more values to a variable, Scala will transform the code into an invocation of a method named apply on that variable. So greetStrings(i) gets transformed into greetStrings.apply(i). Thus accessing an element of an array in Scala is simply a method call like any other. This principle is not restricted to arrays: any application of an object to some arguments in parentheses will be transformed to an apply method call. Of course this will compile only if that type of object actually defines an apply method. So it's not a special case; it's a general rule.
-
+  + Another important idea. When you apply parentheses surrounding one or more values to a variable, Scala will transform the code into an invocation of a method named apply on that variable. So greetStrings(i) gets transformed into greetStrings.apply(i). This principle is not restricted to arrays: any application of an object to some arguments in parentheses will be transformed to an apply method call. Of course this will compile only if that type of object actually defines an apply method.
+  
   + Similarly, when an assignment is made to a variable to which parentheses and one or more arguments have been applied, the compiler will transform that into an invocation of an update method that takes the arguments in parentheses as well as the object to the right of the equals sign. For example:
   
   ```scala
@@ -70,163 +86,202 @@
     print(greetStrings.apply(i))
   ```
   
-  + Scala achieves a conceptual simplicity by treating everything, from arrays to expressions, as objects with methods. You don't have to remember special cases, such as the differences in Java between primitive and their corresponding wrapper types, or between arrays and regular objects. Moreover, this uniformity does not incur a significant performance cost. The Scala compiler uses Java arrays, primitive types, and native arithmetic where possible in the compiled code.
+  + Scala treat everything, from arrays to expressions, as objects with methods, and does not incur a significant performance cost. The Scala compiler uses Java arrays, primitive types, and native arithmetic where possible in the compiled code.
 
-Although the examples you've seen so far in this step compile and run just fine, Scala provides a more concise way to create and initialize arrays that you would normally use. It looks as shown in Listing 3.2. This code creates a new array of length three, initialized to the passed strings, "zero", "one", and "two". The compiler infers the type of the array to be Array[String], because you passed strings to it.
+  + A more concise way to create and initialize arrays. This code creates a new array of length three, initialized to the passed strings, "zero", "one", and "two". The compiler infers the type of the array to be Array[String], because you passed strings to it.
 
-    val numNames = Array("zero", "one", "two")
+  ```scala
+  val numNames = Array("zero", "one", "two")
+  ```
 
-Listing 3.2 - Creating and initializing an array.
+  + Calling a factory method, named apply, which creates and returns the new array and is defined on the Array companion object. If you're a Java programmer, you can think of this as calling a static method named apply on class Array.
 
-What you're actually doing in Listing 3.2 is calling a factory method, named apply, which creates and returns the new array. This apply method takes a variable number of arguments[2] and is defined on the Array companion object. You'll learn more about companion objects in Section 4.3. If you're a Java programmer, you can think of this as calling a static method named apply on class Array. A more verbose way to call the same apply method is:
-
+  ```scala
+  // equivalent to the code
   val numNames2 = Array.apply("zero", "one", "two")
+  ```
 
-Step 8. Use lists [link]
+### Step 8. Use lists
 
-One of the big ideas of the functional style of programming is that methods should not have side effects. A method's only act should be to compute and return a value. Some benefits gained when you take this approach are that methods become less entangled, and therefore more reliable and reusable. Another benefit (in a statically typed language) is that everything that goes into and out of a method is checked by a type checker, so logic errors are more likely to manifest themselves as type errors. Applying this functional philosophy to the world of objects means making objects immutable.
+  + Big idea that a method's only act should be to compute and return a value.
+    - Become less entangled, and therefore more reliable and reusable.
+    - everything that goes into and out of a method is checked by a type checker.
+    - Applying this functional philosophy to the world of objects means making objects immutable.
 
-As you've seen, a Scala array is a mutable sequence of objects that all share the same type. An Array[String] contains only strings, for example. Although you can't change the length of an array after it is instantiated, you can change its element values. Thus, arrays are mutable objects.
+  + A Scala array is a mutable sequence of objects that all share the same type. An Array[String] contains only strings, for example. Although you can't change the length of an array after it is instantiated, you can change its element values.
 
-For an immutable sequence of objects that share the same type you can use Scala's List class. As with arrays, a List[String] contains only strings. Scala's List, scala.List, differs from Java's java.util.List type in that Scala Lists are always immutable (whereas Java Lists can be mutable). More generally, Scala's List is designed to enable a functional style of programming. Creating a list is easy. Listing 3.3 shows how:
-
+  + A List[String] contains only strings. Scala's List, scala.List, differs from Java's java.util.List type in that Scala Lists are always immutable (whereas Java Lists can be mutable). Scala's List is designed to enable a functional style of programming.
+    
+    ```scala
     val oneTwoThree = List(1, 2, 3)
+    ```
+    
+  + Above code establishes a new val named oneTwoThree, initialized with a new List[Int] with the integer elements 1, 2, and 3.[3] 
+  
+  + Because Lists are immutable, they behave a bit like Java strings: when you call a method named `:::` for list concatenation on a list that might seem by its name to imply the list will mutate, it instead creates and returns a new list with the new value.
 
-Listing 3.3 - Creating and initializing a list.
-
-The code in Listing 3.3 establishes a new val named oneTwoThree, initialized with a new List[Int] with the integer elements 1, 2, and 3.[3] Because Lists are immutable, they behave a bit like Java strings: when you call a method on a list that might seem by its name to imply the list will mutate, it instead creates and returns a new list with the new value. For example, List has a method named `:::' for list concatenation. Here's how you use it:
-
+  ```scala
   val oneTwo = List(1, 2)
   val threeFour = List(3, 4)
   val oneTwoThreeFour = oneTwo ::: threeFour
   println(""+ oneTwo +" and "+ threeFour +" were not mutated.")
   println("Thus, "+ oneTwoThreeFour +" is a new list.")
 
-If you run this script, you'll see:
+  /*
+  If you run this script, you'll see:
 
   List(1, 2) and List(3, 4) were not mutated.
   Thus, List(1, 2, 3, 4) is a new list.
+  */
+  ```
 
-Perhaps the most common operator you'll use with lists is `::', which is pronounced "cons." Cons prepends a new element to the beginning of an existing list, and returns the resulting list. For example, if you run this script:
+  + `::` in List, which is pronounced "cons." Cons prepends a new element to the beginning of an existing list, and returns the resulting list.
 
+  ```scala
   val twoThree = List(2, 3)
   val oneTwoThree = 1 :: twoThree
   println(oneTwoThree)
 
-You'll see:
+  /*
+  You'll see:
 
   List(1, 2, 3)
+  */
+  ```
 
-Note
-In the expression "1 :: twoThree", :: is a method of its right operand, the list, twoThree. You might suspect there's something amiss with the associativity of the :: method, but it is actually a simple rule to remember: If a method is used in operator notation, such as a * b, the method is invoked on the left operand, as in a.*(b)—unless the method name ends in a colon. If the method name ends in a colon, the method is invoked on the right operand. Therefore, in 1 :: twoThree, the :: method is invoked on twoThree, passing in 1, like this: twoThree.::(1). Operator associativity will be described in more detail in Section 5.8.
+  + Note
+    - `a * b`, the method is invoked on the left operand, as in a.*(b)—unless the method name ends in a colon. 
+    - If the method name ends in a colon, the method is invoked on the right operand. Therefore, in 1 :: twoThree, the :: method is invoked on twoThree, passing in 1, like this: twoThree.::(1).
 
-Given that a shorthand way to specify an empty list is Nil, one way to initialize new lists is to string together elements with the cons operator, with Nil as the last element.[4] For example, the following script will produce the same output as the previous one, "List(1, 2, 3)":
-
+  + Empty list is Nil, one way to initialize new lists is to string together elements with the cons operator, with Nil as the last element.[4]
+  
+  ```scala
   val oneTwoThree = 1 :: 2 :: 3 :: Nil
   println(oneTwoThree)
+  // output: List(1, 2, 3)
+  ```
+  
+  + Why not append to lists?
+    - Class List does not offer an append operation, because the time it takes to append to a list grows linearly with the size of the list, whereas prepending with :: takes constant time. Your options if you want to build a list by appending elements is to prepend them, then when you're done call reverse; or use a ListBuffer, a mutable list that does offer an append operation, and when you're done call toList. ListBuffer will be described in Section 22.2.
 
-Scala's List is packed with useful methods, many of which are shown in Table 3.1. The full power of lists will be revealed in Chapter 16.
-Why not append to lists?
-Class List does not offer an append operation, because the time it takes to append to a list grows linearly with the size of the list, whereas prepending with :: takes constant time. Your options if you want to build a list by appending elements is to prepend them, then when you're done call reverse; or use a ListBuffer, a mutable list that does offer an append operation, and when you're done call toList. ListBuffer will be described in Section 22.2.
+  + List is packed with useful methods
+    - List() or Nil: The empty List
+    - List("Cool", "tools", "rule"): Creates a new List[String] with the three values "Cool", "tools", and "rule"
+    - val thrill = "Will" :: "fill" :: "until" :: Nil: Creates a new List[String] with the three values "Will", "fill", and "until"
+    - List("a", "b") ::: List("c", "d"): Concatenates two lists (returns a new List[String] with values "a", "b", "c", and "d")
+    - thrill(2): Returns the element at index 2 (zero based) of the thrill list (returns "until")
+    - thrill.count(s => s.length == 4): Counts the number of string elements in thrill that have length 4 (returns 2)
+    - thrill.drop(2):	Returns the thrill list without its first 2 elements (returns List("until"))
+    - thrill.dropRight(2): Returns the thrill list without its rightmost 2 elements (returns List("Will"))
+    - thrill.exists(s => s == "until"): Determines whether a string element exists in thrill that has the value "until" (returns true)
+    - thrill.filter(s => s.length == 4): Returns a list of all elements, in order, of the thrill list that have length 4 (returns List("Will", "fill"))
+    - thrill.forall(s => s.endsWith("l")): Indicates whether all elements in the thrill list end with the letter "l" (returns true)
+    - thrill.foreach(s => print(s)): Executes the print statement on each of the strings in the thrill list (prints "Willfilluntil")
+    - thrill.foreach(print): Same as the previous, but more concise (also prints "Willfilluntil")
+    - thrill.head: Returns the first element in the thrill list (returns "Will")
+    - thrill.init: Returns a list of all but the last element in the thrill list (returns List("Will", "fill"))
+    - thrill.isEmpty: Indicates whether the thrill list is empty (returns false)
+    - thrill.last: Returns the last element in the thrill list (returns "until")
+    - thrill.length: Returns the number of elements in the thrill list (returns 3)
+    - thrill.map(s => s + "y"): Returns a list resulting from adding a "y" to each string element in the thrill list (returns List("Willy", "filly", "untily"))
+    - thrill.mkString(", "): Makes a string with the elements of the list (returns "Will, fill, until")
+    - thrill.remove(s => s.length == 4): Returns a list of all elements, in order, of the thrill list except those that have length 4 (returns List("until"))
+    - thrill.reverse: Returns a list containing all elements of the thrill list in reverse order (returns List("until", "fill", "Will"))
+    - thrill.sort((s, t) => s.charAt(0).toLowerCase < t.charAt(0).toLowerCase): Returns a list containing all elements of the thrill list in alphabetical order of the first character lowercased (returns List("fill", "until", "Will"))
+    - thrill.tail: Returns the thrill list minus its first element (returns List("fill", "until"))
 
-Some List methods and usages
-What it is
-What it does
-List() or Nil 	The empty List
-List("Cool", "tools", "rule") 	Creates a new List[String] with the three values "Cool", "tools", and "rule"
-val thrill = "Will" :: "fill" ::
-"until" :: Nil 	Creates a new List[String] with the three values "Will", "fill", and "until"
-List("a", "b") ::: List("c", "d") 	Concatenates two lists (returns a new List[String] with values "a", "b", "c", and "d")
-thrill(2) 	Returns the element at index 2 (zero based) of the thrill list (returns "until")
-thrill.count(s => s.length == 4) 	Counts the number of string elements in thrill that have length 4 (returns 2)
-thrill.drop(2) 	Returns the thrill list without its first 2 elements (returns List("until"))
-thrill.dropRight(2) 	Returns the thrill list without its rightmost 2 elements (returns List("Will"))
-thrill.exists(s => s == "until") 	Determines whether a string element exists in thrill that has the value "until" (returns true)
-thrill.filter(s => s.length == 4) 	Returns a list of all elements, in order, of the thrill list that have length 4 (returns List("Will", "fill"))
-thrill.forall(s =>
-s.endsWith("l")) 	Indicates whether all elements in the thrill list end with the letter "l" (returns true)
-thrill.foreach(s => print(s)) 	Executes the print statement on each of the strings in the thrill list (prints "Willfilluntil")
-thrill.foreach(print) 	Same as the previous, but more concise (also prints "Willfilluntil")
-thrill.head 	Returns the first element in the thrill list (returns "Will")
-thrill.init 	Returns a list of all but the last element in the thrill list (returns List("Will", "fill"))
-thrill.isEmpty 	Indicates whether the thrill list is empty (returns false)
-thrill.last 	Returns the last element in the thrill list (returns "until")
-thrill.length 	Returns the number of elements in the thrill list (returns 3)
-thrill.map(s => s + "y") 	Returns a list resulting from adding a "y" to each string element in the thrill list (returns List("Willy", "filly", "untily"))
-thrill.mkString(", ") 	Makes a string with the elements of the list (returns "Will, fill, until")
-thrill.remove(s => s.length == 4) 	Returns a list of all elements, in order, of the thrill list except those that have length 4 (returns List("until"))
-thrill.reverse 	Returns a list containing all elements of the thrill list in reverse order (returns List("until", "fill", "Will"))
-thrill.sort((s, t) =>
-s.charAt(0).toLowerCase <
-t.charAt(0).toLowerCase) 	Returns a list containing all elements of the thrill list in alphabetical order of the first character lowercased (returns List("fill", "until", "Will"))
-thrill.tail 	Returns the thrill list minus its first element (returns List("fill", "until"))
-Step 9. Use tuples [link]
+### Step 9. Use tuples
 
-Another useful container object is the tuple. Like lists, tuples are immutable, but unlike lists, tuples can contain different types of elements. Whereas a list might be a List[Int] or a List[String], a tuple could contain both an integer and a string at the same time. Tuples are very useful, for example, if you need to return multiple objects from a method. Whereas in Java you would often create a JavaBean-like class to hold the multiple return values, in Scala you can simply return a tuple. And it is simple: to instantiate a new tuple that holds some objects, just place the objects in parentheses, separated by commas. Once you have a tuple instantiated, you can access its elements individually with a dot, underscore, and the one-based index of the element. An example is shown in Listing 3.4:
+  + Another useful container object is the tuple. 
+    - Like lists, tuples are immutable.
+    - Unlike lists, tuples can contain different types of elements.
+    - If you need to return multiple objects from a method, in Scala you can simply return a tuple.
+    - Instantiate a new tuple that holds some objects, just place the objects in parentheses, separated by commas. 
+    - Once you have a tuple instantiated, you can access its elements individually with a dot, underscore, and the one-based index of the element.
 
+    ```scala
     val pair = (99, "Luftballons")
     println(pair._1)
     println(pair._2)
+    
+    /* output:
+    99
+    Luftballons
+    */
+    ```
 
-Listing 3.4 - Creating and using a tuple.
+  + Scala infers the type of the tuple to be Tuple2[Int, String], and gives that type to the variable pair as well.
+  
+  + The actual type of a tuple depends on the number of elements it contains and the types of those elements. Thus, the type of (99, "Luftballons") is Tuple2[Int, String]. The type of ('u', 'r', "the", 1, 4, "me") is Tuple6[Char, Char, String, Int, Int, String].[5]
+  
+  + Accessing the elements of a tuple
+    - Can't access the elements of a tuple like with "pair(0)".
+    - The reason is that a list's apply method always returns the same type.
+    - But each element of a tuple may be a different type: _1 can have one result type, _2 another, and so on. 
+    - These _N numbers are one-based, instead of zero-based, because starting with 1 is a tradition set by other languages with statically typed tuples, such as Haskell and ML.
 
-In the first line of Listing 3.4, you create a new tuple that contains the integer 99, as its first element, and the string, "Luftballons", as its second element. Scala infers the type of the tuple to be Tuple2[Int, String], and gives that type to the variable pair as well. In the second line, you access the _1 field, which will produce the first element, 99. The "." in the second line is the same dot you'd use to access a field or invoke a method. In this case you are accessing a field named _1. If you run this script, you'll see:
+### Step 10. Use sets and maps
 
-  99
-  Luftballons
+  + Scala aims to help you take advantage of both functional and imperative styles
+    - Its collections libraries make a point to differentiate between mutable and immutable collection classes. 
+    - arrays are always mutable, whereas lists are always immutable.
+    - For sets and maps, Scala models mutability in the class hierarchy.
 
-The actual type of a tuple depends on the number of elements it contains and the types of those elements. Thus, the type of (99, "Luftballons") is Tuple2[Int, String]. The type of ('u', 'r', "the", 1, 4, "me") is Tuple6[Char, Char, String, Int, Int, String].[5]
-Accessing the elements of a tuple
-You may be wondering why you can't access the elements of a tuple like the elements of a list, for example, with "pair(0)". The reason is that a list's apply method always returns the same type, but each element of a tuple may be a different type: _1 can have one result type, _2 another, and so on. These _N numbers are one-based, instead of zero-based, because starting with 1 is a tradition set by other languages with statically typed tuples, such as Haskell and ML.
-Step 10. Use sets and maps [link]
-
-Because Scala aims to help you take advantage of both functional and imperative styles, its collections libraries make a point to differentiate between mutable and immutable collection classes. For example, arrays are always mutable, whereas lists are always immutable. When it comes to sets and maps, Scala also provides mutable and immutable alternatives, but in a different way. For sets and maps, Scala models mutability in the class hierarchy.
-
-For example, the Scala API contains a base trait for sets, where a trait is similar to a Java interface. (You'll find out more about traits in Chapter 12.) Scala then provides two subtraits, one for mutable sets and another for immutable sets. As you can see in Figure 3.2, these three traits all share the same simple name, Set. Their fully qualified names differ, however, because each resides in a different package. Concrete set classes in the Scala API, such as the HashSet classes shown in Figure 3.2, extend either the mutable or immutable Set trait. (Although in Java you "implement" interfaces, in Scala you "extend" or "mix in" traits.) Thus, if you want to use a HashSet, you can choose between mutable and immutable varieties depending upon your needs. The default way to create a set is shown in Listing 3.5:
-
+  + The Scala API contains a base trait for sets.(trait like Java interface)
+    - Scala then provides two subtraits, one for mutable sets and another for immutable sets.
+    - These three traits all share the same simple name, Set(resides in a different package).
+    - Concrete set classes is HashSet classes extend either the mutable or immutable Set trait. (in Scala you "extend" or "mix in" traits.)
+    
+    ```scala
+    // default way to create a set
     var jetSet = Set("Boeing", "Airbus")
     jetSet += "Lear"
     println(jetSet.contains("Cessna"))
+    ```
 
-Listing 3.5 - Creating, initializing, and using an immutable set.
-
-image images/sets53.jpg
   ![Figure 3.2 - Class hierarchy for Scala sets.](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/res/drawable/Figure3.2.jpg)
 
-In the first line of code in Listing 3.5, you define a new var named jetSet, and initialize it with an immutable set containing the two strings, "Boeing" and "Airbus". As this example shows, you can create sets in Scala similarly to how you create lists and arrays: by invoking a factory method named apply on a Set companion object. In Listing 3.5, you invoke apply on the companion object for scala.collection.immutable.Set, which returns an instance of a default, immutable Set. The Scala compiler infers jetSet's type to be the immutable Set[String].
+  + Above code, you define a new var named jetSet, and initialize it with an immutable set containing the two strings, "Boeing" and "Airbus". Create sets in Scala similarly to how you create lists and arrays: by invoking a factory method named apply on a Set companion object for scala.collection.immutable.Set, which returns an instance of a default, immutable Set. The Scala compiler infers jetSet's type to be the immutable Set[String].
 
-To add a new element to a set, you call + on the set, passing in the new element. Both mutable and immutable sets offer a + method, but their behavior differs. Whereas a mutable set will add the element to itself, an immutable set will create and return a new set with the element added. In Listing 3.5, you're working with an immutable set, thus the + invocation will yield a brand new set. Although mutable sets offer an actual += method, immutable sets do not. In this case, the second line of code, "jetSet += "Lear"", is essentially a shorthand for:
-
+  + To add a new element to a set, you call + on the set, passing in the new element.
+    - mutable and immutable sets offer a + method. A mutable set will add the element to itself, an immutable set will create and return a new set with the element added.
+    - Although mutable sets offer an actual += method, immutable sets do not.
+  
+  ```scala
+  // shorthand for: jetSet += "Lear"
   jetSet = jetSet + "Lear"
+  ```
+  
+  + reassign the jetSet var with a new set containing "Boeing", "Airbus", and "Lear". Finally, set contains the string "Cessna". (false.)
 
-Thus, in the second line of Listing 3.5, you reassign the jetSet var with a new set containing "Boeing", "Airbus", and "Lear". Finally, the last line of Listing 3.5 prints out whether or not the set contains the string "Cessna". (As you'd expect, it prints false.)
-
-If you want a mutable set, you'll need to use an import, as shown in Listing 3.6:
-
+  + A mutable set, need to use an import
+    
+    ```scala
     import scala.collection.mutable.Set
   
     val movieSet = Set("Hitch", "Poltergeist")
     movieSet += "Shrek"
-    println(movieSet) 
+    println(movieSet)
+    ```
 
-Listing 3.6 - Creating, initializing, and using a mutable set.
+  + Had you wanted to, instead of writing movieSet += "Shrek", therefore, you could have written movieSet.+=("Shrek").[6]
 
-In the first line of Listing 3.6 you import the mutable Set. As with Java, an import statement allows you to use a simple name, such as Set, instead of the longer, fully qualified name. As a result, when you say Set on the third line, the compiler knows you mean scala.collection.mutable.Set. On that line, you initialize movieSet with a new mutable set that contains the strings "Hitch" and "Poltergeist". The subsequent line adds "Shrek" to the mutable set by calling the += method on the set, passing in the string "Shrek". As mentioned previously, += is an actual method defined on mutable sets. Had you wanted to, instead of writing movieSet += "Shrek", therefore, you could have written movieSet.+=("Shrek").[6]
+  + Simply import that class you need, and use the factory method on its companion object.
 
-Although the default set implementations produced by the mutable and immutable Set factory methods shown thus far will likely be sufficient for most situations, occasionally you may want an explicit set class. Fortunately, the syntax is similar. Simply import that class you need, and use the factory method on its companion object. For example, if you need an immutable HashSet, you could do this:
-
+  ```scala
   import scala.collection.immutable.HashSet
   
   val hashSet = HashSet("Tomatoes", "Chilies")
   println(hashSet + "Coriander")
+  ```
 
-Another useful collection class in Scala is Map. As with sets, Scala provides mutable and immutable versions of Map, using a class hierarchy. As you can see in Figure 3.3, the class hierarchy for maps looks a lot like the one for sets. There's a base Map trait in package scala.collection, and two subtrait Maps: a mutable Map in scala.collection.mutable and an immutable one in scala.collection.immutable.
+  + Scala provides mutable and immutable versions of Map, using a class hierarchy.
 
-image images/maps53.jpg
   ![Figure 3.3 - Class hierarchy for Scala maps.](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/res/drawable/Figure3.3.jpg)
 
-Implementations of Map, such as the HashMaps shown in the class hierarchy in Figure 3.3, extend either the mutable or immutable trait. You can create and initialize maps using factory methods similar to those used for arrays, lists, and sets. For example, Listing 3.7 shows a mutable map in action:
+  + You can create and initialize maps using factory methods similar to those used for arrays, lists, and sets.
 
+    ```scala
     import scala.collection.mutable.Map
   
     val treasureMap = Map[Int, String]()
@@ -234,33 +289,44 @@ Implementations of Map, such as the HashMaps shown in the class hierarchy in Fig
     treasureMap += (2 -> "Find big X on ground.")
     treasureMap += (3 -> "Dig.")
     println(treasureMap(2))
+    
+    // output: Find big X on ground.
+    ```
 
-Listing 3.7 - Creating, initializing, and using a mutable map.
+  + Above code
+    - Import the mutable Map.
+    - Define a val named treasureMap and initialize it with an empty mutable Map that has integer keys and string values.
+    - The map is empty because you pass nothing to the factory method (the parentheses in `Map[Int, String]()` are empty).[7]
+    - Add key/value pairs to the map using the -> and += methods.
+    - Transforms a binary operation expression like 1 -> "Go to island." into (1).->("Go to island.").
+    - This -> method, which you can invoke on any object in a Scala program, returns a two-element tuple containing the key and value.[8]
+    - You then pass this tuple to the += method of the map object to which treasureMap refers.
+    - Print corresponds to the key 2 in the treasureMap.
 
-On the first line of Listing 3.7, you import the mutable Map. You then define a val named treasureMap and initialize it with an empty mutable Map that has integer keys and string values. The map is empty because you pass nothing to the factory method (the parentheses in "Map[Int, String]()" are empty).[7] On the next three lines you add key/value pairs to the map using the -> and += methods. As illustrated previously, the Scala compiler transforms a binary operation expression like 1 -> "Go to island." into (1).->("Go to island."). Thus, when you say 1 -> "Go to island.", you are actually calling a method named -> on an integer with the value 1, passing in a string with the value "Go to island." This -> method, which you can invoke on any object in a Scala program, returns a two-element tuple containing the key and value.[8] You then pass this tuple to the += method of the map object to which treasureMap refers. Finally, the last line prints the value that corresponds to the key 2 in the treasureMap. If you run this code, it will print:
+  + If you prefer an immutable map, no import is necessary, as immutable is the default map.
 
-  Find big X on ground.
-
-If you prefer an immutable map, no import is necessary, as immutable is the default map. An example is shown in Listing 3.8:
-
+    ```scala
     val romanNumeral = Map(
       1 -> "I", 2 -> "II", 3 -> "III", 4 -> "IV", 5 -> "V"
     )
     println(romanNumeral(4))
+    
+    // output: IV
+    ```
 
-Listing 3.8 - Creating, initializing, and using an immutable map.
+  + Given there are no imports, a scala.collection.immutable.Map. You pass five key/value tuples to the map's factory method, which returns an immutable Map.
 
-Given there are no imports, when you say Map in the first line of Listing 3.8, you'll get the default: a scala.collection.immutable.Map. You pass five key/value tuples to the map's factory method, which returns an immutable Map containing the passed key/value pairs. If you run the code in Listing 3.8 it will print "IV".
-Step 11. Learn to recognize the functional style [link]
+### Step 11. Learn to recognize the functional style
 
-As mentioned in Chapter 1, Scala allows you to program in an imperative style, but encourages you to adopt a more functional style. If you are coming to Scala from an imperative background—for example, if you are a Java programmer—one of the main challenges you may face when learning Scala is figuring out how to program in the functional style. We realize this style might be unfamiliar at first, and in this book we try hard to guide you through the transition. It will require some work on your part, and we encourage you to make the effort. If you come from an imperative background, we believe that learning to program in a functional style will not only make you a better Scala programmer, it will expand your horizons and make you a better programmer in general.
+  + Scala allows you to program in an imperative style, but encourages you to adopt a more functional style.
 
-The first step is to recognize the difference between the two styles in code. One telltale sign is that if code contains any vars, it is probably in an imperative style. If the code contains no vars at all—i.e., it contains only vals—it is probably in a functional style. One way to move towards a functional style, therefore, is to try to program without vars.
+  + The difference between the two styles in code. If code contains any vars, it is probably in an imperative style. If the code contains no vars at all—i.e., it contains only vals—it is probably in a functional style.
+  
+  + The Scala perspective, however, is that val and var are just two different tools in your toolbox, both useful, neither inherently evil. Scala encourages you to lean towards vals and get rid of vars in your code, but ultimately reach for the best tool given the job at hand.
 
-If you're coming from an imperative background, such as Java, C++, or C#, you may think of var as a regular variable and val as a special kind of variable. On the other hand, if you're coming from a functional background, such as Haskell, OCaml, or Erlang, you might think of val as a regular variable and var as akin to blasphemy. The Scala perspective, however, is that val and var are just two different tools in your toolbox, both useful, neither inherently evil. Scala encourages you to lean towards vals, but ultimately reach for the best tool given the job at hand. Even if you agree with this balanced philosophy, however, you may still find it challenging at first to figure out how to get rid of vars in your code.
-
-Consider the following while loop example, adapted from Chapter 2, which uses a var and is therefore in the imperative style:
-
+  + The following code uses a var and is therefore in the imperative style:
+  
+  ```scala
   def printArgs(args: Array[String]): Unit = {
     var i = 0
     while (i < args.length) {
@@ -268,36 +334,43 @@ Consider the following while loop example, adapted from Chapter 2, which uses a 
       i += 1
     }
   }
+  ```
 
-You can transform this bit of code into a more functional style by getting rid of the var, for example, like this:
+  + You can transform functional style by getting rid of the var:
 
+  ```scala
   def printArgs(args: Array[String]): Unit = {
     for (arg <- args)
       println(arg)
   }
 
-or this:
+  // or this:
 
   def printArgs(args: Array[String]): Unit = {
     args.foreach(println)
   }
+  ```
 
-This example illustrates one benefit of programming with fewer vars. The refactored (more functional) code is clearer, more concise, and less error-prone than the original (more imperative) code. The reason Scala encourages a functional style, in fact, is that the functional style can help you write more understandable, less error-prone code.
+  + The benefit of the refactored (more functional) code with fewer vars is clearer, more concise, and less error-prone than the original (more imperative) code.
 
-You can go even further, though. The refactored printArgs method is not purely functional, because it has side effects—in this case, its side effect is printing to the standard output stream. The telltale sign of a function with side effects is that its result type is Unit. If a function isn't returning any interesting value, which is what a result type of Unit means, the only way that function can make a difference in the world is through some kind of side effect. A more functional approach would be to define a method that formats the passed args for printing, but just returns the formatted string, as shown in Listing 3.9.
-
+  + Side effects—in this case, its side effect is printing to the standard output stream and its result type is Unit. If a function isn't returning any interesting value, which is what a result type of Unit means. A more functional approach would be to define a method that formats the passed args for printing, but just returns the formatted string.
+    
+    ```scala
     def formatArgs(args: Array[String]) = args.mkString("\n")
+    ```
 
-Listing 3.9 - A function without side effects or vars.
+  + Now you're really functional: no side effects or vars in sight. The mkString method, which you can call on any iterable collection (including arrays, lists, sets, and maps), returns a string consisting of the result of calling toString on each element, separated by the passed string and pass its result to println to accomplish that:
 
-Now you're really functional: no side effects or vars in sight. The mkString method, which you can call on any iterable collection (including arrays, lists, sets, and maps), returns a string consisting of the result of calling toString on each element, separated by the passed string. Thus if args contains three elements "zero", "one", and "two", formatArgs will return "zero\none\ntwo". Of course, this function doesn't actually print anything out like the printArgs methods did, but you can easily pass its result to println to accomplish that:
-
+  ```scala
   println(formatArgs(args))
+  ```
 
-Every useful program is likely to have side effects of some form, because otherwise it wouldn't be able to provide value to the outside world. Preferring methods without side effects encourages you to design programs where side-effecting code is minimized. One benefit of this approach is that it can help make your programs easier to test. For example, to test any of the three printArgs methods shown earlier in this section, you'd need to redefine println, capture the output passed to it, and make sure it is what you expect. By contrast, you could test formatArgs simply by checking its result:
+  + Every useful program is likely to have side effects of some form, because otherwise it wouldn't be able to provide value to the outside world. Preferring methods without side effects encourages you to design programs where side-effecting code is minimized. One benefit of this approach is that it can help make your programs easier to test. For example, to test any of the three printArgs methods shown earlier in this section, you'd need to redefine println, capture the output passed to it, and make sure it is what you expect. By contrast, you could test formatArgs simply by checking its result:
 
+  ```scala
   val res = formatArgs(Array("zero", "one", "two"))
   assert(res == "zero\none\ntwo")
+  ```
 
 Scala's assert method checks the passed Boolean and if it is false, throws AssertionError. If the passed Boolean is true, assert just returns quietly. You'll learn more about assertions and testing in Chapter 14.
 
@@ -305,7 +378,8 @@ That said, bear in mind that neither vars nor side effects are inherently evil. 
 A balanced attitude for Scala programmers
 
 Prefer vals, immutable objects, and methods without side effects. Reach for them first. Use vars, mutable objects, and methods with side effects when you have a specific need and justification for them.
-Step 12. Read lines from a file [link]
+
+### Step 12. Read lines from a file
 
 Scripts that perform small, everyday tasks often need to process lines in files. In this section, you'll build a script that reads lines from a file, and prints them out prepended with the number of characters in each line. The first version is shown in Listing 3.10:
 
@@ -412,8 +486,7 @@ In this for expression, you once again iterate through the lines. For each line,
 Listing 3.11 - Printing formatted character counts for the lines of a file.
 Conclusion
 
-With the knowledge you've gained in this chapter, you should already be able to get started using Scala for small tasks, especially scripts. In future chapters, we will dive into more detail in these topics, and introduce other topics that weren't even hinted at here.
-Footnotes for Chapter 3:
+### Footnotes for Chapter 3:
 
 [1] This to method actually returns not an array but a different kind of sequence, containing the values 0, 1, and 2, which the for expression iterates over. Sequences and other collections will be described in Chapter 17.
 
@@ -430,12 +503,4 @@ Footnotes for Chapter 3:
 [7] The explicit type parameterization, "[Int, String]", is required in Listing 3.7 because without any values passed to the factory method, the compiler is unable to infer the map's type parameters. By contrast, the compiler can infer the type parameters from the values passed to the map factory shown in Listing 3.8, thus no explicit type parameters are needed.
 
 [8] The Scala mechanism that allows you to invoke -> on any object, implicit conversion, will be covered in Chapter 21.
-
-Top | Table of Contents | Glossary | Index | Print | Previous | Next
-
-
-Google
-  	Web Artima.com
-Copyright © 1996-2017 Artima, Inc. All Rights Reserved. - Privacy Policy - Terms of Use - Advertise with Us
-
 
