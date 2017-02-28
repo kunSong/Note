@@ -1,6 +1,4 @@
 ## Index
 
-+ [github Guide](https://github.com/kunSong/Note/blob/master/githubGuide.md)
-+ [Java Note](https://github.com/kunSong/Note/blob/master/JavaLearn.md)
-+ [Scala Note](https://github.com/kunSong/Note/blob/master/ScalaLearn.md)
-+ [Hadoop Note](https://github.com/kunSong/Note/blob/master/HadoopLearn.md)
++ [Chapter 2 First Steps In Scala](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter2FirstStepsinScala.md)
++ [Chapter 3 Next Steps In Scala](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter3NextStepsinScala.md)
