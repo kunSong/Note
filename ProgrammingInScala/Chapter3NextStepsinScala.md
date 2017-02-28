@@ -20,6 +20,7 @@
   + error-prone
   + telltale
   + reveal
+  + bear in mind that
 
 ### Step 7. Parameterize arrays with types
 
@@ -393,14 +394,19 @@ Given there are no imports, when you say Map in the first line of Listing 3.8, y
 
 As mentioned in Chapter 1, Scala allows you to program in an imperative style, but encourages you to adopt a more functional style. If you are coming to Scala from an imperative background—for example, if you are a Java programmer—one of the main challenges you may face when learning Scala is figuring out how to program in the functional style. We realize this style might be unfamiliar at first, and in this book we try hard to guide you through the transition. It will require some work on your part, and we encourage you to make the effort. If you come from an imperative background, we believe that learning to program in a functional style will not only make you a better Scala programmer, it will expand your horizons and make you a better programmer in general.
 
-  + 
+  + 从命令式编程（Java programmer）向函数式编程转变
 
 The first step is to recognize the difference between the two styles in code. One telltale sign is that if code contains any vars, it is probably in an imperative style. If the code contains no vars at all—i.e., it contains only vals—it is probably in a functional style. One way to move towards a functional style, therefore, is to try to program without vars.
+
+  + 函数式与命令式形式的区别在于没有vars，只有vals。
 
 If you're coming from an imperative background, such as Java, C++, or C#, you may think of var as a regular variable and val as a special kind of variable. On the other hand, if you're coming from a functional background, such as Haskell, OCaml, or Erlang, you might think of val as a regular variable and var as akin to blasphemy. The Scala perspective, however, is that val and var are just two different tools in your toolbox, both useful, neither inherently evil. Scala encourages you to lean towards vals, but ultimately reach for the best tool given the job at hand. Even if you agree with this balanced philosophy, however, you may still find it challenging at first to figure out how to get rid of vars in your code.
 
 Consider the following while loop example, adapted from Chapter 2, which uses a var and is therefore in the imperative style:
 
+  + 对于命令式（Java，C++，C#）vars是通常的，vals是特殊的，相反于函数式。Scala兼顾两者，但更倾向于vals，从你的代码中消除vars可能是个挑战。
+
+  ```scala
   def printArgs(args: Array[String]): Unit = {
     var i = 0
     while (i < args.length) {
@@ -409,35 +415,50 @@ Consider the following while loop example, adapted from Chapter 2, which uses a 
     }
   }
 
-You can transform this bit of code into a more functional style by getting rid of the var, for example, like this:
+  // You can transform this bit of code into a more functional style by getting rid of the var, for example, like this:
 
   def printArgs(args: Array[String]): Unit = {
     for (arg <- args)
       println(arg)
   }
 
-or this:
+  // or this:
 
   def printArgs(args: Array[String]): Unit = {
     args.foreach(println)
   }
+  ```
 
 This example illustrates one benefit of programming with fewer vars. The refactored (more functional) code is clearer, more concise, and less error-prone than the original (more imperative) code. The reason Scala encourages a functional style, in fact, is that the functional style can help you write more understandable, less error-prone code.
 
+  + 上述代码重构变得更函数化从原来的命令式中，简洁，更好理解，少错误的代码，这就是函数式的好处。
+
 You can go even further, though. The refactored printArgs method is not purely functional, because it has side effects—in this case, its side effect is printing to the standard output stream. The telltale sign of a function with side effects is that its result type is Unit. If a function isn't returning any interesting value, which is what a result type of Unit means, the only way that function can make a difference in the world is through some kind of side effect. A more functional approach would be to define a method that formats the passed args for printing, but just returns the formatted string, as shown in Listing 3.9.
 
+  + 上述printArgs还不够函数化，仍然有副作用，其返回值为Unit空，更函数式的方法是定义一个方法来将传入的args返回一个string。
+
+    ```scala
     def formatArgs(args: Array[String]) = args.mkString("\n")
+    ```
 
 Listing 3.9 - A function without side effects or vars.
 
 Now you're really functional: no side effects or vars in sight. The mkString method, which you can call on any iterable collection (including arrays, lists, sets, and maps), returns a string consisting of the result of calling toString on each element, separated by the passed string. Thus if args contains three elements "zero", "one", and "two", formatArgs will return "zero\none\ntwo". Of course, this function doesn't actually print anything out like the printArgs methods did, but you can easily pass its result to println to accomplish that:
 
+  + 现在已经函数化了，没有副作用和vars，`mkString`是每个可遍历的集合都可以调用的(arrays, lists, sets, and maps)，是返回一个string由传入的string来进行对元素的遍历，toString和分割后组成。最后由println来完成打印。
+
+  ```scala
   println(formatArgs(args))
+  ```
 
 Every useful program is likely to have side effects of some form, because otherwise it wouldn't be able to provide value to the outside world. Preferring methods without side effects encourages you to design programs where side-effecting code is minimized. One benefit of this approach is that it can help make your programs easier to test. For example, to test any of the three printArgs methods shown earlier in this section, you'd need to redefine println, capture the output passed to it, and make sure it is what you expect. By contrast, you could test formatArgs simply by checking its result:
 
+  + 有用的程序在某些样式上可能会有副作用，可能没法提供数据到外部，就像上述的printArgs。更好的没有副作用的方法可以带来很多好处，例如很方便地来判断你的程序结果如下，不用去改造println，不用去抓却输出值。`assert`方法来判断true or false，if false会抛出AssertionError，true会安静地返回。
+
+  ```scala
   val res = formatArgs(Array("zero", "one", "two"))
   assert(res == "zero\none\ntwo")
+  ```
 
 Scala's assert method checks the passed Boolean and if it is false, throws AssertionError. If the passed Boolean is true, assert just returns quietly. You'll learn more about assertions and testing in Chapter 14.
 
@@ -446,10 +467,15 @@ A balanced attitude for Scala programmers
 
 Prefer vals, immutable objects, and methods without side effects. Reach for them first. Use vars, mutable objects, and methods with side effects when you have a specific need and justification for them.
 
+  + Scala是个基于函数和命令式的语言，如果命令式更好地处理问题，那无需犹豫。更倾向于使用vals，immutable object， and methods without side effects。
+
 ### Step 12. Read lines from a file
 
 Scripts that perform small, everyday tasks often need to process lines in files. In this section, you'll build a script that reads lines from a file, and prints them out prepended with the number of characters in each line. The first version is shown in Listing 3.10:
 
+  + 从文件中读取内容，并返回前面包含此行字数的内容
+
+    ```scala
     import scala.io.Source
   
     if (args.length > 0) {
@@ -459,14 +485,18 @@ Scripts that perform small, everyday tasks often need to process lines in files.
     }
     else
       Console.err.println("Please enter filename")
+    ```
 
 Listing 3.10 - Reading lines from a file.
 
 This script starts with an import of a class named Source from package scala.io. It then checks to see if at least one argument was specified on the command line. If so, the first argument is interpreted as a filename to open and process. The expression Source.fromFile(args(0)) attempts to open the specified file and returns a Source object, on which you call getLines. The getLines method returns an Iterator[String], which provides one line on each iteration, including the end-of-line character. The for expression iterates through these lines and prints for each the length of the line, a space, and the line itself. If there were no arguments supplied on the command line, the final else clause will print a message to the standard error stream. If you place this code in a file named countchars1.scala, and run it on itself with:
 
+  + `scala.io.Source`包名`Source.fromFile(args(0))`可以打开文件并返回一个Source对象，Source对象的`getLines`方法返回一个`Iterator[String]`对象，它会遍历每一行包括空格和行结束符。
+
+  ```
   $ scala countchars1.scala countchars1.scala
 
-You should see:
+  // You should see:
 
   23 import scala.io.Source
   1 
@@ -478,7 +508,7 @@ You should see:
   5 else
   47   Console.err.println("Please enter filename")
 
-Although the script in its current form prints out the needed information, you may wish to line up the numbers, right adjusted, and add a pipe character, so that the output looks instead like:
+  // Although the script in its current form prints out the needed information, you may wish to line up the numbers, right adjusted, and add a pipe character, so that the output looks instead like:
 
   23 | import scala.io.Source
    1 | 
@@ -489,30 +519,47 @@ Although the script in its current form prints out the needed information, you m
    2 | }
    5 | else
   47 |   Console.err.println("Please enter filename")
+  ```
 
 To accomplish this, you can iterate through the lines twice. The first time through you'll determine the maximum width required by any line's character count. The second time through you'll print the output, using the maximum width calculated previously. Because you'll be iterating through the lines twice, you may as well assign them to a variable:
 
+  + 打印出上诉结果，数字右对齐加上管道符。需要每行遍历两次。第一次来确定字数的最大宽度。第二遍是输出内容使用到前面计算的最大宽度。
+
+  ```scala
   val lines = Source.fromFile(args(0)).getLines.toList
+  ```
 
 The final toList is required because the getLines method returns an iterator. Once you've iterated through an iterator, it is spent. By transforming it into a list via the toList call, you gain the ability to iterate as many times as you wish, at the cost of storing all lines from the file in memory at once. The lines variable, therefore, references a list of strings that contains the contents of the file specified on the command line.
 
+  + `toList`方法将Soure对象返回的iterator转化成一个List放在内存中。List一个元素为一行。
+
 Next, because you'll be calculating the width of each line's character count twice, once per iteration, you might factor that expression out into a small function, which calculates the character width of the passed string's length:
 
-  def widthOfLength(s: String) = s.length.toString.length
+  + 计算每一行的长度的宽度，抽成一个方法，配合for循环可以知道最大宽度。
 
-With this function, you could calculate the maximum width like this:
+  ```scala
+  def widthOfLength(s: String) = s.length.toString.length
+  
+  // With this function, you could calculate the maximum width like this:
 
   var maxWidth = 0
   for (line <- lines)
     maxWidth = maxWidth.max(widthOfLength(line))
+  ```
 
 Here you iterate through each line with a for expression, calculate the character width of that line's length, and, if it is larger than the current maximum, assign it to maxWidth, a var that was initialized to 0. (The max method, which you can invoke on any Int, returns the greater of the value on which it was invoked and the value passed to it.) Alternatively, if you prefer to find the maximum without vars, you could first find the longest line like this:
 
+  + 调用max方法找到最大值，当然最好是通过下面的找到最大行不用vars
+
+  ```scala
   val longestLine = lines.reduceLeft(
     (a, b) => if (a.length > b.length) a else b 
   ) 
+  ```
 
 The reduceLeft method applies the passed function to the first two elements in lines, then applies it to the result of the first application and the next element in lines, and so on, all the way through the list. On each such application, the result will be the longest line encountered so far, because the passed function, (a, b) => if (a.length > b.length) a else b, returns the longest of the two passed strings. "reduceLeft" will return the result of the last application of the function, which in this case will be the longest string element contained in lines.
+
+  + `def reduceLeft[B >: A](op: (B, A) ⇒ B): B`方法是从左到右对所有元素进行传入方法的操作。先比较前两个元素，接着应用到第一次比较结果和下一个元素上，从左到右遍历整个List，最后返回最后一次的比较结果。
 
 Given this result, you can calculate the maximum width by passing the longest line to widthOfLength:
 
@@ -527,7 +574,10 @@ All that remains is to print out the lines with proper formatting. You can do th
   }
 
 In this for expression, you once again iterate through the lines. For each line, you first calculate the number of spaces required before the line length and assign it to numSpaces. Then you create a string containing numSpaces spaces with the expression " " * numSpaces. Finally, you print out the information with the desired formatting. The entire script looks as shown in Listing 3.11:
+    
+  + 找到最大行字数宽度和每行字数宽度得到需要空个数，加管道符，加行内容。
 
+    ```scala
     import scala.io.Source
   
     def widthOfLength(s: String) = s.length.toString.length
@@ -549,6 +599,7 @@ In this for expression, you once again iterate through the lines. For each line,
     }
     else
       Console.err.println("Please enter filename")
+    ```
 
 Listing 3.11 - Printing formatted character counts for the lines of a file.
 
