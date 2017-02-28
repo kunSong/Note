@@ -1,6 +1,10 @@
 ## Next Steps in Scala
 
 ### Vocabulary
+  + side effect
+    - changing something somewhere
+    - Accessing a volatile object, modifying an object, modifying a file, or calling a function that does any of those operations are all side effects，which are changes in the state of the execution environment.
+    - A side effect is generally defined as mutating state somewhere external to the method or performing an I/O action.
   + semantically
   + incur
   + concise
@@ -155,7 +159,7 @@ What you're actually doing in Listing 3.2 is calling a factory method, named app
 
 One of the big ideas of the functional style of programming is that methods should not have side effects. A method's only act should be to compute and return a value. Some benefits gained when you take this approach are that methods become less entangled, and therefore more reliable and reusable. Another benefit (in a statically typed language) is that everything that goes into and out of a method is checked by a type checker, so logic errors are more likely to manifest themselves as type errors. Applying this functional philosophy to the world of objects means making objects immutable.
 
-  + 函数式编程中方法不应该副作用，方法应该计算和返回一个值。
+  + 函数式编程中方法不应该有赋值，方法应该计算和返回一个值。
     - 好处一：方法会解偶，可靠和被重用。
     - 好处二：每个东西进和出方法都会被类型检测，逻辑错误更像是类型错误。
     - 将函数的心理应用到对象世界就是使对象不可变。
@@ -435,7 +439,7 @@ This example illustrates one benefit of programming with fewer vars. The refacto
 
 You can go even further, though. The refactored printArgs method is not purely functional, because it has side effects—in this case, its side effect is printing to the standard output stream. The telltale sign of a function with side effects is that its result type is Unit. If a function isn't returning any interesting value, which is what a result type of Unit means, the only way that function can make a difference in the world is through some kind of side effect. A more functional approach would be to define a method that formats the passed args for printing, but just returns the formatted string, as shown in Listing 3.9.
 
-  + 上述printArgs还不够函数化，仍然有副作用，其返回值为Unit空，更函数式的方法是定义一个方法来将传入的args返回一个string。
+  + 上述printArgs还不够函数化，仍然有赋值给返回值，其返回值为Unit空，更函数式的方法是定义一个方法来将传入的args返回一个string。
 
     ```scala
     def formatArgs(args: Array[String]) = args.mkString("\n")
@@ -445,7 +449,7 @@ Listing 3.9 - A function without side effects or vars.
 
 Now you're really functional: no side effects or vars in sight. The mkString method, which you can call on any iterable collection (including arrays, lists, sets, and maps), returns a string consisting of the result of calling toString on each element, separated by the passed string. Thus if args contains three elements "zero", "one", and "two", formatArgs will return "zero\none\ntwo". Of course, this function doesn't actually print anything out like the printArgs methods did, but you can easily pass its result to println to accomplish that:
 
-  + 现在已经函数化了，没有副作用和vars，`mkString`是每个可遍历的集合都可以调用的(arrays, lists, sets, and maps)，是返回一个string由传入的string来进行对元素的遍历，toString和分割后组成。最后由println来完成打印。
+  + 现在已经函数化了，没有赋值和vars，`mkString`是每个可遍历的集合都可以调用的(arrays, lists, sets, and maps)，是返回一个string由传入的string来进行对元素的遍历，toString和分割后组成。最后由println来完成打印。
 
   ```scala
   println(formatArgs(args))
@@ -453,7 +457,7 @@ Now you're really functional: no side effects or vars in sight. The mkString met
 
 Every useful program is likely to have side effects of some form, because otherwise it wouldn't be able to provide value to the outside world. Preferring methods without side effects encourages you to design programs where side-effecting code is minimized. One benefit of this approach is that it can help make your programs easier to test. For example, to test any of the three printArgs methods shown earlier in this section, you'd need to redefine println, capture the output passed to it, and make sure it is what you expect. By contrast, you could test formatArgs simply by checking its result:
 
-  + 有用的程序在某些样式上可能会有副作用，可能没法提供数据到外部，就像上述的printArgs。更好的没有副作用的方法可以带来很多好处，例如很方便地来判断你的程序结果如下，不用去改造println，不用去抓却输出值。`assert`方法来判断true or false，if false会抛出AssertionError，true会安静地返回。
+  + 有用的程序在某些样式上可能会有赋值，可能没有办法将数据提供到外部，就像上述的printArgs。更好的没有赋值的方法可以带来很多好处，例如很方便地来判断你的程序结果如下，不用去改造println，不用去抓却输出值。`assert`方法来判断true or false，if false会抛出AssertionError，true会安静地返回。
 
   ```scala
   val res = formatArgs(Array("zero", "one", "two"))
