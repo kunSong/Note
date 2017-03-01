@@ -323,13 +323,13 @@ Thus, in the second line of Listing 3.5, you reassign the jetSet var with a new 
 
 If you want a mutable set, you'll need to use an import, as shown in Listing 3.6:
     
-    ```scala
+```scala
     import scala.collection.mutable.Set
   
     val movieSet = Set("Hitch", "Poltergeist")
     movieSet += "Shrek"
     println(movieSet) 
-    ```
+```
 
 Listing 3.6 - Creating, initializing, and using a mutable set.
 
@@ -419,7 +419,8 @@ Consider the following while loop example, adapted from Chapter 2, which uses a 
     }
   }
 
-  // You can transform this bit of code into a more functional style by getting rid of the var, for example, like this:
+  // You can transform this bit of code into a more functional style by getting rid of the var,
+  // for example, like this:
 
   def printArgs(args: Array[String]): Unit = {
     for (arg <- args)
@@ -512,7 +513,9 @@ This script starts with an import of a class named Source from package scala.io.
   5 else
   47   Console.err.println("Please enter filename")
 
-  // Although the script in its current form prints out the needed information, you may wish to line up the numbers, right adjusted, and add a pipe character, so that the output looks instead like:
+  // Although the script in its current form prints out the needed information, 
+  // you may wish to line up the numbers, right adjusted, and add a pipe character, 
+  // so that the output looks instead like:
 
   23 | import scala.io.Source
    1 | 
