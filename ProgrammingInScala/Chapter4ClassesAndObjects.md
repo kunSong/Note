@@ -6,6 +6,7 @@
   + pursue
   + superfluous
   + infix
+  + perceptible
 
 You've already seen the basics of classes and objects in Scala in the previous two chapters. In this chapter, we'll take you a bit deeper. You'll learn more about classes, fields, and methods, and get an overview of semicolon inference. You'll learn more about singleton objects, including how to use them to write and run a Scala application. If you are familiar with Java, you'll find the concepts in Scala are similar, but not exactly the same. So even if you're a Java guru, it will pay to read on.
 
@@ -15,7 +16,7 @@ A class is a blueprint for objects. Once you define a class, you can create obje
 
   + 类是对象的蓝图，使用new来为蓝图创建对象。
 
-  ```scala
+```scala
   class ChecksumAccumulator {
     // class definition goes here
   }
@@ -23,13 +24,13 @@ A class is a blueprint for objects. Once you define a class, you can create obje
   // You can create ChecksumAccumulator objects with:
 
   new ChecksumAccumulator
-  ```
+```
 
 Inside a class definition, you place fields and methods, which are collectively called members. Fields, which you define with either val or var, are variables that refer to objects. Methods, which you define with def, contain executable code. The fields hold the state, or data, of an object, whereas the methods use that data to do the computational work of the object. When you instantiate a class, the runtime sets aside some memory to hold the image of that object's state—i.e., the content of its variables. For example, if you defined a ChecksumAccumulator class and gave it a var field named sum:
 
   + 类的定义，你会设置字段，方法，它们被称为成员。字段可以是var或val，用def定义的方法包好可执行的代码。字段持有对象状态和数据，方法用这些数据进行对对象的计算类似的工作。当你初始化一个类，运行时会分出些内存去持有对象状态的照片例如变量的内容。
 
-  ```scala
+```scala
   class ChecksumAccumulator {
     var sum = 0
   }
@@ -38,7 +39,7 @@ Inside a class definition, you place fields and methods, which are collectively 
 
   val acc = new ChecksumAccumulator
   val csa = new ChecksumAccumulator
-  ```
+```
 
 The image of the objects in memory might look like:
   
@@ -48,9 +49,9 @@ Since sum, a field declared inside class ChecksumAccumulator, is a var, not a va
   
   + 因为sum在类ChecksumAccumulator中是个var不是val，你可以给它重新赋Int值。
 
-  ```scala
+```scala
   acc.sum = 3
-  ```
+```
 
 Now the picture would look like:
 
@@ -64,10 +65,10 @@ Another thing to note in this example is that you were able to mutate the object
   
   + 注意另一个问题就是acc是一个val不是var，所以不能对其赋值另一个实例对象。下面代码是错误的。
 
-  ```scala
+```scala
   // Won't compile, because acc is a val
   acc = new ChecksumAccumulator
-  ```
+```
 
 What you can count on, therefore, is that acc will always refer to the same ChecksumAccumulator object with which you initialize it, but the fields contained inside that object might change over time.
 
@@ -77,18 +78,18 @@ One important way to pursue robustness of an object is to ensure that the object
 
   + 为了对象的健壮性，保证字段状态是含有有效的值，加private修饰符，只可以类中定义的方法进行访问和修改。下面acc就不能直接修改了。
 
-  ```scala
+```scala
   class ChecksumAccumulator {
     private var sum = 0
   }
-  ```
+```
 
   Given this definition of ChecksumAccumulator, any attempt to access sum from the outside of the class would fail:
 
-  ```scala
+```scala
   val acc = new ChecksumAccumulator
   acc.sum = 5 // Won't compile, because sum is private
-  ```
+```
 
 Note
 
@@ -98,7 +99,7 @@ The way you make members public in Scala is by not explicitly specifying any acc
 
 Now that sum is private, the only code that can access sum is code defined inside the body of the class itself. Thus, ChecksumAccumulator won't be of much use to anyone unless we define some methods in it:
 
-  ```scala
+```scala
   class ChecksumAccumulator {
   
     private var sum = 0
@@ -111,7 +112,7 @@ Now that sum is private, the only code that can access sum is code defined insid
       return ~(sum & 0xFF) + 1
     }
   }
-  ```
+```
 
 The ChecksumAccumulator now has two methods, add and checksum, both of which exhibit the basic form of a function definition, shown in Figure 2.1 here.
 
@@ -119,12 +120,12 @@ Any parameters to a method can be used inside the method. One important characte
 
   + 入参`b: Byte`是vals不是vars，不可以在方法内部被修改。
 
-  ```scala
+```scala
   def add(b: Byte): Unit = {
     b = 1     // This won't compile, because b is a val
     sum += b
   }
-  ```
+```
 
 Although add and checksum in this version of ChecksumAccumulator correctly implement the desired functionality, you can express them using a more concise style. First, the return at the end of the checksum method is superfluous and can be dropped. In the absence of any explicit return statement, a Scala method returns the last value computed by the method.
 
@@ -136,26 +137,26 @@ Because all checksum does is calculate a value, it does not need an explicit ret
 
   + 推荐的方法样式能够避免有明显地特殊地多重的返回声明，每个方法作为一个表达式产生一个值并返回。这样方法可以较为小，更方便地书写，当然你可以选。如果只有一个值那就不需要大括号了直接写在方法后面即可，如下。
 
-  ```scala
+```scala
   class ChecksumAccumulator {
     private var sum = 0
     def add(b: Byte): Unit = sum += b
     def checksum(): Int = ~(sum & 0xFF) + 1
   }
-  ```
+```
 
 Methods with a result type of Unit, such as ChecksumAccumulator's add method, are executed for their side effects. A side effect is generally defined as mutating state somewhere external to the method or performing an I/O action. In add's case, for example, the side effect is that sum is reassigned. Another way to express such methods is to leave off the result type and the equals sign, and enclose the body of the method in curly braces. In this form, the method looks like a procedure, a method that is executed only for its side effects. The add method in Listing 4.1 illustrates this style:
 
   + side effect通常被定义为方法外部的某处的状态突变或者是IO操作，在这里sum被赋值是side effect，另一种形式是将`: Unit =`去掉，方法提用大括号包裹，看起来像一个步骤和在方法内部执行赋值操作。
 
-    ```scala
+```scala
     // In file ChecksumAccumulator.scala
     class ChecksumAccumulator {
       private var sum = 0
       def add(b: Byte) { sum += b }
       def checksum(): Int = ~(sum & 0xFF) + 1
     }
-    ```
+```
 
 Listing 4.1 - Final version of class ChecksumAccumulator.
 
@@ -163,27 +164,27 @@ One puzzler to watch out for is that whenever you leave off the equals sign befo
 
   + 在方法体前去掉等号，它的结果会被确定为Unit，Scala编译器能将任何类型变为Unit，无论你方法内部是什么，最后一个结果是String，会被转为Unit，它的值会被丢失。
 
-  ```scala
+```scala
   scala> def f(): Unit = "this String gets lost"    
   f: ()Unit
-  ```
+```
 
   In this example, the String is converted to Unit because Unit is the declared result type of function f. The Scala compiler treats a function defined in the procedure style, i.e., with curly braces but no equals sign, essentially the same as a function that explicitly declares its result type to be Unit:
 
-  ```scala
+```scala
   scala> def g() { "this String gets lost too" }
   g: ()Unit
-  ```
+```
 
   The puzzler occurs, therefore, if you intend to return a non-Unit value, but forget the equals sign. To get what you want, you'll need to insert the missing equals sign:
 
-  ```scala
+```scala
   scala> def h() = { "this String gets returned!" }
   h: ()java.lang.String
   
   scala> h
   res0: java.lang.String = this String gets returned!
-  ```
+```
 
 ### 4.2 Semicolon inference
 
@@ -191,42 +192,42 @@ In a Scala program, a semicolon at the end of a statement is usually optional. Y
 
   + 在Scala中，分号在声明最后通常是可选的但只是在这个声明仅在一行中。反之，在一行中写多个声明就需要用分隔开。
 
-  ```scala
+```scala
   val s = "hello"; println(s)
-  ```
+```
 
 If you want to enter a statement that spans multiple lines, most of the time you can simply enter it and Scala will separate the statements in the correct place. For example, the following is treated as one four-line statement:
 
-  ```scala
+```scala
   if (x < 2)
     println("too small")
   else
     println("ok")
-  ```
+```
 
 Occasionally, however, Scala will split a statement into two parts against your wishes:
 
-  ```scala
+```scala
   x
   + y
-  ```
+```
 
 This parses as two statements x and +y. If you intend it to parse as one statement x + y, you can always wrap it in parentheses:
 
-  ```scala
+```scala
   (x
   + y)
-  ```
+```
 
   + 第一种书写方式会分开为两个部分`x`和`+y`，如果想表达一个声明就要用括号包裹是第二种写法。
 
 Alternatively, you can put the + at the end of a line. For just this reason, whenever you are chaining an infix operation such as +, it is a common Scala style to put the operators at the end of the line instead of the beginning:
   
-  ```scala
+```scala
   x +
   y +
   z
-  ```
+```
 
   + 这种写法在scala中也是可以的，将`+`放在最后，但是后面需要加上东西。
 
@@ -247,7 +248,7 @@ The line ends while inside parentheses (...) or brackets [...], because these ca
 
 ### 4.3 Singleton objects
 
-    ```scala
+```scala
     // In file ChecksumAccumulator.scala
     import scala.collection.mutable.Map
   
@@ -267,7 +268,7 @@ The line ends while inside parentheses (...) or brackets [...], because these ca
           cs
         }
     }
-    ```
+```
 
 Listing 4.2 - Companion object for class ChecksumAccumulator.
 
@@ -287,9 +288,9 @@ If you are a Java programmer, one way to think of singleton objects is as the ho
 
   + 可以用单例对象的名字加点来调用在单例对象中的方法。
 
-  ```scala
+```scala
   ChecksumAccumulator.calculate("Every value is an object.")
-  ```
+```
 
 A singleton object is more than a holder of static methods, however. It is a first-class object.
 
@@ -315,6 +316,9 @@ A singleton object that does not share the same name with a companion class is c
 
 To run a Scala program, you must supply the name of a standalone singleton object with a main method that takes one parameter, an Array[String], and has a result type of Unit. Any standalone object with a main method of the proper signature can be used as the entry point into an application. An example is shown in Listing 4.3:
 
+  + 运行一个程序，你必须提供一个`standalone`的object，里面有main方法和类型为Array[String]的入参，main方法需要适合的签名才能作为程序的入口。
+
+```scala
     // In file Summer.scala
     import ChecksumAccumulator.calculate
   
@@ -324,41 +328,69 @@ To run a Scala program, you must supply the name of a standalone singleton objec
           println(arg +": "+ calculate(arg))
       }
     }
+```
 
 Listing 4.3 - The Summer application.
 
 The name of the singleton object in Listing 4.3 is Summer. Its main method has the proper signature, so you can use it as an application. The first statement in the file is an import of the calculate method defined in the ChecksumAccumulator object in the previous example. This import statement allows you to use the method's simple name in the rest of the file.[5] The body of the main method simply prints out each argument and the checksum for the argument, separated by a colon.
+
+  + `import ChecksumAccumulator.calculate`导包，可以用简单的名字在后面的代码中。
+
 Note
 
 Scala implicitly imports members of packages java.lang and scala, as well as the members of a singleton object named Predef, into every Scala source file. Predef, which resides in package scala, contains many useful methods. For example, when you say println in a Scala source file, you're actually invoking println on Predef. (Predef.println turns around and invokes Console.println, which does the real work.) When you say assert, you're invoking Predef.assert.
 
+  + Scala隐藏的导入了java.lang和scala包，包括一个单例对象Predef。Predef是在scala包中的，定义了一些有用的方法。`println`实际调用`Predef.println`实际调用`Console.println`，`assert`调用`Predef.assert`。
+
 To run the Summer application, place the code from Listing 4.3 into a file named Summer.scala. Because Summer uses ChecksumAccumulator, place the code for ChecksumAccumulator, both the class shown in Listing 4.1 and its companion object shown in Listing 4.2, into a file named ChecksumAccumulator.scala.
+
+  + 将object Summer放在Summers.scala。将ChecksumAccumulator类和伴随单例对象放在ChecksumAccumulator.scala中。
 
 One difference between Scala and Java is that whereas Java requires you to put a public class in a file named after the class—for example, you'd put class SpeedRacer in file SpeedRacer.java—in Scala, you can name .scala files anything you want, no matter what Scala classes or code you put in them. In general in the case of non-scripts, however, it is recommended style to name files after the classes they contain as is done in Java, so that programmers can more easily locate classes by looking at file names. This is the approach we've taken with the two files in this example, Summer.scala and ChecksumAccumulator.scala.
 
+  + 在Java中一个java文件中需要一个public的类，但是在scala中，你可以放任何东西。通常，我们以类名命名文件名，这样可以通过文件名字轻松定位类。
+
 Neither ChecksumAccumulator.scala nor Summer.scala are scripts, because they end in a definition. A script, by contrast, must end in a result expression. Thus if you try to run Summer.scala as a script, the Scala interpreter will complain that Summer.scala does not end in a result expression (assuming of course you didn't add any expression of your own after the Summer object definition). Instead, you'll need to actually compile these files with the Scala compiler, then run the resulting class files. One way to do this is to use scalac, which is the basic Scala compiler, like this:
 
+  + 使用scalac来编译这些文件。
+
+```
   $ scalac ChecksumAccumulator.scala Summer.scala
+```
 
 This compiles your source files, but there may be a perceptible delay before the compilation finishes. The reason is that every time the compiler starts up, it spends time scanning the contents of jar files and doing other initial work before it even looks at the fresh source files you submit to it. For this reason, the Scala distribution also includes a Scala compiler daemon called fsc (for fast Scala compiler). You use it like this:
 
+  + 在编译完成前，会有明显地延迟，是因为scala compiler会扫描jar文件的内容和对新文件做初始化化的工作，scala分布式包括一个编译器的进程叫fsc可以用来快速编译。
+
+```
   $ fsc ChecksumAccumulator.scala Summer.scala
+```
 
 The first time you run fsc, it will create a local server daemon attached to a port on your computer. It will then send the list of files to compile to the daemon via the port, and the daemon will compile the files. The next time you run fsc, the daemon will already be running, so fsc will simply send the file list to the daemon, which will immediately compile the files. Using fsc, you only need to wait for the Java runtime to startup the first time. If you ever want to stop the fsc daemon, you can do so with fsc -shutdown.
 
+  + 第一次运行fsc会创建一个本地服务进程附着在你电脑的端口上，会通过这个端口将文件发送给这个进程进行编译。下一次在运行fsc，这个进程已经运行了，所以fsc会只是简单发送文件到这个进程，很快就能编译好。使用fsc只需要等待java runtime第一次启动。如果想关闭进程请使用`fsc -shutdown`。
+
 Running either of these scalac or fsc commands will produce Java class files that you can then run via the scala command, the same command you used to invoke the interpreter in previous examples. However, instead of giving it a filename with a .scala extension containing Scala code to interpret as you did in every previous example,[6] in this case you'll give it the name of a standalone object containing a main method of the proper signature. You can run the Summer application, therefore, by typing:
 
+  + 编译完后会产生Java class文件，可以通过有scala命令来运行有main方法的文件并且加上args。
+
+```
   $ scala Summer of love
+```
 
 You will see checksums printed for the two command line arguments:
 
+```
+  // output：
   of: -213
   love: -182
+```
 
 ### 4.5 The Application trait
 
 Scala provides a trait, scala.Application, that can save you some finger typing. Although we haven't yet covered everything you'll need to understand exactly how this trait works, we figured you'd want to know about it now anyway. Listing 4.4 shows an example:
 
+```scala
     import ChecksumAccumulator.calculate
   
     object FallWinterSpringSummer extends Application {
@@ -366,14 +398,21 @@ Scala provides a trait, scala.Application, that can save you some finger typing.
       for (season <- List("fall", "winter", "spring"))
         println(season +": "+ calculate(season))
     }
+```
 
 Listing 4.4 - Using the Application trait.
 
 To use the trait, you first write "extends Application" after the name of your singleton object. Then instead of writing a main method, you place the code you would have put in the main method directly between the curly braces of the singleton object. That's it. You can compile and run this application just like any other.
 
+  + 继承`scala.Application`接口可以省不少打字的事，就不需要写main方法了，就可以直接编译和运行应用。
+
 The way this works is that trait Application declares a main method of the appropriate signature, which your singleton object inherits, making it usable as a Scala application. The code between the curly braces is collected into a primary constructor of the singleton object, and is executed when the class is initialized. Don't worry if you don't understand what all this means. It will be explained in later chapters, and in the meantime you can use the trait without fully understanding the details.
 
+  + 其工作原理是接口Application有个适合签名的main方法，单例对象继承。在大括号内的代码已经在主要的单例对象构造方法中了，初始化后就会被执行。
+
 Inheriting from Application is shorter than writing an explicit main method, but it also has some shortcomings. First, you can't use this trait if you need to access command-line arguments, because the args array isn't available. For example, because the Summer application uses command-line arguments, it must be written with an explicit main method, as shown in Listing 4.3. Second, because of some restrictions in the JVM threading model, you need an explicit main method if your program is multi-threaded. Finally, some implementations of the JVM do not optimize the initialization code of an object which is executed by the Application trait. So you should inherit from Application only when your program is relatively simple and single-threaded.
+
+  + 虽然可以少些main方法，但是也有弊端，第一你不能访问从command-line来的入参。第二，因为一些限制在JVM线程模型中，你需要显示定义main方法如果你的程序是多线程的。最后，一些JVM中的实现不会调整被Application接口执行的对象的初始化代码。所以你的程序需要继承Application仅仅是相对简单并且是单线程的。
 
 ### 4.6 Conclusion
 
