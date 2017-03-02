@@ -7,6 +7,11 @@
   + alphanumeric
   + noteworthy
   + intern
+  + quotient
+  + truncating
+  + solely
+  + symmetry
+  + alluded
 
 Now that you've seen classes and objects in action, it's a good time to look at Scala's basic types and operations in more depth. If you're familiar with Java, you'll be glad to find that Java's basic types and operators have the same meaning in Scala. However there are some interesting differences that will make this chapter worthwhile reading even if you're an experienced Java developer. Because some of the aspects of Scala covered in this chapter are essentially the same in Java, we've inserted notes indicating what Java developers can safely skip, to expedite your progress.
 
@@ -253,7 +258,7 @@ Running this code does not produce quite what is desired, however:
 
 The issue is that the leading spaces before the second line are included in the string! To help with this common situation, you can call stripMargin on strings. To use this method, put a pipe character (|) at the front of each line, and then call stripMargin on the whole string:
 
-  + 在每行前加上管道符`|`可以保持缩进对齐。
+  + 在每行前加上管道符`|`可以保持缩进对齐，并且掉用stripMargin方法。
 
 ```scala
   println("""|Welcome to Ultamix 3000.
@@ -330,65 +335,100 @@ That's all there is to it. You are now literally[2] an expert in Scala.
 
 Scala provides a rich set of operators for its basic types. As mentioned in previous chapters, these operators are actually just a nice syntax for ordinary method calls. For example, 1 + 2 really means the same thing as (1).+(2). In other words, class Int contains a method named + that takes an Int and returns an Int result. This + method is invoked when you add two Ints:
 
+```scala
   scala> val sum = 1 + 2    // Scala invokes (1).+(2)
   sum: Int = 3
+```
 
 To prove this to yourself, you can write the expression explicitly as a method invocation:
 
+```scala
   scala> val sumMore = (1).+(2) 
   sumMore: Int = 3
+```
 
 In fact, Int contains several overloaded + methods that take different parameter types.[3] For example, Int has another method, also named +, that takes and returns a Long. If you add a Long to an Int, this alternate + method will be invoked, as in:
 
+  + Int还有其他的`+`方法的重载，例如入参为Long型，返回也是Long。
+
+```scala
   scala> val longSum = 1 + 2L    // Scala invokes (1).+(2L)
   longSum: Long = 3
+```
 
 The + symbol is an operator—an infix operator to be specific. Operator notation is not limited to methods like + that look like operators in other languages. You can use any method in operator notation. For example, class String has a method, indexOf, that takes one Char parameter. The indexOf method searches the string for the first occurrence of the specified character, and returns its index or -1 if it doesn't find the character. You can use indexOf as an operator, like this:
 
+  + `+`是一个操作符，一个连接的特殊操作符。操作符的概念不仅限于`+`，你可以用任何方法作为操作符的概念。如下`indexOf`方法，其实是个操作符，如果没找到就是`-1`。
+
+```scala
   scala> val s = "Hello, world!" 
   s: java.lang.String = Hello, world!
   
   scala> s indexOf 'o'     // Scala invokes s.indexOf('o')
   res0: Int = 4
+```
 
 In addition, String offers an overloaded indexOf method that takes two parameters, the character for which to search and an index at which to start. (The other indexOf method, shown previously, starts at index zero, the beginning of the String.) Even though this indexOf method takes two arguments, you can use it in operator notation. But whenever you call a method that takes multiple arguments using operator notation, you have to place those arguments in parentheses. For example, here's how you use this other indexOf form as an operator (continuing from the previous example):
 
+  + 另外，String还有个indexOf的方法重载，可以有连个入参，也可以用操作符的概念，把参数都放在括号里。从第几个开始找字符。
+
+```scala
   scala> s indexOf ('o', 5) // Scala invokes s.indexOf('o', 5)
   res1: Int = 8
+```
 
-Any method can be an operator
+**Any method can be an operator**
 
 In Scala operators are not special language syntax: any method can be an operator. What makes a method an operator is how you use it. When you write "s.indexOf('o')", indexOf is not an operator. But when you write "s indexOf 'o'", indexOf is an operator, because you're using it in operator notation.
 
+  + `s.indexOf('o')`就不是操作符indexOf，`s indexOf 'o'`这种indexOf就是操作符。因为你用到了操作符概念。
+
 So far, you've seen examples of infix operator notation, which means the method to invoke sits between the object and the parameter or parameters you wish to pass to the method, as in "7 + 2". Scala also has two other operator notations: prefix and postfix. In prefix notation, you put the method name before the object on which you are invoking the method, for example, the `-' in -7. In postfix notation, you put the method after the object, for example, the "toLong" in "7 toLong".
+
+  + 除了infix操作符，还有prefix和postfix操作符的概念，prefix就是方法在对象前面`'-' in -7`，postfix就是方法在对象后面`"toLong" in "7 toLong"`
 
 In contrast to the infix operator notation—in which operators take two operands, one to the left and the other to the right—prefix and postfix operators are unary: they take just one operand. In prefix notation, the operand is to the right of the operator. Some examples of prefix operators are -2.0, !found, and ~0xFF. As with the infix operators, these prefix operators are a shorthand way of invoking methods. In this case, however, the name of the method has "unary_" prepended to the operator character. For instance, Scala will transform the expression -2.0 into the method invocation "(2.0).unary_-". You can demonstrate this to yourself by typing the method call both via operator notation and explicitly:
 
+  + 相比中间操作符概念需要两个操作数，一左一右。而前置和后置操作符是一元的，他们只有一个操作数。在前置的概念中，操作数是在操作符右边，例如`-2.0, !found, and ~0xFF`。这里`unary_`方法在操作符前，Scala会将`- 2.0`转换为方法调用`(2.0).unary_-`。
+
+```scala
   scala> -2.0                  // Scala invokes (2.0).unary_-
   res2: Double = -2.0
   
   scala> (2.0).unary_-
   res3: Double = -2.0
+```
 
 The only identifiers that can be used as prefix operators are +, -, !, and ~. Thus, if you define a method named unary_!, you could invoke that method on a value or variable of the appropriate type using prefix operator notation, such as !p. But if you define a method named unary_*, you wouldn't be able to use prefix operator notation, because * isn't one of the four identifiers that can be used as prefix operators. You could invoke the method normally, as in p.unary_*, but if you attempted to invoke it via *p, Scala will parse it as if you'd written *.p, which is probably not what you had in mind![4]
 
+  + 可以被用做前置操作符的只有`+, -, !, and ~`。如果你想定义一个`unary_!`的方法，你可以在适合使用前置操作符概念的变量和值上调用此方法`!p`。但是如果你想定义一个`unary_*`，你不能只用前置操作符概念，因为`*`不是前面四种可以使用前置操作符的一种。你可以正常调用方法用`p.unary_*`，但是你不能尝试调用`*p`，Scala会转换为`*.p`，可能不是你想要的那种。（可能当做C++编译）
+
 Postfix operators are methods that take no arguments, when they are invoked without a dot or parentheses. In Scala, you can leave off empty parentheses on method calls. The convention is that you include parentheses if the method has side effects, such as println(), but you can leave them off if the method has no side effects, such as toLowerCase invoked on a String:
 
+  + 后置操作符的方法是没有入参的，调用时没有点和括号。在Scala中，你可以在方法调用时不要空括号。如果有赋值你可以有括号`println()`，如果没有你可以不有需要括号就像toLowerCase。
+
+```scala
   scala> val s = "Hello, world!"
   s: java.lang.String = Hello, world!
   
   scala> s.toLowerCase 
   res4: java.lang.String = hello, world!
+```
 
 In this latter case of a method that requires no arguments, you can alternatively leave off the dot and use postfix operator notation:
 
+```scala
   scala> s toLowerCase
   res5: java.lang.String = hello, world!
+```
 
 In this case, toLowerCase is used as a postfix operator on the operand s.
 
 To see what operators you can use with Scala's basic types, therefore, all you really need to do is look at the methods declared in the type's classes in the Scala API documentation. Given that this is a Scala tutorial, however, we'll give you a quick tour of most of these methods in the next few sections.
-Fast track for Java programmers
+
+  + 可以看下Scala API 文档。
+
+**Fast track for Java programmers**
 
 Many aspects of Scala described in the remainder of this chapter are the same as in Java. If you're a Java guru in a rush, you can safely skip to Section 5.7 here, which describes how Scala differs from Java in the area of object equality.
 
@@ -396,6 +436,7 @@ Many aspects of Scala described in the remainder of this chapter are the same as
 
 You can invoke arithmetic methods via infix operator notation for addition (+), subtraction (-), multiplication (*), division (/), and remainder (%), on any numeric type. Here are some examples:
 
+```scala
   scala> 1.2 + 2.3
   res6: Double = 3.5
   
@@ -424,11 +465,16 @@ When both the left and right operands are integral types (Int, Long, Byte, Short
 
 The floating-point remainder you get with % is not the one defined by the IEEE 754 standard. The IEEE 754 remainder uses rounding division, not truncating division, in calculating the remainder, so it is quite different from the integer remainder operation. If you really want an IEEE 754 remainder, you can call IEEEremainder on scala.Math, as in:
 
+```scala
   scala> Math.IEEEremainder(11.0, 4.0)
   res14: Double = -1.0
+```
 
 The numeric types also offer unary prefix operators + (method unary_+) and - (method unary_-), which allow you to indicate a literal number is positive or negative, as in -3 or +4.0. If you don't specify a unary + or -, a literal number is interpreted as positive. Unary + exists solely for symmetry with unary -, but has no effect. The unary - can also be used to negate a variable. Here are some examples:
 
+  + 数字类型仍然提供前置操作符`+ (method unary_+) and - (method unary_-)`，允许你表明数字是正或负。不指明就是正的，可以用`unary_-`是变量变负。
+
+```scala
   scala> val neg = 1 + -3
   neg: Int = -2
   
@@ -437,11 +483,15 @@ The numeric types also offer unary prefix operators + (method unary_+) and - (me
   
   scala> -neg
   res15: Int = 2
+```
 
 ### 5.5 Relational and logical operations
 
 You can compare numeric types with relational methods greater than (>), less than (<), greater than or equal to (>=), and less than or equal to (<=), which yield a Boolean result. In addition, you can use the unary `!' operator (the unary_! method) to invert a Boolean value. Here are a few examples:
 
+  + the unary `!' operator (the unary_! method) to invert a Boolean value.
+
+```scala
   scala> 1 > 2 
   res16: Boolean = false
   
@@ -462,9 +512,11 @@ You can compare numeric types with relational methods greater than (>), less tha
   
   scala> !thisIsBoring   
   res21: Boolean = true
+```
 
 The logical methods, logical-and (&&) and logical-or (||), take Boolean operands in infix notation and yield a Boolean result. For example:
 
+```scala
   scala> val toBe = true
   toBe: Boolean = true
   
@@ -473,9 +525,13 @@ The logical methods, logical-and (&&) and logical-or (||), take Boolean operands
   
   scala> val paradox = toBe && !toBe
   paradox: Boolean = false
+```
 
 The logical-and and logical-or operations are short-circuited as in Java: expressions built from these operators are only evaluated as far as needed to determine the result. In other words, the right-hand side of logical-and and logical-or expressions won't be evaluated if the left-hand side determines the result. For example, if the left-hand side of a logical-and expression evaluates to false, the result of the expression will definitely be false, so the right-hand side is not evaluated. Likewise, if the left-hand side of a logical-or expression evaluates to true, the result of the expression will definitely be true, so the right-hand side is not evaluated. For example:
 
+  + 如果与，左手为false，即fales，右手无意义。如果或，左手为true，即为true，右手无意义。
+
+```scala
   scala> def salt() = { println("salt"); false }
   salt: ()Boolean
   
@@ -490,17 +546,21 @@ The logical-and and logical-or operations are short-circuited as in Java: expres
   scala> salt() && pepper() 
   salt
   res23: Boolean = false
+```
 
 In the first expression, pepper and salt are invoked, but in the second, only salt is invoked. Given salt returns false, there's no need to call pepper.
 
-Note
+**Note**
 
 You may be wondering how short-circuiting can work given operators are just methods. Normally, all arguments are evaluated before entering a method, so how can a method avoid evaluating its second argument? The answer is that all Scala methods have a facility for delaying the evaluation of their arguments, or even declining to evaluate them at all. The facility is called by-name parameters and is discussed in Section 9.5.
+
+  + 如何避免评估第二个入参，Scala方法有个延时评估入参功能，更甚地是不评估。这个功能叫做By-name parameters。
 
 ### 5.6 Bitwise operations
 
 Scala enables you to perform operations on individual bits of integer types with several bitwise methods. The bitwise methods are: bitwise-and (&), bitwise-or (|), and bitwise-xor (^).[5] The unary bitwise complement operator (~, the method unary_~), inverts each bit in its operand. For example:
 
+```scala
   scala> 1 & 2  
   res24: Int = 0
   
@@ -512,11 +572,15 @@ Scala enables you to perform operations on individual bits of integer types with
   
   scala> ~1     
   res27: Int = -2
+```
 
 The first expression, 1 & 2, bitwise-ands each bit in 1 (0001) and 2 (0010), which yields 0 (0000). The second expression, 1 | 2, bitwise-ors each bit in the same operands, yielding 3 (0011). The third expression, 1 ^ 3, bitwise-xors each bit in 1 (0001) and 3 (0011), yielding 2 (0010). The final expression, ~1, inverts each bit in 1 (0001), yielding -2, which in binary looks like 11111111111111111111111111111110.
 
 Scala integer types also offer three shift methods: shift left (<<), shift right (>>), and unsigned shift right (>>>). The shift methods, when used in infix operator notation, shift the integer value on the left of the operator by the amount specified by the integer value on the right. Shift left and unsigned shift right fill with zeroes as they shift. Shift right fills with the highest bit (the sign bit) of the left-hand value as it shifts. Here are some examples:
 
+  + unsigned shift right (>>>).
+
+```scala
   scala> -1 >> 31 
   res28: Int = -1
   
@@ -525,6 +589,7 @@ Scala integer types also offer three shift methods: shift left (<<), shift right
   
   scala> 1 << 2   
   res30: Int = 4
+```
 
 -1 in binary is 11111111111111111111111111111111. In the first example, -1 >> 31, -1 is shifted to the right 31 bit positions. Since an Int consists of 32 bits, this operation effectively moves the leftmost bit over until it becomes the rightmost bit.[6] Since the >> method fills with ones as it shifts right, because the leftmost bit of -1 is 1, the result is identical to the original left operand, 32 one bits, or -1. In the second example, -1 >>> 31, the leftmost bit is again shifted right until it is in the rightmost position, but this time filling with zeroes along the way. Thus the result this time is binary 00000000000000000000000000000001, or 1. In the final example, 1 << 2, the left operand, 1, is shifted left two positions (filling in with zeroes), resulting in binary 00000000000000000000000000000100, or 4.
 
@@ -532,6 +597,9 @@ Scala integer types also offer three shift methods: shift left (<<), shift right
 
 If you want to compare two objects for equality, you can use either ==, or its inverse !=. Here are a few simple examples:
 
+  + 比较两个对象，可以用`==`和`!=`。
+
+```scala
   scala> 1 == 2 
   res31: Boolean = false
   
@@ -540,63 +608,100 @@ If you want to compare two objects for equality, you can use either ==, or its i
   
   scala> 2 == 2 
   res33: Boolean = true
+```
 
 These operations actually apply to all objects, not just basic types. For example, you can use == to compare lists:
 
+  + 你可以用在任何对象上，不仅仅是数字。
+
+```scala
   scala> List(1, 2, 3) == List(1, 2, 3)
   res34: Boolean = true
   
   scala> List(1, 2, 3) == List(4, 5, 6)
   res35: Boolean = false
+```
 
 Going further, you can compare two objects that have different types:
 
+ + 甚至不同的对象类型。
+
+```scala
   scala> 1 == 1.0
   res36: Boolean = true
   
   scala> List(1, 2, 3) == "hello"
   res37: Boolean = false
+```
 
 You can even compare against null, or against things that might be null. No exception will be thrown:
+  
+  + 可以比较null。
 
+```scala
   scala> List(1, 2, 3) == null
   res38: Boolean = false
   
   scala> null == List(1, 2, 3)
   res39: Boolean = false
+```
 
 As you see, == has been carefully crafted so that you get just the equality comparison you want in most cases. This is accomplished with a very simple rule: first check the left side for null, and if it is not null, call the equals method. Since equals is a method, the precise comparison you get depends on the type of the left-hand argument. Since there is an automatic null check, you do not have to do the check yourself.[7]
 
+  + 在调用`==`前会先对左手做null check，如果不是null就调用equals方法，equals方法会根据左手类型。null check是自动的。
+
 This kind of comparison will yield true on different objects, so long as their contents are the same and their equals method is written to be based on contents. For example, here is a comparison between two strings that happen to have the same five letters in them:
 
+  + 如果他们定义的equals方法是比较内容。
+
+```scala
   scala> ("he"+"llo") == "hello"
   res40: Boolean = true
+```
 
-How Scala's == differs from Java's
+**How Scala's == differs from Java's**
 
 In Java, you can use == to compare both primitive and reference types. On primitive types, Java's == compares value equality, as in Scala. On reference types, however, Java's == compares reference equality, which means the two variables point to the same object on the JVM's heap. Scala provides a facility for comparing reference equality, as well, under the name eq. However, eq and its opposite, ne, only apply to objects that directly map to Java objects. The full details about eq and ne are given in Sections 11.1 and 11.2. Also, see Chapter 28 on how to write a good equals method.
+
+  + `==`在基本数据类型上的比较Java和Scala是相同的。在引用比较上，Java是比较两个对象是否指向同一个对象在JVM's堆上。Scala提供了一个工具来做引用比较，就是通过名字eq和ne，仅仅是应用到对象直接映射到Java对象。
 
 ### 5.8 Operator precedence and associativity
 
 Operator precedence determines which parts of an expression are evaluated before the other parts. For example, the expression 2 + 2 * 7 evaluates to 16, not 28, because the * operator has a higher precedence than the + operator. Thus the multiplication part of the expression is evaluated before the addition part. You can of course use parentheses in expressions to clarify evaluation order or to override precedence. For example, if you really wanted the result of the expression above to be 28, you could write the expression like this:
 
+  + 先乘后加，加括号提高优先级。
+
+```scala
   (2 + 2) * 7
+```
 
 Given that Scala doesn't have operators, per se, just a way to use methods in operator notation, you may be wondering how operator precedence works. Scala decides precedence based on the first character of the methods used in operator notation (there's one exception to this rule, which will be discussed below). If the method name starts with a *, for example, it will have a higher precedence than a method that starts with a +. Thus 2 + 2 * 7 will be evaluated as 2 + (2 * 7), and a +++ b *** c (in which a, b, and c are variables, and +++ and *** are methods) will be evaluated a +++ (b *** c), because the *** method has a higher precedence than the +++ method.
 
+  + 方法调用同样使用上面的特征，`***`的优先级比`+++`高，`a +++ b *** c`等于`a +++ (b *** c)`。
+
 Table 5.3 here shows the precedence given to the first character of a method in decreasing order of precedence, with characters on the same line having the same precedence. The higher a character is in this table, the higher the precedence of methods that start with that character. Here's an example that illustrates the influence of precedence:
 
+  + 优先级遵循table 5.3。
+
+```scala
   scala> 2 << 2 + 2
   res41: Int = 32
+```
 
 The << method starts with the character <, which appears lower in Table 5.3 than the character +, which is the first and only character of the + method. Thus << will have lower precedence than +, and the expression will be evaluated by first invoking the + method, then the << method, as in 2 << (2 + 2). 2 + 2 is 4, by our math, and 2 << 4 yields 32. Here's another example:
 
+  + `<<`开始于`<`这个优先级低于`+`，所以`2 << 2 + 2`等于`2 << (2 + 2)`。
+
+```scala
   scala> 2 + 2 << 2
   res42: Int = 16
+```
 
 Since the first characters are the same as in the previous example, the methods will be invoked in the same order. First the + method will be invoked, then the << method. So 2 + 2 will again yield 4, and 4 << 2 is 16.
 
 Table 5.3 - Operator precedence
+
+```
 (all other special characters)
 * / %
 + -
@@ -608,14 +713,21 @@ Table 5.3 - Operator precedence
 |
 (all letters)
 (all assignment operators)
+```
 
 The one exception to the precedence rule, alluded to above, concerns assignment operators, which end in an equals character. If an operator ends in an equals character (=), and the operator is not one of the comparison operators <=, >=, ==, or !=, then the precedence of the operator is the same as that of simple assignment (=). That is, it is lower than the precedence of any other operator. For instance:
 
+  + 有个特例如果`=`不是判断中的，那它的优先级是最低的。
+
+```scala
   x *= y + 1
+```
 
 means the same as:
 
+```scala
   x *= (y + 1)
+```
 
 because *= is classified as an assignment operator whose precedence is lower than +, even though the operator's first character is *, which would suggest a precedence higher than +.
 
@@ -623,40 +735,50 @@ When multiple operators of the same precedence appear side by side in an express
 
 No matter what associativity an operator has, however, its operands are always evaluated left to right. So if b is an expression that is not just a simple reference to an immutable value, then a ::: b is more precisely treated as the following block:
 
+```scala
   { val x = a; b.:::(x) }
+```
 
 In this block a is still evaluated before b, and then the result of this evaluation is passed as an operand to b's ::: method.
 
 This associativity rule also plays a role when multiple operators of the same precedence appear side by side. If the methods end in `:', they are grouped right to left; otherwise, they are grouped left to right. For example, a ::: b ::: c is treated as a ::: (b ::: c). But a * b * c, by contrast, is treated as (a * b) * c.
 
+  + `a ::: b ::: c`等于`a ::: (b ::: c)`，`a * b * c`等于`(a * b) * c`。
+
 Operator precedence is part of the Scala language. You needn't be afraid to use it. Nevertheless, it is good style to use parentheses to clarify what operators are operating upon what expressions. Perhaps the only precedence you can truly count on other programmers knowing without looking up is that multiplicative operators, *, /, and %, have a higher precedence than the additive ones + and -. Thus even if a + b << c yields the result you want without parentheses, the extra clarity you get by writing (a + b) << c may reduce the frequency with which your peers utter your name in operator notation, for example, by shouting in disgust, "bills !*&^%~ code!".[8]
+
+  + `bills !*&^%~ code!`等于`(bills.!*&^%~(code)).!()`
 
 ### 5.9 Rich wrappers
 
 You can invoke many more methods on Scala's basic types than were described in the previous sections. A few examples are shown in Table 5.4. These methods are available via implicit conversions, a technique that will be described in detail in Chapter 21. All you need to know for now is that for each basic type described in this chapter, there is also a "rich wrapper" that provides several additional methods. To see all the available methods on the basic types, therefore, you should look at the API documentation on the rich wrapper for each basic type. Those classes are listed in Table 5.5.
 
 Table 5.4 - Some rich operations
-Code  Result
-0 max 5   5
-0 min 5   0
--2.7 abs  2.7
--2.7 round  -3L
-1.5 isInfinity  false
-(1.0 / 0) isInfinity  true
-4 to 6  Range(4, 5, 6)
-"bob" capitalize  "Bob"
-"robert" drop 2   "bert"
+
+Code                 | Result
+---------------------|---------------
+0 max 5              | 5
+0 min 5              | 0
+-2.7 abs             | 2.7
+-2.7 round           | -3L
+1.5 isInfinity       | false
+(1.0 / 0) isInfinity | true
+4 to 6               | Range(4, 5, 6)
+"bob" capitalize     | "Bob"
+"robert" drop 2      | "bert"
 
 Table 5.5 - Rich wrapper classes
-Basic type  Rich wrapper
-Byte  scala.runtime.RichByte
-Short   scala.runtime.RichShort
-Int   scala.runtime.RichInt
-Char  scala.runtime.RichChar
-String  scala.runtime.RichString
-Float   scala.runtime.RichFloat
-Double  scala.runtime.RichDouble
-Boolean   scala.runtime.RichBoolean
+
+Basic type | Rich wrapper
+-----------|---------------------------
+Byte       | scala.runtime.RichByte
+Short      | scala.runtime.RichShort
+Int        | scala.runtime.RichInt
+Char       | scala.runtime.RichChar
+String     | scala.runtime.RichString
+Float      | scala.runtime.RichFloat
+Double     | scala.runtime.RichDouble
+Boolean    | scala.runtime.RichBoolean
 
 ### 5.10 Conclusion
 
