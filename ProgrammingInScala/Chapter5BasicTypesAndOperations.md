@@ -1,7 +1,12 @@
 ## Basic Types and Operations
 
 ### Vocabulary
-  + 
+  + Savvy
+  + exponent
+  + backslash
+  + alphanumeric
+  + noteworthy
+  + intern
 
 Now that you've seen classes and objects in action, it's a good time to look at Scala's basic types and operations in more depth. If you're familiar with Java, you'll be glad to find that Java's basic types and operators have the same meaning in Scala. However there are some interesting differences that will make this chapter worthwhile reading even if you're an experienced Java developer. Because some of the aspects of Scala covered in this chapter are essentially the same in Java, we've inserted notes indicating what Java developers can safely skip, to expedite your progress.
 
@@ -29,22 +34,35 @@ Boolean    | true or false
 
 Other than String, which resides in package java.lang, all of the types shown in Table 5.1 are members of package scala.[1] For example, the full name of Int is scala.Int. However, given that all the members of package scala and java.lang are automatically imported into every Scala source file, you can just use the simple names (i.e., names like Boolean, Char, or String) everywhere.
 
+  + 除了String，它是在java.lang包中的。其他5.1中的所有类型都是在scala中的。scala和java.lang是自动导入每个scala文件的，所以写Boolean or String就可以了。
+
 Note
 
 You can in fact currently use lower case aliases for Scala value types, which correspond to Java's primitive types. For example, you can say int instead of Int in a Scala program. But keep in mind they both mean exactly the same thing: scala.Int. The recommended style that arose from the experience of the Scala community is to always use the upper case form, which is what we do in this book. In honor of this community-driven choice, the lower case variants may be deprecated or even removed in a future version of Scala, so you would be wise indeed to go with the community flow and say Int, not int, in your Scala code.
 
+  + 事实上你可以使用小写的别名来替换Scala的基本数据类型，就想Java里一样，`int`等于`Int`。但是记住它们是一个东西，有经验的社区推荐使用大写的`Int`。`int`可能会在未来被遗弃。
+
 Savvy Java developers will note that Scala's basic types have the exact same ranges as the corresponding types in Java. This enables the Scala compiler to transform instances of Scala value types, such as Int or Double, down to Java primitive types in the bytecodes it produces.
+
+  + 有见识的Java开发者会记住Scala的基本数据类型范围是和Java相同的，所以编译器在字节码中可以将Scala数据类型实例转成Java基本数据类型。
 
 ### 5.2 Literals
 
 All of the basic types listed in Table 5.1 can be written with literals. A literal is a way to write a constant value directly in code.
-Fast track for Java programmers
+
+  + 字面量是一个在代码中直接写常量的方法。
+
+**Fast track for Java programmers**
 
 The syntax of most literals shown in this section are exactly the same as in Java, so if you're a Java master, you can safely skip much of this section. The two differences you should read about are Scala's literals for raw strings and symbols, which are described starting here.
-Integer literals
+
+  + 大多都是和Java中相同的，有两个不同点就是raw strings和symbols。
+
+**Integer literals**
 
 Integer literals for the types Int, Long, Short, and Byte come in three forms: decimal, hexadecimal, and octal. The way an integer literal begins indicates the base of the number. If the number begins with a 0x or 0X, it is hexadecimal (base 16), and may contain 0 through 9 as well as upper or lowercase digits A through F. Some examples are:
 
+```scala
   scala> val hex = 0x5
   hex: Int = 5
   
@@ -53,9 +71,13 @@ Integer literals for the types Int, Long, Short, and Byte come in three forms: d
   
   scala> val magic = 0xcafebabe
   magic: Int = -889275714
+```
 
 Note that the Scala shell always prints integer values in base 10, no matter what literal form you may have used to initialize it. Thus the interpreter displays the value of the hex2 variable you initialized with literal 0x00FF as decimal 255. (Of course, you don't need to take our word for it. A good way to start getting a feel for the language is to try these statements out in the interpreter as you read this chapter.) If the number begins with a zero, it is octal (base 8), and may, therefore, only contain digits 0 through 7. Some examples are:
 
+  + Scala一直打印整数用十进制。
+
+```scala
   scala> val oct = 035  // (35 octal is 29 decimal)
   oct: Int = 29
   
@@ -64,9 +86,11 @@ Note that the Scala shell always prints integer values in base 10, no matter wha
   
   scala> val dec = 0321
   dec: Int = 209
+```
 
 If the number begins with a non-zero digit, and is otherwise undecorated, it is decimal (base 10). For example:
 
+```scala
   scala> val dec1 = 31
   dec1: Int = 31
   
@@ -75,9 +99,11 @@ If the number begins with a non-zero digit, and is otherwise undecorated, it is 
   
   scala> val dec3 = 20
   dec3: Int = 20
+```
 
 If an integer literal ends in an L or l, it is a Long, otherwise it is an Int. Some examples of Long integer literals are:
 
+```scala
   scala> val prog = 0XCAFEBABEL
   prog: Long = 3405691582
   
@@ -86,19 +112,23 @@ If an integer literal ends in an L or l, it is a Long, otherwise it is an Int. S
   
   scala> val of = 31l
   of: Long = 31
+```
 
 If an Int literal is assigned to a variable of type Short or Byte, the literal is treated as if it were a Short or Byte type so long as the literal value is within the valid range for that type. For example:
 
+```scala
   scala> val little: Short = 367
   little: Short = 367
   
   scala> val littler: Byte = 38
   littler: Byte = 38
+```
 
-Floating point literals
+**Floating point literals**
 
 Floating point literals are made up of decimal digits, optionally containing a decimal point, and optionally followed by an E or e and an exponent. Some examples of floating-point literals are:
 
+```scala
   scala> val big = 1.2345
   big: Double = 1.2345
   
@@ -107,135 +137,192 @@ Floating point literals are made up of decimal digits, optionally containing a d
   
   scala> val biggerStill = 123E45
   biggerStill: Double = 1.23E47
+```
 
 Note that the exponent portion means the power of 10 by which the other portion is multiplied. Thus, 1.2345e1 is 1.2345 times 101, which is 12.345. If a floating-point literal ends in an F or f, it is a Float, otherwise it is a Double. Optionally, a Double floating-point literal can end in D or d. Some examples of Float literals are:
 
+```scala
   scala> val little = 1.2345F
   little: Float = 1.2345
   
   scala> val littleBigger = 3e5f
   littleBigger: Float = 300000.0
+```
 
 That last value expressed as a Double could take these (and other) forms:
 
+```scala
   scala> val anotherDouble = 3e5
   anotherDouble: Double = 300000.0
   
   scala> val yetAnother = 3e5D
   yetAnother: Double = 300000.0
+```
 
-Character literals
+**Character literals**
 
 Character literals are composed of any Unicode character between single quotes, such as:
 
+```scala
   scala> val a = 'A'
   a: Char = A
+```
 
 In addition to providing an explicit character between the single quotes, you can provide an octal or hex number for the character code point preceded by a backslash. The octal number must be between '\0' and '\377'. For example, the Unicode character code point for the letter A is 101 octal. Thus:
 
+```scala
   scala> val c = '\101'
   c: Char = A
+```
 
 A character literal can also be given as a general Unicode character consisting of four hex digits and preceded by a \u, as in:
 
+```scala
   scala> val d = '\u0041'
   d: Char = A
   
   scala> val f = '\u0044'
   f: Char = D
+```
 
 In fact, such Unicode characters can appear anywhere in a Scala program. For instance you could also write an identifier like this:
 
+  + 你可以在Scala中任何地方使用unicode来表示一个字母，但是不鼓励因为很难理解如下。
+
+```scala
   scala> val B\u0041\u0044 = 1
   BAD: Int = 1
+```
 
 This identifier is treated as identical to BAD, the result of expanding the two Unicode characters in the code above. In general, it is a bad idea to name identifiers like this, because it is hard to read. Rather, this syntax is intended to allow Scala source files that include non-ASCII Unicode characters to be represented in ASCII.
 
 Finally, there are also a few character literals represented by special escape sequences, shown in Table 5.2. For example:
 
+```scala
   scala> val backslash = '\\'
   backslash: Char = \
+```
 
 Table 5.2 - Special character literal escape sequences
-Literal   Meaning
-\n  line feed (\u000A)
-\b  backspace (\u0008)
-\t  tab (\u0009)
-\f  form feed (\u000C)
-\r  carriage return (\u000D)
-\"  double quote (\u0022)
-\'  single quote (\u0027)
-\\  backslash (\u005C)
-String literals
+
+Literal | Meaning
+--------|-------------------------
+\n      | line feed (\u000A)
+\b      | backspace (\u0008)
+\t      | tab (\u0009)
+\f      | form feed (\u000C)
+\r      | carriage return (\u000D)
+\"      | double quote (\u0022)
+\'      | single quote (\u0027)
+\\      | backslash (\u005C)
+
+**String literals**
 
 A string literal is composed of characters surrounded by double quotes:
 
+  + string使用双引号。
+
+```scala
   scala> val hello = "hello"
   hello: java.lang.String = hello
+```
 
 The syntax of the characters within the quotes is the same as with character literals. For example:
 
+```scala
   scala> val escapes = "\\\"\'"
   escapes: java.lang.String = \"'
+```
 
 Because this syntax is awkward for strings that contain a lot of escape sequences or strings that span multiple lines, Scala includes a special syntax for raw strings. You start and end a raw string with three double quotation marks in a row ("""). The interior of a raw string may contain any characters whatsoever, including newlines, quotation marks, and special characters, except of course three quotes in a row. For example, the following program prints out a message using a raw string:
 
+  + Scala可以使用`"""`来产生一个raw string，可以包含换行，引用符号和特殊字符。
+
+```scala
   println("""Welcome to Ultamix 3000.
              Type "HELP" for help.""")
+```
 
 Running this code does not produce quite what is desired, however:
 
+```
+  // output:
   Welcome to Ultamix 3000.
              Type "HELP" for help.
+```
 
 The issue is that the leading spaces before the second line are included in the string! To help with this common situation, you can call stripMargin on strings. To use this method, put a pipe character (|) at the front of each line, and then call stripMargin on the whole string:
 
+  + 在每行前加上管道符`|`可以保持缩进对齐。
+
+```scala
   println("""|Welcome to Ultamix 3000.
              |Type "HELP" for help.""".stripMargin)
+```
 
 Now the code behaves as desired:
 
+```
+  // output:
   Welcome to Ultamix 3000.
   Type "HELP" for help.
+```
 
-Symbol literals
+**Symbol literals**
 
 A symbol literal is written 'ident, where ident can be any alphanumeric identifier. Such literals are mapped to instances of the predefined class scala.Symbol. Specifically, the literal 'cymbal will be expanded by the compiler to a factory method invocation: Symbol("cymbal"). Symbol literals are typically used in situations where you would use just an identifier in a dynamically typed language. For instance, you might want to define a method that updates a record in a database:
+  
+  + 使用`'ident`作为Symbol，ident可以是数字和字母组成的，它的实例对象是先前就定义的类scala.Symbol。`'cymbal`会调用工厂方法`Symbol("cymbal")`，Symbol字面量一般用在需要一个鉴别者的动态类型的语言中。
 
+```scala
   scala> def updateRecordByName(r: Symbol, value: Any) {
            // code goes here
          }
   updateRecordByName: (Symbol,Any)Unit
+```
 
 The method takes as parameters a symbol indicating the name of a record field and a value with which the field should be updated in the record. In a dynamically typed language, you could invoke this operation passing an undeclared field identifier to the method, but in Scala this would not compile:
 
+  + 向数据库中增加记录，动态类型语言会调用方法传一个未声明的字段变量给方法，但是Scala是不行的。
+
+```scala
   scala> updateRecordByName(favoriteAlbum, "OK Computer")
   <console>:6: error: not found: value favoriteAlbum
          updateRecordByName(favoriteAlbum, "OK Computer")
                            ^  
+```
 
 Instead, and almost as concisely, you can pass a symbol literal:
 
+```scala
   scala> updateRecordByName('favoriteAlbum, "OK Computer")
+```
 
 There is not much you can do with a symbol, except find out its name:
 
+```scala
   scala> val s = 'aSymbol
   s: Symbol = 'aSymbol
   
   scala> s.name
   res20: String = aSymbol
+```
 
 Another thing that's noteworthy is that symbols are interned. If you write the same symbol literal twice, both expressions will refer to the exact same Symbol object.
 
-Boolean literals
+  + 指的记住symbols是保留的，如果你写了一个同样的symbol literal二次，他们的表达式都会指向同一个Symbol对象。
+
+**Boolean literals**
+
 The Boolean type has two literals, true and false:
 
+```scala
   scala> val bool = true 
   bool: Boolean = true
   
   scala> val fool = false
   fool: Boolean = false
+```
 
 That's all there is to it. You are now literally[2] an expert in Scala.
 
