@@ -1,5 +1,8 @@
 ## Basic Types and Operations
 
+### Vocabulary
+  + 
+
 Now that you've seen classes and objects in action, it's a good time to look at Scala's basic types and operations in more depth. If you're familiar with Java, you'll be glad to find that Java's basic types and operators have the same meaning in Scala. However there are some interesting differences that will make this chapter worthwhile reading even if you're an experienced Java developer. Because some of the aspects of Scala covered in this chapter are essentially the same in Java, we've inserted notes indicating what Java developers can safely skip, to expedite your progress.
 
 In this chapter, you'll get an overview of Scala's basic types, including Strings and the value types Int, Long, Short, Byte, Float, Double, Char, and Boolean. You'll learn the operations you can perform on these types, including how operator precedence works in Scala expressions. You'll also learn how implicit conversions can "enrich" variants of these basic types, giving you additional operations beyond those supported by Java.
@@ -8,21 +11,26 @@ In this chapter, you'll get an overview of Scala's basic types, including String
 
 Several fundamental types of Scala, along with the ranges of values instances of these types may have, are shown in Table 5.1. Collectively, types Byte, Short, Int, Long, and Char are called integral types. The integral types plus Float and Double are called numeric types.
 
+  + 5.1中是几个Scala基础类型，Byte,Short,Int,Long, and Char是整型，Float and Double是数字型。
+
 Table 5.1 - Some basic types
-Value type  
-Range
-Byte  8-bit signed two's complement integer (-27 to 27 - 1, inclusive)
-Short   16-bit signed two's complement integer (-215 to 215 - 1, inclusive)
-Int   32-bit signed two's complement integer (-231 to 231 - 1, inclusive)
-Long  64-bit signed two's complement integer (-263 to 263 - 1, inclusive)
-Char  16-bit unsigned Unicode character (0 to 216 - 1, inclusive)
-String  a sequence of Chars
-Float   32-bit IEEE 754 single-precision float
-Double  64-bit IEEE 754 double-precision float
-Boolean   true or false
+
+Value type | wRange
+-----------|--------------------------------------------------------------------
+Byte       | 8-bit signed two's complement integer (-27 to 27 - 1, inclusive)
+Short      | 16-bit signed two's complement integer (-215 to 215 - 1, inclusive)
+Int        | 32-bit signed two's complement integer (-231 to 231 - 1, inclusive)
+Long       | 64-bit signed two's complement integer (-263 to 263 - 1, inclusive)
+Char       | 16-bit unsigned Unicode character (0 to 216 - 1, inclusive)
+String     | a sequence of Chars
+Float      | 32-bit IEEE 754 single-precision float
+Double     | 64-bit IEEE 754 double-precision float
+Boolean    | true or false
 
 Other than String, which resides in package java.lang, all of the types shown in Table 5.1 are members of package scala.[1] For example, the full name of Int is scala.Int. However, given that all the members of package scala and java.lang are automatically imported into every Scala source file, you can just use the simple names (i.e., names like Boolean, Char, or String) everywhere.
+
 Note
+
 You can in fact currently use lower case aliases for Scala value types, which correspond to Java's primitive types. For example, you can say int instead of Int in a Scala program. But keep in mind they both mean exactly the same thing: scala.Int. The recommended style that arose from the experience of the Scala community is to always use the upper case form, which is what we do in this book. In honor of this community-driven choice, the lower case variants may be deprecated or even removed in a future version of Scala, so you would be wise indeed to go with the community flow and say Int, not int, in your Scala code.
 
 Savvy Java developers will note that Scala's basic types have the exact same ranges as the corresponding types in Java. This enables the Scala compiler to transform instances of Scala value types, such as Int or Double, down to Java primitive types in the bytecodes it produces.
