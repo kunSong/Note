@@ -1,4 +1,4 @@
-##　Functional Objects
+## Functional Objects
 
 ### Vocabulary
 
