@@ -1,6 +1,11 @@
 ## Functional Objects
 
 ### Vocabulary
+  + rational numbers
+  + numerator and denominator
+  + fraction
+  + substantial
+  + boilerplate
 
 With the understanding of Scala basics you gained in previous chapters, you're ready to see how to design more full-featured classes in Scala. The emphasis in this chapter is on classes that define functional objects, that is, objects that do not have any mutable state. As a running example, we'll create several variants of a class that models rational numbers as immutable objects. Along the way, we'll show you more aspects of object-oriented programming in Scala: class parameters and constructors, methods and operators, private members, overriding, checking preconditions, overloading, and self references.
 
@@ -8,12 +13,21 @@ With the understanding of Scala basics you gained in previous chapters, you're r
 
 A rational number is a number that can be expressed as a ratio n/d, where n and d are integers, except that d cannot be zero. n is called the numerator and d the denominator. Examples of rational numbers are 1/2, 2/3, 112/239, and 2/1. Compared to floating-point numbers, rational numbers have the advantage that fractions are represented exactly, without rounding or approximation.
 
+  + 一个数的百分之几，分子，分母不为0，为分数。和浮点数比分数表达比较确切没有大概。
+
 The class we'll design in this chapter must model the behavior of rational numbers, including allowing them to be added, subtracted, multiplied, and divided. To add two rationals, you must first obtain a common denominator, then add the two numerators. For example, to add 1/2 + 2/3, you multiply both parts of the left operand by 3 and both parts of the right operand by 2, which gives you 3/6 + 4/6. Adding the two numerators yields the result, 7/6. To multiply two rational numbers, you can simply multiply their numerators and multiply their denominators. Thus, 1/2 * 2/5 gives 2/10, which can be represented more compactly in its "normalized" form as 1/5. You divide by swapping the numerator and denominator of the right operand and then multiplying. For instance 1/2 / 3/5 is the same as 1/2 * 5/3, or 5/6.
+
+  + 在这章中我们定义的类就是用来加减乘除分数。两个相加需要有同样的分母，`1/2 + 2/3`等于`3/6 + 4/6`等于`7/6`，`1/2 * 2/5`等于`2/10`等于`1/5`，`1/2 / 3/5`等于`1/2 * 5/3`等于`5/6`。
 
 One, maybe rather trivial, observation is that in mathematics, rational numbers do not have mutable state. You can add one rational number to another, but the result will be a new rational number. The original numbers will not have "changed." The immutable Rational class we'll design in this chapter will have the same property. Each rational number will be represented by one Rational object. When you add two Rational objects, you'll create a new Rational object to hold the sum.
 
+  + 分数是没有变化状态的，你要加一个分数就会产生一个新的分数，原来那个不会被改变。本章中用到的不变分数类一样有这个原则，每个分数代表一个分数对象，你要加一个就要创建一个新的对象来持有结果。
+
 This chapter will give you a glimpse of some of the ways Scala enables you to write libraries that feel like native language support. For example, at the end of this chapter you'll be able to do this with class Rational:
 
+  + Scala有许多方法来是你写库感觉像本地语言支持。
+
+```scala
   scala> val oneHalf = new Rational(1, 2)                     
   oneHalf: Rational = 1/2
   
@@ -22,51 +36,81 @@ This chapter will give you a glimpse of some of the ways Scala enables you to wr
   
   scala> (oneHalf / 7) + (1 - twoThirds)                       
   res0: Rational = 17/42
+```
 
 ### 6.2 Constructing a Rational
 
 A good place to start designing class Rational is to consider how client programmers will create a new Rational object. Given we've decided to make Rational objects immutable, we'll require that clients provide all data needed by an instance (in this case, a numerator and a denominator) when they construct the instance. Thus, we will start the design with this:
 
+  + 开始设计一个Rational类需要考虑程序员创建的一个新Rational对象如何服务。是Rational对象不变，当我们创建一个实例时需要在构造方法中添加需要的数据就是分子和分母。
+
+```scala
   class Rational(n: Int, d: Int)
+```
 
 One of the first things to note about this line of code is that if a class doesn't have a body, you don't need to specify empty curly braces (though you could, of course, if you wanted to). The identifiers n and d in the parentheses after the class name, Rational, are called class parameters. The Scala compiler will gather up these two class parameters and create a primary constructor that takes the same two parameters.
 
-Immutable object trade-offs
+  + 如果这个方法没有方法体，就不需要添加空的大括号，如果你想也是可以的。Scala会收集这两个入参，然后创建主要构造方法并使用。
+
+**Immutable object trade-offs**
 
 Immutable objects offer several advantages over mutable objects, and one potential disadvantage. First, immutable objects are often easier to reason about than mutable ones, because they do not have complex state spaces that change over time. Second, you can pass immutable objects around quite freely, whereas you may need to make defensive copies of mutable objects before passing them to other code. Third, there is no way for two threads concurrently accessing an immutable to corrupt its state once it has been properly constructed, because no thread can change the state of an immutable. Fourth, immutable objects make safe hashtable keys. If a mutable object is mutated after it is placed into a HashSet, for example, that object may not be found the next time you look into the HashSet.
 
+  + 不变对象有几个优于可变对象的地方，不过有一个潜在的缺点。第一，不变对象会更容易知道原因在是什么，因为它没有复杂的状态变化。第二，你可以不受限制安静地传递一个不变对象，反之你传到其他代码中去的可变对象需要做防御性的副本以防被改。第三，不可能会有两个线程同时去访问一个已被构造的不变对象进行修改修改其状态。第四，不变对象保证了一个安全的hash表键，如果一个可变对象在进入HashSet后变化了，那么你可能下一次找不到在HashSet中对应的对象了。
+
 The main disadvantage of immutable objects is that they sometimes require that a large object graph be copied where otherwise an update could be done in place. In some cases this can be awkward to express and might also cause a performance bottleneck. As a result, it is not uncommon for libraries to provide mutable alternatives to immutable classes. For example, class StringBuilder is a mutable alternative to the immutable String. We'll give you more information on designing mutable objects in Scala in Chapter 18.
-Note
+
+  + 不可变对象需要有地方来完成更新。有时很难表达和导致性能的瓶颈。结果，有库会提供可变的方案给不可变的对象。例如，`StringBuilder`对象就是可变方案给不可变对象`String`。
+
+**Note**
 
 This initial Rational example highlights a difference between Java and Scala. In Java, classes have constructors, which can take parameters, whereas in Scala, classes can take parameters directly. The Scala notation is more concise—class parameters can be used directly in the body of the class; there's no need to define fields and write assignments that copy constructor parameters into fields. This can yield substantial savings in boilerplate code, especially for small classes.
 
+  + Rational类在Java和Scala中还是有区别的。在Java中，类需要构造方法，里面可以有入参。而Scala，类直接可以有入参，Scala会更简洁的类和入参使用；不需要定义字段来保存从构造方法里得到的入参值。
+
 The Scala compiler will compile any code you place in the class body, which isn't part of a field or a method definition, into the primary constructor. For example, you could print a debug message like this:
 
+  + Scala编译器会编译任何代码你放在class中，不是字段也不是方法定义，都会被加到主要的构造方法中。如下。
+
+```scala
   class Rational(n: Int, d: Int) {
     println("Created "+ n +"/"+ d)
   }
+```
 
 Given this code, the Scala compiler would place the call to println into Rational's primary constructor. The println call will, therefore, print its debug message whenever you create a new Rational instance:
 
+  + 在Rational创建的时候主要构造方法会调用println方法。
+
+```scala
   scala> new Rational(1, 2)
   Created 1/2
   res0: Rational = Rational@90110a
+```
 
 ### 6.3 Reimplementing the toString method
 
 When we created an instance of Rational in the previous example, the interpreter printed "Rational@90110a". The interpreter obtained this somewhat funny looking string by calling toString on the Rational object. By default, class Rational inherits the implementation of toString defined in class java.lang.Object, which just prints the class name, an @ sign, and a hexadecimal number. The result of toString is primarily intended to help programmers by providing information that can be used in debug print statements, log messages, test failure reports, and interpreter and debugger output. The result currently provided by toString is not especially helpful, because it doesn't give any clue about the rational number's value. A more useful implementation of toString would print out the values of the Rational's numerator and denominator. You can override the default implementation by adding a method toString to class Rational, like this:
 
+  + 默认的toSting方法是从`java.lang.Object`那里继承而来，表达的不清晰，所以我们可以方法重写，如下。
+
+```scala
   class Rational(n: Int, d: Int) {
     override def toString = n +"/"+ d
   }
+```
 
 The override modifier in front of a method definition signals that a previous method definition is overridden; more on this in Chapter 10. Since Rational numbers will display nicely now, we removed the debug println statement we put into the body of previous version of class Rational. You can test the new behavior of Rational in the interpreter:
 
+  + 
+  
+```scala
   scala> val x = new Rational(1, 3)
   x: Rational = 1/3
   
   scala> val y = new Rational(5, 7)
   y: Rational = 5/7
+```
 
 ###　6.4 Checking preconditions
 

@@ -460,6 +460,7 @@ You can invoke arithmetic methods via infix operator notation for addition (+), 
   
   scala> 11.0 % 4.0  
   res13: Double = 3.0
+```
 
 When both the left and right operands are integral types (Int, Long, Byte, Short, or Char), the / operator will tell you the whole number portion of the quotient, excluding any remainder. The % operator indicates the remainder of an implied integer division.
 
