@@ -5,3 +5,5 @@
 + [Chapter 4 Classes and Objects](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter4ClassesAndObjects.md)
 + [Chapter 5 Basic Types and Operations](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter5BasicTypesAndOperations.md)
 + [Chapter 6 Functional Objects](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter6FunctionalObjects.md)
++ [Chapter 6 Functional Objects](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter6FunctionalObjects.md)
+
