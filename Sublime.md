@@ -9,7 +9,8 @@
 	"font_size": 11,
 	"tab_size": 2,
 	"translate_tabs_to_spaces": true,
-	"preview_on_click": false
+	"preview_on_click": false,
+	"save_on_focus_lost": true
 }
 ```
 

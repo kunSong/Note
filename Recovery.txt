@@ -1,0 +1,203 @@
+Recovery and OTA
+
+BCB(Bootloader Control Block)--位于MISC分区，与Main System和Recovery进行交互
+
+bootloader.h
+#include "bootloader_message/include/bootloader_message/bootloader_message.h"
+
+bootloader_message.h
+/*
+* command:
+* 1. 重启进入recovery或者是更新radio或Bootloader硬件时，linux会更新这个域。
+* 2. 当硬件更新完成（启动进入Recovery做最后的清理），bootloader会更新这个域。
+* Status：在bootloader完成“update-radio”和”update-hboot”命令之后更新
+* Recovery：用于system和recovery之间的通信
+* Stage：需要重启多次的packages会写入这个值，表示所处的状态。UI会加个小的显示来显示当前状态，当值的形式为#/#(1/3)
+*/
+struct bootloader_message {
+    char command[32];
+    char status[32];
+    char recovery[768];
+    char stage[32];
+    char slot_suffix[32];
+    char reserved[192];
+}
+
+/* recovery main 入口 */
+bootloader/recovery/recovery.cpp
+int main(int argc, char **argv){
+    ...
+    /* take action to refresh pmsg content */
+    __android_log_pmsg_file_read(
+            LOG_ID_SYSTEM, ANDROID_LOG_INFO, filter,
+            logbasename/logrotate, &doRotate);
+    /* 当入参为--adbd执行sideload命令 */
+    adb_server_main(0, DEFAULT_ADB_PORT, -1); 
+    /* 获取系统时间 */
+    time_t start = time(NULL); 
+    /* 重定向log。sideload模式会有两个logger实例，不同的时间戳 */
+    redirect_stdio(TEMPORARY_LOG_FILE);
+    /* 打印进程号和时间戳 */
+    /* */
+    load_volume_table();
+    ...   
+}
+
+static void redirect_stdio(const char* filename){
+    ...
+    /* 创建管道如果打开失败则打开原先的log文件继续append */
+    int pipefd[2];
+    if(pipe(pipefd) == -1){
+      ...
+      freopen(filename, "a", stdout); setbuf(stdout, NULL);
+      ...
+    }
+
+    /* pid fork出一个新的进程，如果失败则同上操作 */
+    if(pid == -1){
+    pid_t pid = fork();
+      ...
+    }
+
+    /* 重定向 */
+    if(pid == 0){
+        /* 子进程
+         * 关闭没用的管道写入端
+         * 获得start时间
+         * 以append模式打开文件/temp/recovery.log
+         * 以只读并从开始的地方打开管道读取端
+         * 以有从管道读取端得到一行为判断循环
+         * 获得now时间
+         * 计算时间差值
+         * 写到recovery.log文件以时间加log的样式
+         * 释放对象和关闭资源
+        close(pipefd[1]);
+        auto start = std::chrono::steady_clock::now();
+        FILE* log_fp = fopen(filename, "a");
+        FILE* pipefp = fdopen(pipefd[0], "r");
+        while(getline(&line, &len, pipe_fp) != -1)
+        auto now = std::chrono::steady_clock::now();
+        double duration = (now - start).count();
+        fprintf(logfp, "[%12.6lf] %s", duration, line);
+    } else {
+        /* 等于-1则打开失败，父进程重定向STDOUD到pipe的写入端pipefs[1] */
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        dup2(piedfd[1], STDERR_FILENO);
+    }
+    ...
+}
+
+bootloader/recovery/roots.cpp
+void load_volume_table(){
+    ...
+    /* 读取/etc/recovery.fstab并返回结构体fstab */
+    fstab = fs_mgr_read_fstab("/etc/recovery.fstab");
+    /* 增加一个节点/tmp，fs_type是ramdisk，blk_device是ramdisk */
+    ret = fs_mgr_add_entry(fstab, "/tmp", "ramdisk", "ramdisk");
+    /* 增加SDCARD节点mount point */
+    ret = mt_load_volume_table(fstab);
+    /*  */
+    mt_ensure_dev_ready("/misc");
+    mt_ensure_dev_ready("/cache");
+    /*  */
+    mt_fstab_translation_NAND(fstab);
+    /* 打印recovery filesyste table */
+    /* 回到 revocery.cpp main() */
+    ...
+}
+
+bootloader/recovery/mt_roots.cpp
+int mt_load_volume_table(struct fstab *fstab){
+    /* 调用返回fstab_rec结构体指针"/misc"
+       1. fs_mgr_get_entry_for_mount_point(fstab, path);
+       2. fs_mgr_get_entry_for_mount_point_after(NULL, fstab, path);
+    */
+    Volume* v = volume_for_path("/misc");
+    /* 判断返回结构体中fs_type是不是emmc类型 */
+    if(!strcmp(v->fs_type, "emmc")){
+        /* 
+        增加mount point
+        宏定义
+        MTK_GMO_ROM_OPTIMIZE
+          /sdcard      vfat /dev/block/mmsblk1p
+          /sdcard_dev2 vfat /dev/block/mmcblk1
+        MTK_SHARED_SDCART || MTK_2SDCARD_SWAP
+          /sdcard      vfat /dev/block/mmcblk1p1
+          /sdcard_dev2 vfat /intsd
+        */
+    } else {
+        /* 
+        增加mount point
+        /sdcard  vfat /dev/block/mmcblk0p1
+        /sdcard2 vfat /dev/block/mmcblk0
+        */
+    }
+
+}
+
+system/core/fs_mgr/include/fs_mgr.h
+struct fstab {
+    int num_entries;
+    struct fstab_rec *recs;
+    char *fstab_filename;
+}
+
+struct fstab_rec {
+    char *blk_device;
+    char *mount_point;
+    char *fs_type;
+    unsigned long flags;
+    char *fs_options;
+    int fs_mgr_flags;
+    char *key_loc;
+    char *verity_loc;
+    long long length;
+    char *label;
+    int partnum;
+    int swap_prio;
+    unsigned int zram_size;
+    unsigned int file_encryption_mode;
+};
+
+system/core/fs_mgr/fs_mgr_fstab.c
+struct fstab *fs_mgr_read_fstab(const char *fstab_path){
+    ...
+    /* 以只读方式从头打开/etc/recovery.fstab文件
+    fstab_file = fopen(fstab_pach, "r");
+    /* 第一个循环逐行读取并给fstab分配内存，构建结构体中成员，分配fstab_rec的内存空间 */
+    while ((len = getline(&line, &alloc_len, fstab_file)) != -1)
+    /* 回到文件头部 */
+    fseek(fstab_file, 0, SEEK_SET);
+    /* 第二个循环逐行读取并构建fstab_rec构造结构体中成员 */
+    while ((len = getline(&line, &alloc_len, fstab_file)) != -1)
+    /* 关闭资源 */
+    ...
+}
+
+int fs_mgr_add_entry(struct fstab *fstab,
+                     const char *mount_point, const char *fs_type,
+                     const char *blk_device)
+{
+    ...
+    /* 创建新的指针用来指向改变大小+1后的原来fstab结构体成员recs结构体的内存空间 */
+    new_fstab_recs = (struct fstab_rec *)
+                     realloc(fstab->recs, sizeof(struct fstab_rec) * (n + 1));
+
+    /* 初始化新节点成员 */
+     memset(&new_fstab_recs[n], 0, sizeof(struct fstab_rec));
+     new_fstab_recs[n].mount_point = strdup(mount_point);
+     new_fstab_recs[n].fs_type = strdup(fs_type);
+     new_fstab_recs[n].blk_device = strdup(blk_device);
+     new_fstab_recs[n].length = 0;
+
+     /* 更新fstab结构体 */
+     fstab->recs = new_fstab_recs;
+     fstab->num_entries++;
+     ...
+}
+
+
+
+
+
