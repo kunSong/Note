@@ -358,7 +358,7 @@ The yield goes before the entire body. Even if the body is a block surrounded by
   }
 ```
 
-For example, the for expression shown in Listing 7.10 first transforms the Array[File] named filesHere, which contains all files in the current directory, to one that contains only .scala files. For each of these it generates an Iterator[String] (the result of the fileLines method, whose definition is shown in Listing 7.8). An Iterator offers methods next and hasNext that allow you to iterate over a collection of elements. This initial iterator is transformed into another Iterator[String] containing only trimmed lines that include the substring "for". Finally, for each of these, an integer length is yielded. The result of this for expression is an Array[Int] containing those lengths.
+For example, the for expression shown in Listing 7.10 first transforms the Array[File] named filesHere, which contains all files in the current directory, to one that contains only .scala files. For each of these it generates an `Iterator[String]` (the result of the fileLines method, whose definition is shown in Listing 7.8). An Iterator offers methods next and hasNext that allow you to iterate over a collection of elements. This initial iterator is transformed into another Iterator[String] containing only trimmed lines that include the substring "for". Finally, for each of these, an integer length is yielded. The result of this for expression is an Array[Int] containing those lengths.
 
   + Iterator提供了next和hasNext方法来允许你迭代到下一个。这里最后产生一个包含"for"字符串被trimed后的长度的数组。类型是Array[Int]。
   
