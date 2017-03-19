@@ -6,4 +6,4 @@
 + [Chapter 5 Basic Types and Operations](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter5BasicTypesAndOperations.md)
 + [Chapter 6 Functional Objects](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter6FunctionalObjects.md)
 + [Chapter 7 Built-in Control Structures](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter7BuiltInControlStructures.md)
-
++ [Chapter 8 Functions and Closures](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter8FunctionsAndClosures.md)
