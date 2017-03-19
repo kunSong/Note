@@ -1,5 +1,7 @@
 ## Functions and Closures
 
+### Vocabulary
+  + 
 
 When programs get larger, you need some way to divide them into smaller, more manageable pieces. For dividing up control flow, Scala offers an approach familiar to all experienced programmers: divide the code into functions. In fact, Scala offers several ways to define functions that are not present in Java. Besides methods, which are functions that are members of some object, there are also functions nested within functions, function literals, and function values. This chapter takes you on a tour through all of these flavors of functions in Scala.
 
@@ -7,6 +9,9 @@ When programs get larger, you need some way to divide them into smaller, more ma
 
 The most common way to define a function is as a member of some object. Such a function is called a method. As an example, Listing 8.1 shows two methods that together read a file with a given name and print out all lines whose length exceeds a given width. Every printed line is prefixed with the name of the file it appears in.
 
+  + 最通常的方法是在对象中定义一个函数，这样的函数叫方法。如下是打印比给定宽度长的句子。
+
+```scala
     import scala.io.Source
   
     object LongLines {
@@ -24,13 +29,19 @@ The most common way to define a function is as a member of some object. Such a f
           println(filename +": "+ line.trim)
       }
     }
+```
 
 Listing 8.1 - LongLines with a private processLine method.
 
 The processFile method takes a filename and width as parameters. It creates a Source object from the file name and, in the generator of the for expression, calls getLines on the source. As mentioned in Step 12 of Chapter 3, getLines returns an iterator that provides one line from the file on each iteration, including the end-of-line character. The for expression processes each of these lines by calling the helper method, processLine. The processLine method takes three parameters: a filename, a width, and a line. It tests whether the length of the line is greater than the given width, and, if so, it prints the filename, a colon, and the line.
 
+  + `getLines`会返回一个iterator对应文件的每行，包括一行最后的字符。
+
 To use LongLines from the command line, we'll create an application that expects the line width as the first command-line argument, and interprets subsequent arguments as filenames:[1]
 
+  + 相对于在终端中运行，需要新建一个application包含main方法的对象来执行。
+
+```
   object FindLongLines {
     def main(args: Array[String]) {
       val width = args(0).toInt
@@ -38,22 +49,34 @@ To use LongLines from the command line, we'll create an application that expects
         LongLines.processFile(arg, width)
     } 
   } 
+```
 
 Here's how you'd use this application to find the lines in LongLines.scala that are over 45 characters in length (there's just one):
 
+```
   $ scala FindLongLines 45 LongLines.scala
   LongLines.scala: def processFile(filename: String, width: Int) {
+```
 
 So far, this is very similar to what you would do in any object-oriented language. However, the concept of a function in Scala is more general than a method. Scala's other ways to express functions will be explained in the following sections.
+
+  + Scala的函数概念要比这方法通用的多，下一节会解释表达函数。
 
 ### 8.2 Local functions
 
 The construction of the processFile method in the previous section demonstrated an important design principle of the functional programming style: programs should be decomposed into many small functions that each do a well-defined task. Individual functions are often quite small. The advantage of this style is that it gives a programmer many building blocks that can be flexibly composed to do more difficult things. Each building block should be simple enough to be understood individually.
 
+  + 程序被分成功能定义好的小函数。优点是给程序员很多建造块来灵活地构造复杂的东西。每个块需要够简单够好理解。
+
 One problem with this approach is that all the helper function names can pollute the program namespace. In the interpreter this is not so much of a problem, but once functions are packaged in reusable classes and objects, it's desirable to hide the helper functions from clients of a class. They often do not make sense individually, and you often want to keep enough flexibility to delete the helper functions if you later rewrite the class a different way.
+
+  + 有一个问题就是这些帮助函数的命名会污染整个程序的命名空间。在终端中不是问题，但是在包内重用的类和对象中就是问题，客户端不希望看到这些函数。他们单独是没有意义的，你经常想足够灵活地删除这些帮助函数如果以后想用其他方式重写类。
 
 In Java, your main tool for this purpose is the private method. This private-method approach works in Scala as well, as is demonstrated in Listing 8.1, but Scala offers an additional approach: you can define functions inside other functions. Just like local variables, such local functions are visible only in their enclosing block. Here's an example:
 
+  + Java，主要通过private关键字来隐藏方法。同样也是在Scala中适用，在8.1中用的。但是Scala提供了另一种方案，你可以在一个函数中定义另一个函数。就想本地变量一样，仅仅在相关块中才是可见的。
+
+```scala
   def processFile(filename: String, width: Int) {
   
     def processLine(filename: String,
@@ -68,11 +91,17 @@ In Java, your main tool for this purpose is the private method. This private-met
       processLine(filename, width, line)
     }
   }
+```
 
 In this example, we refactored the original LongLines version, shown in Listing 8.1, by transforming private method, processLine, into a local function of processFile. To do so we removed the private modifier, which can only be applied (and is only needed) for methods, and placed the definition of processLine inside the definition of processFile. As a local function, processLine is in scope inside processFile, but inaccessible outside.
 
+  + 8.1中的private方法processLine被重构成上述本地变量在一个方法中，并去掉了private关键字，仅仅是在那个作用域中才有用。
+
 Now that processLine is defined inside processFile, however, another improvement becomes possible. Notice how filename and width are passed unchanged into the helper function? This is not necessary, because local functions can access the parameters of their enclosing function. You can just use the parameters of the outer processLine function, as shown in Listing 8.2:
 
+  + 作为本地变量函数processLine的那些入参，可以从包裹它的方法中得到。
+
+```scala
     import scala.io.Source
   
     object LongLines {
@@ -89,6 +118,7 @@ Now that processLine is defined inside processFile, however, another improvement
           processLine(line)
       }
     }
+```
 
 Listing 8.2 - LongLines with a local processLine function.
 
