@@ -23,8 +23,9 @@ struct bootloader_message {
     char reserved[192];
 }
 
+recovery.cpp
 /* recovery main 入口 */
-bootloader/recovery/recovery.cpp
+bootable/recovery/recovery.cpp
 int main(int argc, char **argv){
     ...
     /* take action to refresh pmsg content */
@@ -38,8 +39,83 @@ int main(int argc, char **argv){
     /* 重定向log。sideload模式会有两个logger实例，不同的时间戳 */
     redirect_stdio(TEMPORARY_LOG_FILE);
     /* 打印进程号和时间戳 */
-    /* */
+    /* 读取fstab文件，并做一些文件系统的初始化 */
     load_volume_table();
+    /* 返回"/cache"分区fstab_rec结构体并判断是否为空 */
+    has_cache = volume_for_path(CACHE_ROOT) != nullptr
+    /* 1. 判断宏定义SUPPORT_SDCARD2 true MTK_SHARED_SDCARD false
+       2. 判断"/sdcard2"文件系统状态，如果ENOENT则创建这路径
+    */
+    mt_main_init_sdcard2();
+    /* 1. 如果宏定义CACHE_MERGE_SUPPORT true
+       2. 保证"/data/.cach"已经mounted情况下以0770权限创建文件夹，删除在init.rc中创建的"/cache"文件夹，用"/cache"符号连接到"/data/.cache"文件夹
+    */
+    if (mt_main_init_cache_merge()) return 0
+    /* LAST_LOG_FILE = "/cache/recovery/last_log" 保证"/cache"已经挂载分区 */
+    ensure_path_mounted(LAST_LOG_FILE);
+    /* 重命名last_log -> last_log.1 */
+    rotate_logs(KEEP_LOG_COUNT);
+    /* 获得参数并写入BCB*/
+    get_args(&argc, &argv);
+    /* 根据获取的入参来设置相应的flag，比如
+       1. send_intent
+       2. update_package
+       3. should_wipe_data
+       4. should_wipe_cache
+       5. just_exit
+       6. shutdown_after
+    */
+    /* 从/cache/recovery/last_local文件中获得语言 */
+    load_locale_from_cache(...);
+    /* 实例化Device对象和ScreenRecoveryUI对象并初始化成员 */
+    Device* device = make_device();
+    /* 返回并赋值RecoveryUI gGurrentUI = new ScreenRecoveryUI();*/
+    ui = device->GetUI();
+    gCurrentUI = ui;
+    /* 调用ScreenRecoveryUI::SetLocale判断是否是阿拉伯语系，因为要从右到左，设置标志位rtl_locale为true，默认为英语 */
+    ui->SetLocale(locale);
+    /* 1. 初始化图形设备
+       2. 读取png文件并生成surface
+       3. 创建线程监听currentIcon和progressBar*/
+    ui->Init();
+    /* 调用loadlocalizedBitmap打开png文件生成surface设置背景字符串为"installing security update"或者"installing system update"*/
+    ui->SetSystemUpdateText(security_update);
+    /* 当stage不为空，则要设置现在的阶段 */
+    ui->Setage
+    /* 1. 同步显示
+       2. update_screen_locked();
+         2a. draw_screen_locked();
+         2b. gr_flip(); 刷新
+       3. 根据show_text判断是显示进度条和动画还是显示菜单
+    */
+    ui->SetBackground(RecoveryUI::NONE);
+    /* 1. pdate_package 为/cache/some-file.zip
+       2. 判断是否为/cache开头，并修改update_package的path */
+    if(update_package != NULL){
+        ...
+    }
+    /* 初始化标志位 */
+    int status = INSTALL_SUCESS;
+    if(upadate_package != NULL){
+        if(!is_battery_ok()){
+            /* 1. 判断电池电量充电状态和电量是否ok
+               2. 不ok则打出log并设置标志位为INSTALL_SKIPPED */
+        } else if (bootreason_in_blacklist()){
+            /* 1. 与系统属性比较ro.boot.bootreason，如果是在黑名单中的就跳过ota升级打出log
+               2. 设置标志位为INSTALL_SKIPPED
+            */
+        } else {
+            #if 0
+                /* 直接调用Android install_package方法 */
+                status = install_package(...)
+            #else
+                /* 1. 写入bootloader message
+                   2. Mtk 进行了包装并调用Android install_package方法 
+                */
+                mt_main_update_package(status, update_package, &should_wipe_cache);
+            #endif
+        }
+    }
     ...   
 }
 
@@ -88,7 +164,29 @@ static void redirect_stdio(const char* filename){
     ...
 }
 
-bootloader/recovery/roots.cpp
+static void get_args(int *argc, char ***argv){
+    /* 1. 调用read_misc_partition
+       2. 调用get_misc_blk_device来得带"/misc"的fstab结构体中blkdevice
+       3. 打开blkdevice的文件
+       4. 定位文件lseek
+       5. 读取文件ReadFully，读到定义的bootloader_message中
+    */
+    read_bootloader_message(&boot, &err);
+    /* 拷贝boot_message中stage当前状态，因为有多次重启的状况 */
+    stage = strndup(boot.stage, sizeof(boot.stage));
+    /* 1. 入参的来源先后顺序是，实际终端，BCB，COMMAND FILE
+       2. 如果没有入参argc<=1，则先去看BCB中boot.recovery的值
+       3. 判断"sdota"是否完成ota升级，完成则return
+       4. 如果没有升级成功，保证有/cache的情况下并有一个参数，去看COMMAND FILE(/cache/recovery/command)文件是否有入参并写入BCB，看是走ota还是recovery
+       5. 如果实际终端有入参则保证有/cache的情况下直接写入BCB并运行recovery
+    */
+    read_bootloader_message(&boot, &err);
+    check_otaupdate_done();
+    FILE *fp = fopen_path(COMMAND_FILE, "r");
+    write_bootloader_message(boot, &err);
+}
+
+bootable/recovery/roots.cpp
 void load_volume_table(){
     ...
     /* 读取/etc/recovery.fstab并返回结构体fstab */
@@ -97,17 +195,59 @@ void load_volume_table(){
     ret = fs_mgr_add_entry(fstab, "/tmp", "ramdisk", "ramdisk");
     /* 增加SDCARD节点mount point */
     ret = mt_load_volume_table(fstab);
-    /*  */
+    /* 得到fstab结构体，调用access方法循环5次来检查"/msic"和"/cache"能否访问 */
     mt_ensure_dev_ready("/misc");
     mt_ensure_dev_ready("/cache");
-    /*  */
+    /* 1. 如果fstab_rec为"/misc"结构体，fs_type为"emmc"，则返回 
+       2. 如果是"ubifs","yaffs2","mtd"则要从NAND转换，查看blk_device中是有"@"，有则指针+1，无则就是blk_device。
+    */
     mt_fstab_translation_NAND(fstab);
     /* 打印recovery filesyste table */
     /* 回到 revocery.cpp main() */
     ...
 }
 
-bootloader/recovery/mt_roots.cpp
+/* 入参 /cache/recovery/last_log */
+int ensure_patch_mounted_at(const char* path, const char* mount_point) {
+    /* 从文件/cache/recovery/last_log返回一个fstab_rec结构体 */
+    Volume* v = volume_for_path(path);
+    /* 检查返回的结构体中fstype是不是ramdisk */
+    if(strcmp(v->fstype, "ramdisk") == 0)
+    /* 扫描已经mount的volumes，通过读取/proc/mounts文件将内容保存到结构体MountsState的MountedVolume中 */
+    result = scan_mounted_volumes();
+    /* 以为mount_point入参时是null，所以这里会赋值结构体中的mount_point */
+    mount_point = v->mount_point;
+    /* 根据入参mount_point对比返回已挂载的MountsVolume指针 */
+    const MountedVolume* mv = find_mounted_volume_by_mount_point(mount_point);
+    if(mv){
+        /* 1. 如果已挂载则返回不为空
+           2. 如果有宏定义CACHE_MERGE_SUPPORT
+           3. 判断入参前6位是否是"/cache"，这里的确是的
+           4. "/data/.cache"和"/cache"创建连接
+           5. 如果成功返回0到recovery.cpp main方法
+        */
+        ...
+    }
+    /* 1. 如果没有返回mount_point相同的MountsVolume指针
+       2. 创建mount_point相应的文件夹以权限0755
+       3. 根据fs_type来创建mount_point
+       4. mount相应的mount_point
+       5. mount成功直接goto mount_done
+       6. 创建文件夹并建立连接
+    */
+    if(strcmp(v->fs_type, "ubifs") == 0){
+        ...
+    }
+    if(strcmp(v->mount_point, "/cache") == 0) {
+        strcpy(tmp, "/dev/ubi0_1");
+    } ...
+    result = mount(tmp, v->mount_point, v->fs_type, flags, "");
+    goto mount_done;
+    symlink(DATA_CACHE_ROOT, "/cache");
+    ...
+}
+
+bootable/recovery/mt_roots.cpp
 int mt_load_volume_table(struct fstab *fstab){
     /* 调用返回fstab_rec结构体指针"/misc"
        1. fs_mgr_get_entry_for_mount_point(fstab, path);
@@ -195,6 +335,422 @@ int fs_mgr_add_entry(struct fstab *fstab,
      fstab->recs = new_fstab_recs;
      fstab->num_entries++;
      ...
+}
+
+mount.c
+int scan_mounted_volumes(){
+    ...
+    /* 为MountedVolume结构体分配内存空间，如果有则free掉之前的 */
+    MountedVolume *volumes = malloc(numv * sizeof(*volumes));
+    memset(volumes, 0, numv * sizeof(*volumes));
+    free_volume_internals(&g_mounts_state.volumes[i], 1);
+    /* 从头部以只读方式打开文件"/proc/mounts" */
+    fp = setmntent(PROC_MOUNTS_FILENAME, "r");
+    /* 通过getmntent(fp)返回的mntent结构体来赋值给MountVolumes结构体 */
+    while((mentry = getmntent(fp)) != NULL){
+      ...
+    }
+    /* 关闭文件 */
+    endmntent(fp);
+    ...
+}
+
+bootable/recovery/device.h
+class Device {
+    public:
+        /* 初始化列表，RecoveryUI* ui_成员初始化 */
+        Device(RecoveryUI* ui) : ui_(ui) {}
+    private：
+        RecoveryUI* ui_;
+}
+
+bootable/recovery/device.cpp
+
+bootable/recovery/ui.h
+class RecoveryUI {
+    ...
+}
+
+bootable/recovery/screen_ui.h
+clas ScreenRecoveryUI : public RecoveryUI {
+    ...
+}
+
+bootable/recovery/screen_ui.cpp
+/* 初始化成员 */
+ScreenRecoveryUI::ScreenRecoveryUI():
+    ...,
+    ...{}
+
+void ScreenRecoveryUI::Init(){
+    /* 初始化图形设备，设置内存 */
+    gr_init();
+    /* 获取屏幕density */
+    property_get_int32("ro.sf.lcd.density");
+    /* 判断layout是横屏竖屏 */
+    layout = (gr_fb_width() > gr_fb_height()) ? LANDSCAPE :　PORTRAIT;
+    /* 字体对应surface长宽赋值字体大小 */
+    gr_font_size(...);
+    /* 屏幕能容纳几行几列 */
+    text_rows = ...
+    text_cols = ...
+    ...
+    /* 打开png图片生成surface，所有surface放在一哥数组中 */
+    LoadBitmap(...)
+    /* 将对应区域的图片中的text信息对比当前locale提取出来生成surface */
+    LoadLocalizedBitmap(...)
+    ...
+    /* 从/res/images读取png图片并生成surface放在数组中 */
+    loadAnimation();
+    /* 创建新线程是个死循环来监听currentIcon和processbarType并更新，调用update_progress_locked来更新进度条 */
+    pthread_create(&process_thread_, ..., ProcessThreadStartRoutine, ...);
+    /* 初始化输入事件处理 */
+    RecoveryUI::Init();
+    /* 回到recovery.cpp 的 main() */
+}
+
+void ScreenRecoveryUI::draw_screen_locked(){
+    /* show_text flag控制*/
+    if(!show_text){
+        /* 调用gr_blit设置背景图片 */
+        draw_background_locked();
+        /* 绘制动画和进度条 */
+        draw_foreground_locked();
+    } else {
+        /* 设置字体颜色 */
+        gr_color(...);
+        if(show_menu){
+            /* 获取指纹系统属性 */
+            property_get("ro.bootimage.build.fingerprint" ...);
+            /* 根据不同类型设置字体颜色 */
+            SetColor(INFO);
+            /* 调用gr_text显示字符串*/
+            DrawTextLine(...);
+            /* 设置字体颜色和填充矩形区域 */
+            DrawHorizontalRule(...);
+            /* 根据MenuItem调用gr_fill和SetColor设置字体颜色和填充矩形区域 */
+            for(int i= 0;i < menu_items; ++i);
+        }
+        /* 设置字体颜色显示字符串 */
+        SetColor(LOG);
+    }
+}
+
+bootable/recovery/minui/minui.h
+struct GRSurface {
+    int width;
+    int height;
+    int row_bytes;
+    int pixel_bytes;
+    unsigned char* data;
+
+};
+
+bootable/recovery/minui/graphics.h
+struct minui_backend {
+    GRSurface* (*init)(minui_backend*);
+    GRSurface* (*flip)(minui_backend*);
+    void (*blank)(minui_backend*, bool);
+    void (*exit)(minui_backend*); 
+}
+
+bootable/recovery/minui/graphics.cpp
+struct GRFont {
+    GRSurace* texture;
+    int cwidth;
+    int cheight;
+};
+
+int gr_init(void){
+    /* 从资源文件打开并创建资源，如果没有文件使用compiled-in font */
+    gr_init_font();
+    /* 1. adf_pdate结构体内存分配
+       2. 赋值adf_init，adf_flip，adf_blank，adb_exit
+       3. 返回类型为adf minui_backend */
+    gr_backend = open_adf();
+    /* 1. 调用adf_init根据device id打开adf device并初始化
+       2. adf_flip刷新
+       3. adf_blank设置空白
+       4. 返回类型为GRSurface */
+    gr_draw = gr_backend->init(gr_backend);
+    /* 如果为空，则adf_exit释放不合理的引用*/
+    gr_backend->exit(gr_backend);
+    /* 如果adf的gr_draw为空，类似返回drm minui_backend */
+    gr_backend = open_drm();
+    /* 打开drm device，然后连接监视器 */
+    gr_draw = gr_backend->init(gr_backend);
+    /* 如果drm的gr_draw还是为空，则返回fbdev minui_backend */
+    gr_backend = open_fbdev();
+    /* 打开驱动设备/dev/graphics/fb0 */
+    gr_draw = gr_backend->init(gr_backend);
+    /* gr_draw = gr_backend->flip(gr_backend);刷新 */
+    gr_flip();
+    /* 回到ScreenRecoveryUI::Init */
+}
+
+static void gr_init_font(void){
+    /* 给结构体GRFont *gr_font分配内存 */
+    gr_font = reinterpret_cast<GRFont*>(calloc(sizeof(*gr_font), 1));
+    /* 调用"font"png图片来创建资源GRSurface */
+    int res = res_create_alpha_surface("font", &(gr_font->texture));
+    /* 打开成功则设置cwidth和cheight */
+    /* 如果打不成功则用complied-in font */
+    /* 回到gr_init */
+
+}
+
+bootable/recovery/minui/resources.cpp
+int res_create_alpha_surface(
+        const char* name, GRSuface** pSurface){
+    /* 调用libpng库来读取png */
+    result = open_png(...);
+    /* malloc GRSurface 结构体 */
+    surface = init_display_surface(width, height);
+    /* 回到gr_init_font函数 */
+    ...
+}
+
+static int open_png(...){
+    /* libpng
+    1. png_structp
+    2. png_infop
+    3. png_uint_32
+    4. png_byte
+    */
+    /* 打开指定png图片文件 */
+    FILE* fp = fopen(resPath, "rb");
+    /* 读取sizeof(header)个字节数据 */
+    byteRead = fread(header, 1, sizeof(header));
+    /* 检测数据是否为PNG的签名 */ 
+    int png_sig_cmp(png_bytep buf, png_size_t from, size_t to);
+    /* 创建png read struct */
+    *png_ptr = png_create_read_struct(...);
+    /* 创建info struct*/
+    *info_ptr = png_create_info_struct(...);
+    /* 设置错误处理 */
+    setjmp(png_jmpbuf(*png_ptr));
+    /* 开始读文件 */
+    png_init_io(*png_ptr, fp);
+    /* 库会跳过相应的数据*/
+    png_set_sig_bytes(*png_ptr, sizeof(header));
+    /* 获取图片信息 */
+    png_read_info(*png_ptr, *info_ptr);
+    /* 调用来查询info_ptr中的信息 */
+    png_get_IHDR(...);
+    /* 设置参数 */
+    png_set_expand_gray_1_2_4_to_8(...);
+    /* 读完后清除释放分配的内存 */
+    png_destroy_read_struct(...);
+}
+
+/bootable/recovery/mt_recovery.cpp
+int mt_main_update_package(
+        int &status, cons char* update_package, bool* wipe_cache){
+    /* 写入bootloader message */
+    mt_set_bootloader_message(...);
+    /* 调用install_package，返回更新状态 */
+    status = install_package(update_package, wipe_cache, TEMPORARY_INSTALL_FILE, true, 0/*retry_count*/);
+    ...
+}
+
+/bootable/recovery/install.cpp
+int install_package(const char* path, bool* wipe_cache, const char* install_file, bool needs_mount, int retry_count){
+    ...
+    int result;
+    if(setup_install_mount() != 0){
+        /* 卸载除了/tmp和/cache的其他分区，返回结果 */
+        result = INSTALL_ERROR
+    } else {
+        /* */
+        result = really_install_package(path, wipe_cache, needs_mount, log_buffer, retry_count);
+    }
+
+}
+
+static int really_install_package(
+        const char* path, bool* wipe_cache, bool needs_mount, std::vector<std::string>& log_buffer, int retry_count){
+    /* 绘制UI界面，使之为INSTALLING_UPDATE */
+    ui->SetBackground(RecoveryUI::INSTALLING_UPDATE);
+    /* 设置进度UI */
+    ui->SetProgressType(...);
+    ui->ShowProgress(...);
+    /* 确保这些path和needs_mount都被挂载 */
+    if(path && needs_mount){
+        ...
+        ensure_path_mounted(...);
+        ...
+    }
+    /* MemMapping是个构造方法 */ 
+    MemMapping map;
+    /* 将指定路径的文件映射到内存，构建结构体MemMapping */
+    if(sysMapFile(path, &map) != 0){
+        ...
+    }
+    /* 读取系统publickey并与zip文件进行校验 */
+    if(!verfiy_package(map.addr, map.length)){
+        ...
+    }
+    /* 打开Zip 并解析Zip，构建了ZipArchive结构体，最后解析内容在一个Hashtable中 */
+    ZipArchive zip;
+    int err = mzOpenZipArchive(map.addr, map.length, &zip);
+    
+    /* 打印log显示正在升级 */
+    ui->Print("Installing update...\n");
+    /* 不可重启 */
+    ui->SetEnableReboot(false);
+    /* 真正fota升级 */
+    int result = try_update_binary(path, &zip, wipe_cache, log_buffer, retry_count);
+    /* 可以重启 */
+    ui->SetEnableReboot(true);
+    mt_really_install_package_external_modem(result, path);
+}
+
+bool verify_package(const unsigned char* package_data, size_t package_size){
+    /* 读取系统publickey */
+    if(!load_keys(PUBLIC_KEYS_FILE, loadKeys)){
+        ...
+    }
+    /* zip文件和系统publickey进行校验 */
+    int err = verify_file(
+            const_cast<unsigned char*>(package_data),
+            package_size, loadedKeys);
+    /* 成功则返回true给really_install_package */
+}
+
+static int try_update_binary(
+        const char* path, ZipArchive* zip, 
+        bool* wipe_cache, std::vector<std::string>& log_buffer, int retry_count){
+    /* */
+    read_source_target_build(zip, log_buffer);
+    
+    /* 创建管道用于父子进程通讯 */
+    int pipefd[2];
+    pipe(pipefd);
+    /* */
+    int ret = update_binary_command(path, zip, retry_count, pipefd[1], &args);
+    mzCloseZipArchive(zip);
+}
+
+/* 1. PUBLIC_KEYS_FILE = "/res/keys" 
+   2. 例子:"v2 {64, 0xc926ad21, {..."
+*/
+bootable/recovery/verifier.cpp
+bool load_keys(const char* filename, std::vector<Cerficate>& certs){
+    /* 打开包含publickey的文件 */
+    std::unique_prt<FILE, decltype(&fclose)> f(fopen(filename, "r"), fclose);
+    /* 
+    1. 在一个无线循环中先初始化容器 
+    2. 当开头是以{开始就默认key版本为1，赋值key_type
+    3. 如果开头是v，就要根据后面那个数来判断是什么版本 */
+    if(start_char == "{"){
+        ...
+    } else if(start_char == 'v'){
+        ...
+    }
+    /* 根据key类型来解析可以放在结构体中 */
+    cert.rsa = parse_res_key(f.get(), exponent);
+    /* 结束释放资源回到verify_package */
+}
+
+/* 寻找zip中的RSA签名，和publicKey对比，成功则ok，fail则fail */
+int verify_file(unsigned char* addr, size_t length, const std::vector<Certificate>& keys){
+    /* 
+    1. 从文件最后6个字符开始校验，得到comment_size和signature_start 
+    2. 和EOCD做一系列校验长度，错误怎返回fail
+    3. 判读是否需要SHA1和SHA256
+    4. 根据key_type进行不同类型key的校验
+    5. RSA_verify校验
+    6. ECDSA_verify校验 
+    7. 返回给verify_package */
+}
+
+bootable/recovery/minzip/Zip.h
+typedef struct ZiipArchive {
+    unsigned int   numEntries;
+    ZipEntry*      pEntries;
+    HashTable*     pHash;
+    unsigned char* addr;
+    size_t         length;
+} ZipArchive;
+
+/* 打开zip文件扫描，获得相关信息 */
+bootable/recovery/minzip/Zip.c
+int mzOpenZipArchive(unsigned char* addr, size_t length, ZipArchive* pArchive){
+    /* 赋值addr和length，调用parseZipArchive解析map中的内存映射内容 */
+    if(!parseZipArchive(pArchive)){
+        ...
+    }
+}
+
+/* 
+1. 解析zip的内容，确认是zip文件，扫描核心文件夹，并存储在Hashtable中
+2. ZIP文件格式，打星号的为经常用到的
+*[local file header 1] LOGSIG = 0x04034b50
+*[file data 1]
+*[data descriptor 1]
+. 
+.
+.
+*[local file header n]
+*[file data n]
+*[data descriptor n]
+[archive decryption header] (EFS)
+[archive extra data record] (EFS)
+*[central directory]
+[zip64 end of central directory record]
+[zip64 end of central directory locator] 
+*[end of central directory record] ENDSIG = 0x06054b50
+
+ENHDR 22
+*/
+static bool parseZipArchive(ZipArchive* pArchive){
+    /* 判断文件是否是以LOCSIG开头，如果以ENDSIG开头zip是空的 */
+    val = get4LE(pArchive->addr);
+    /* 寻找block首地址EOCD end of central directory record，找不到返回 */
+    ptr = pArchive->addr + pArchive->length - ENDHDR;
+    /* 寻找EOCD block里面两个值
+    1. 该磁盘上所记录的核心目录数量
+    2. 核心目录开始位置相对于archive开始的位移 */
+    numEntries = get2LE(ptr + ENDSUB);
+    cdOffset = get4LE(ptr + ENDOFF);
+
+    /* 构建数据结构pArchive */
+    pArchive->numEntries = numEntries;
+    /* 创建numEntries个大小ZipEntry大小的空间 */
+    pArchive->pEntries = (ZipEntry*)calloc(numEntries, sizeof(ZipEntry));
+    /* 创建和初始化Hashtable */
+    pArchive->pHash = mzHashTableCreate(mzHashSize(numEntries, NULL));
+    /* 
+    1. 定位指针指向核心目录开始的地方
+    2. 根据numEntries核心目录数进行循环构建ZipEntry */
+    ptr = pArchive->addr + cdOffset;
+    for(i = 0; i < numEntries; i++){
+        ZipEntry* pEntry;
+        /* 
+        1. 获取在zip中各个文件标志符位置
+        2. 如果有宏定义SORT_ENTRIES则进行排序
+        3. 然后构建ZipEntry结构体 
+        4. 获得zip包模式 
+        5. 放入hashtable */
+    }
+    /* 回到Zip.c mzOpenZipArchive */
+}
+
+
+/* 
+1. 通过pArchive->addr指针指向第一个字符首地址相当于低有效位放在内存高地址，pArchive->addr指向后一位字符
+2. pArchive->addr向左移动8bit(1byte)，赋值并指向后一位字符。
+3. 以此类推，返回小端字节序的int值。
+*/
+INLINE unsigned int get4LE(unsignde char const* pSrc){
+    unsigned = *pSrc++;
+
+    result = *pSrc++;
+    result |= *pSrc++ << 8;
+    result |= *pSrc++ << 16;
+    result |= *pSrc++ << 24;
+
+    return result;
 }
 
 

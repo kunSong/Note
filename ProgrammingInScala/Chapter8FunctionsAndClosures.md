@@ -1,7 +1,10 @@
 ## Functions and Closures
 
 ### Vocabulary
-  + 
+  + Intuitively
+  + roundabout
+  + asterisk
+  + moral
 
 When programs get larger, you need some way to divide them into smaller, more manageable pieces. For dividing up control flow, Scala offers an approach familiar to all experienced programmers: divide the code into functions. In fact, Scala offers several ways to define functions that are not present in Java. Besides methods, which are functions that are members of some object, there are also functions nested within functions, function literals, and function values. This chapter takes you on a tour through all of these flavors of functions in Scala.
 
@@ -128,32 +131,51 @@ Simpler, isn't it? This use of an enclosing function's parameters is a common an
 
 Scala has first-class functions. Not only can you define functions and call them, but you can write down functions as unnamed literals and then pass them around as values. We introduced function literals in Chapter 2 and showed the basic syntax in Figure 2.2 here.
 
+  + Scala是最高级的函数。不仅仅是可以定义函数来调用他，你还可以写一个函数用无名字声明，像值一样传递他。
+
 A function literal is compiled into a class that when instantiated at runtime is a function value.[2] Thus the distinction between function literals and values is that function literals exist in the source code, whereas function values exist as objects at runtime. The distinction is much like that between classes (source code) and objects (runtime).
+
+  + 函数声明被编译成类，在runtime的时候实例化为函数值。区别是函数声明是存在于源码的，函数值是存在于对象的。
 
 Here is a simple example of a function literal that adds one to a number:
 
+```scala
   (x: Int) => x + 1
+```
 
 The => designates that this function converts the thing on the left (any integer x) to the thing on the right (x + 1). So, this is a function mapping any integer x to x + 1.
 
+  + `=>`是将左边任意整数x转化为右边x+1。
+
 Function values are objects, so you can store them in variables if you like. They are functions, too, so you can invoke them using the usual parentheses function-call notation. Here is an example of both activities:
 
+  + 函数值是个对象你可以存储在变量中，因为是个函数可以通过变量加括号的平常函数调用形式。
+
+```
   scala> var increase = (x: Int) => x + 1
   increase: (Int) => Int = <function>
   
   scala> increase(10)
   res0: Int = 11
+```
 
 Because increase, in this example, is a var, you can reassign it a different function value later on.
 
+  + 因为是var所以可以被重定义另外的函数值。
+
+```
   scala> increase = (x: Int) => x + 9999
   increase: (Int) => Int = <function>
   
   scala> increase(10)
   res2: Int = 10009
+```
 
 If you want to have more than one statement in the function literal, surround its body by curly braces and put one statement per line, thus forming a block. Just like a method, when the function value is invoked, all of the statements will be executed, and the value returned from the function is whatever the expression on the last line generates.
 
+  + 如果你想多个语句在函数声明中，你可以用大括号包裹，每个语句一行形成一个块。最后返回的是最后一行产生的类型。
+
+```
   scala> increase = (x: Int) => {
            println("We")
            println("are")
@@ -167,9 +189,13 @@ If you want to have more than one statement in the function literal, surround it
   are
   here!
   res4: Int = 11
+```
 
 So now you have seen the nuts and bolts of function literals and function values. Many Scala libraries give you opportunities to use them. For example, a foreach method is available for all collections.[3] It takes a function as an argument and invokes that function on each of its elements. Here is how it can be used to print out all of the elements of a list: -1
 
+  + 例如所有集合的foreach方法，将一个函数作为入参，每个元素x调用这个方法println(x)。
+
+```
   scala> val someNumbers = List(-11, -10, -5, 0, 5, 10)
   someNumbers: List[Int] = List(-11, -10, -5, 0, 5, 10)
   
@@ -180,11 +206,16 @@ So now you have seen the nuts and bolts of function literals and function values
   0
   5
   10
+```
 
 As another example, collection types also have a filter method. This method selects those elements of a collection that pass a test the user supplies. That test is supplied using a function. For example, the function (x: Int) => x > 0 could be used for filtering. This function maps positive integers to true and all others to false. Here is how to use it with filter:
 
+  + 另一个例子就是集合的filter方法如下。　　
+
+```
   scala> someNumbers.filter((x: Int) => x > 0)
   res6: List[Int] = List(5, 10)
+```
 
 Methods like foreach and filter are described further later in the book. Chapter 16 talks about their use in class List. Chapter 17 discusses their use with other collection types.
 
@@ -192,116 +223,193 @@ Methods like foreach and filter are described further later in the book. Chapter
 
 Scala provides a number of ways to leave out redundant information and write function literals more briefly. Keep your eyes open for these opportunities, because they allow you to remove clutter from your code.
 
+  + Scala会略去一些多余的信息，函数声明更简洁。
+
 One way to make a function literal more brief is to leave off the parameter types. Thus, the previous example with filter could be written like this:
 
+  + 可以省掉入参类型对比上述代码。
+
+```
   scala> someNumbers.filter((x) => x > 0)
   res7: List[Int] = List(5, 10)
+```
 
 The Scala compiler knows that x must be an integer, because it sees that you are immediately using the function to filter a list of integers (referred to by someNumbers). This is called target typing, because the targeted usage of an expression—in this case an argument to someNumbers.filter()—is allowed to influence the typing of that expression—in this case to determine the type of the x parameter. The precise details of target typing are not important to study. You can simply start by writing a function literal without the argument type, and, if the compiler gets confused, add in the type. Over time you'll get a feel for which situations the compiler can and cannot puzzle out.
 
+  + 会根据someNumbers的类型List[Int]来影响filter，就知道了入参的类型，叫做target-typing。
+
 A second way to remove useless characters is to leave out parentheses around a parameter whose type is inferred. In the previous example, the parentheses around x are unnecessary:
 
+  + 第二个可以省去的就是括号了。因为类型推断后括号显得无意义。
+
+```
   scala> someNumbers.filter(x => x > 0)
   res8: List[Int] = List(5, 10)
+```
 
 ### 8.5 Placeholder syntax
 
 To make a function literal even more concise, you can use underscores as placeholders for one or more parameters, so long as each parameter appears only one time within the function literal. For example, _ > 0 is very short notation for a function that checks whether a value is greater than zero:
 
+  + 使函数声明更简洁，你可以用下划线为一个或多个参数做占位符，只要每个入参在函数中只出现一次。如下。
+
+```
   scala> someNumbers.filter(_ > 0)
   res9: List[Int] = List(5, 10)
+```
 
 You can think of the underscore as a "blank" in the expression that needs to be "filled in." This blank will be filled in with an argument to the function each time the function is invoked. For example, given that someNumbers was initialized here to the value List(-11, -10, -5, 0, 5, 10), the filter method will replace the blank in _ > 0 first with -11, as in -11 > 0, then with -10, as in -10 > 0, then with -5, as in -5 > 0, and so on to the end of the List. The function literal _ > 0, therefore, is equivalent to the slightly more verbose x => x > 0, as demonstrated here:
 
+  + 你可以认为下划线就是一个空格表达，可以在其中进行填充。每次函数调用的时候都会在空格处进行填充一次。
+
+```
   scala> someNumbers.filter(x => x > 0)
   res10: List[Int] = List(5, 10)
+```
 
 Sometimes when you use underscores as placeholders for parameters, the compiler might not have enough information to infer missing parameter types. For example, suppose you write _ + _ by itself:
 
+  + 你用下划线作为占位符的来表示参数时，编译器可能没有足够的信息来推断参数类型。如下。
+
+```
   scala> val f = _ + _
   <console>:4: error: missing parameter type for expanded 
   function ((x$1, x$2) => x$1.$plus(x$2))
          val f = _ + _
                  ^
+```
 
 In such cases, you can specify the types using a colon, like this:
 
+  + 你可以用冒号类型来特别指出。
+
+```
   scala> val f = (_: Int) + (_: Int)
   f: (Int, Int) => Int = <function>
   
   scala> f(5, 10)
   res11: Int = 15
+```
 
 Note that _ + _ expands into a literal for a function that takes two parameters. This is why you can use this short form only if each parameter appears in the function literal at most once. Multiple underscores mean multiple parameters, not reuse of a single parameter repeatedly. The first underscore represents the first parameter, the second underscore the second parameter, the third underscore the third parameter, and so on.
+
+  + 每个下划线代表一个参数在函数声明时，第一个是一个参数，第二个是另一个参数，不是前一个参数的重用。
 
 ### 8.6 Partially applied functions
 
 Although the previous examples substitute underscores in place of individual parameters, you can also replace an entire parameter list with an underscore. For example, rather than writing println(_), you could write println _. Here's an example:
 
+  + 虽然前面的例子可以用下划线代替单个参数，你也可以用来代替整个参数列表。如下。
+
+```scala
   someNumbers.foreach(println _)
+```
 
 Scala treats this short form exactly as if you had written the following:
 
+```scala
   someNumbers.foreach(x => println(x))
+```
 
 Thus, the underscore in this case is not a placeholder for a single parameter. It is a placeholder for an entire parameter list. Remember that you need to leave a space between the function name and the underscore, because otherwise the compiler will think you are referring to a different symbol, such as for example, a method named println_, which likely does not exist.
 
+  + 记住在函数名和下划线中间加个空格，编译器会认为是指德其他的符号。
+
 When you use an underscore in this way, you are writing a partially applied function. In Scala, when you invoke a function, passing in any needed arguments, you apply that function to the arguments. For example, given the following function:
 
+  + 这里使用下划线方式是写一个部分应用的函数。在Scala中，当你调用一个函数，传递一些需要的入参。 
+
+```
   scala> def sum(a: Int, b: Int, c: Int) = a + b + c
   sum: (Int,Int,Int)Int
+```
 
 You could apply the function sum to the arguments 1, 2, and 3 like this:
 
+```
   scala> sum(1, 2, 3)
   res12: Int = 6
+```
 
 A partially applied function is an expression in which you don't supply all of the arguments needed by the function. Instead, you supply some, or none, of the needed arguments. For example, to create a partially applied function expression involving sum, in which you supply none of the three required arguments, you just place an underscore after "sum". The resulting function can then be stored in a variable. Here's an example:
 
+  + 部分应用函数没必要提供需要的入参，你可以提供一些或没有。这里没有提供任何入参，用下划线作为代替，结果便存放在val中。
+
+```
   scala> val a = sum _
   a: (Int, Int, Int) => Int = <function>
+```
 
 Given this code, the Scala compiler instantiates a function value that takes the three integer parameters missing from the partially applied function expression, sum _, and assigns a reference to that new function value to the variable a. When you apply three arguments to this new function value, it will turn around and invoke sum, passing in those same three arguments:
 
+  + Scala编译器实例化一个函数值带着三个整数参数在部分应用函数里缺少的，`sum _`，会调用sum并传递三个入参。
+
+```
   scala> a(1, 2, 3)
   res13: Int = 6
+```
 
 Here's what just happened: The variable named a refers to a function value object. This function value is an instance of a class generated automatically by the Scala compiler from sum _, the partially applied function expression. The class generated by the compiler has an apply method that takes three arguments.[4] The generated class's apply method takes three arguments because three is the number of arguments missing in the sum _ expression. The Scala compiler translates the expression a(1, 2, 3) into an invocation of the function value's apply method, passing in the three arguments 1, 2, and 3. Thus, a(1, 2, 3) is a short form for:
 
+  + `a（1,2,3）`只是`a.apply(1,2,3)`的简短形式。
+
+```
   scala> a.apply(1, 2, 3)
   res14: Int = 6
+```
 
 This apply method, defined in the class generated automatically by the Scala compiler from the expression sum _, simply forwards those three missing parameters to sum, and returns the result. In this case apply invokes sum(1, 2, 3), and returns what sum returns, which is 6.
+
+  + 最后调用的是sum（1,2,3），结果为6。
 
 Another way to think about this kind of expression, in which an underscore is used to represent an entire parameter list, is as a way to transform a def into a function value. For example, if you have a local function, such as sum(a: Int, b: Int, c: Int): Int, you can "wrap" it in a function value whose apply method has the same parameter list and result types. When you apply this function value to some arguments, it in turn applies sum to those same arguments, and returns the result. Although you can't assign a method or nested function to a variable, or pass it as an argument to another function, you can do these things if you wrap the method or nested function in a function value by placing an underscore after its name.
 
 Now, although sum _ is indeed a partially applied function, it may not be obvious to you why it is called this. It has this name because you are not applying that function to all of its arguments. In the case of sum _, you are applying it to none of its arguments. But you can also express a partially applied function by supplying some but not all of the required arguments. Here's an example:
 
+  + 你可以表达部分应用函数只提供一些并不是所有参数，其中一个用下划线表示。
+
+```
   scala> val b = sum(1, _: Int, 3)
   b: (Int) => Int = <function>
+```
 
 In this case, you've supplied the first and last argument to sum, but the middle argument is missing. Since only one argument is missing, the Scala compiler generates a new function class whose apply method takes one argument. When invoked with that one argument, this generated function's apply method invokes sum, passing in 1, the argument passed to the function, and 3. Here's an example:
 
+  + 因为只有一个参数丢失，scala编译器产生会产生一个新的函数类只需要提供一个参数的。相当于调用`sum(1, 2, 3)`。
+
+```
   scala> b(2)
   res15: Int = 6
+```
 
 In this case, b.apply invoked sum(1, 2, 3).
 
+```
   scala> b(5)
   res16: Int = 9
+```
 
 And in this case, b.apply invoked sum(1, 5, 3).
 
 If you are writing a partially applied function expression in which you leave off all parameters, such as println _ or sum _, you can express it more concisely by leaving off the underscore if a function is required at that point in the code. For example, instead of printing out each of the numbers in someNumbers (defined here) like this:
 
+  + 如果你写了部分应用函数表达式用下划线代替了所有入参，那你可以写得更简洁就是把下划线也去掉。如下。
+
+```scala
   someNumbers.foreach(println _)
+```
 
 You could just write:
 
+```scala
   someNumbers.foreach(println)
+```
 
 This last form is allowed only in places where a function is required, such as the invocation of foreach in this example. The compiler knows a function is required in this case, because foreach requires that a function be passed as an argument. In situations where a function is not required, attempting to use this form will cause a compilation error. Here's an example:
 
+  + 上述形式println仅仅允许在需要入参是方法调用的地方，如果是下面这个形式是会编译错误的。
+
+```
   scala> val c = sum
   <console>:5: error: missing arguments for method sum...
   follow this method with `_' if you want to treat it as
@@ -313,30 +421,48 @@ This last form is allowed only in places where a function is required, such as t
   
   scala> d(10, 20, 30)
   res17: Int = 60
+```
 
 ### 8.7 Closures
 
 So far in this chapter, all the examples of function literals have referred only to passed parameters. For example, in (x: Int) => x > 0, the only variable used in the function body, x > 0, is x, which is defined as a parameter to the function. You can, however, refer to variables defined elsewhere:
+  
+  + 直到现在，所有例子只是讲了函数声明一个变量传到函数内部，反之下面呢。
 
+```
   (x: Int) => x + more  // how much more?
+```
 
 This function adds "more" to its argument, but what is more? From the point of view of this function, more is a free variable, because the function literal does not itself give a meaning to it. The x variable, by contrast, is a bound variable, because it does have a meaning in the context of the function: it is defined as the function's lone parameter, an Int. If you try using this function literal by itself, without any more defined in its scope, the compiler will complain:
 
+  + 这里的more是个自由变量，没有给它任何意义，编译器和报错。
+
+```
   scala> (x: Int) => x + more
   <console>:5: error: not found: value more
          (x: Int) => x + more
                          ^
+```
 
-Why the trailing underscore?
+**Why the trailing underscore?**
 
 Scala's syntax for partially applied functions highlights a difference in the design trade-offs of Scala and classical functional languages such as Haskell or ML. In these languages, partially applied functions are considered the normal case. Furthermore, these languages have a fairly strict static type system that will usually highlight every error with partial applications that you can make. Scala bears a much closer relation to imperative languages such as Java, where a method that's not applied to all its arguments is considered an error. Furthermore, the object-oriented tradition of subtyping and a universal root type accepts some programs that would be considered erroneous in classical functional languages.
 
+  + 因为Scala更像Java这种面向对象语言，应用的入参不完全的声明会有错误。
+
 For instance, say you mistook the drop(n: Int) method of List for tail(), and you therefore forgot you need to pass a number to drop. You might write, "println(drop)". Had Scala adopted the classical functional tradition that partially applied functions are OK everywhere, this code would type check. However, you might be surprised to find out that the output printed by this println statement would always be <function>! What would have happened is that the expression drop would have been treated as a function object. Because println takes objects of any type, this would have compiled OK, but it would have given an unexpected result.
+
+  + 例子`println(drop)`，因为println后面入参是任何类型，编译器会报一直是`<function>`
 
 To avoid situations like this, Scala normally requires you to specify function arguments that are left out explicitly, even if the indication is as simple as a `_'. Scala allows you to leave off even the _ only when a function type is expected.
 
+  + 所以需要下划线，你只可以去掉下划线当且仅当入参是函数类型。
+
 On the other hand, the same function literal will work fine so long as there is something available named more:
 
+  + 这样写就很好嘛。
+
+```
   scala> var more = 1
   more: Int = 1
   
@@ -345,19 +471,31 @@ On the other hand, the same function literal will work fine so long as there is 
   
   scala> addMore(10)
   res19: Int = 11
+```
 
 The function value (the object) that's created at runtime from this function literal is called a closure. The name arises from the act of "closing" the function literal by "capturing" the bindings of its free variables. A function literal with no free variables, such as (x: Int) => x + 1, is called a closed term, where a term is a bit of source code. Thus a function value created at runtime from this function literal is not a closure in the strictest sense, because (x: Int) => x + 1 is already closed as written. But any function literal with free variables, such as (x: Int) => x + more, is an open term. Therefore, any function value created at runtime from (x: Int) => x + more will by definition require that a binding for its free variable, more, be captured. The resulting function value, which will contain a reference to the captured more variable, is called a closure, therefore, because the function value is the end product of the act of closing the open term, (x: Int) => x + more.
 
+  + 函数声明在runtime的时候创建的函数值叫做closure。这个名字是从关闭的函数声明捕捉到绑定的free variable的动作而来。
+    - 如果没有free variable，`(x: Int) => x + 1`已经被写完了所以在严格意义上来讲不是closure，则叫做`closed term`，term有点源码的意思。
+    - 而`(x: Int) => x + more`，因为他有free variable就叫做是`open term`，more会被捕捉，所以被叫做closure。
+  
 This example brings up a question: what happens if more changes after the closure is created? In Scala, the answer is that the closure sees the change. For example:
 
+  + 如果在一个closure创建完后more发生了变化，Scala会看到这变化并输出。
+
+```
   scala> more = 9999
   more: Int = 9999
   
   scala> addMore(10)
   res21: Int = 10009
+```
 
 Intuitively, Scala's closures capture variables themselves, not the value to which variables refer.[5] As the previous example demonstrates, the closure created for (x: Int) => x + more sees the change to more made outside the closure. The same is true in the opposite direction. Changes made by a closure to a captured variable are visible outside the closure. Here's an example:
 
+  + 直观地，Scala closures是自己去捕捉variables，不是变量去引用值。上面那个例子能看得到more变量的改变。反方向也是对的。closure改变了要被捕捉的变量，外面也是看得见得。如下。
+
+```
   scala> val someNumbers = List(-11, -10, -5, 0, 5, 10)
   someNumbers: List[Int] = List(-11, -10, -5, 0, 5, 10)
   
@@ -368,43 +506,67 @@ Intuitively, Scala's closures capture variables themselves, not the value to whi
   
   scala> sum
   res23: Int = -11
+```
 
 This example uses a roundabout way to sum the numbers in a List. Variable sum is in a surrounding scope from the function literal sum += _, which adds numbers to sum. Even though it is the closure modifying sum at runtime, the resulting total, -11, is still visible outside the closure.
 
+  + 这个例子简洁的计算了这个list的总和。variable sum是在函数声明中的，把每个元素加到sum上去。即使是closure在runtime时改变sum，但是外部还是看得到sum的改变，结果为-11。
+
 What if a closure accesses some variable that has several different copies as the program runs? For example, what if a closure uses a local variable of some function, and the function is invoked many times? Which instance of that variable gets used at each access?
+
+  + 难道closure访问变量会有几个不同的副本？难道closure使用函数的本地变量会每次调用吗？变量实例每次都会用到吗？
 
 Only one answer is consistent with the rest of the language: the instance used is the one that was active at the time the closure was created. For example, here is a function that creates and returns "increase" closures:
 
+  + 只有当closure被创建的时候那个本地变量实例才会被用到。如下more。
+
+```
   def makeIncreaser(more: Int) = (x: Int) => x + more
+```
 
 Each time this function is called it will create a new closure. Each closure will access the more variable that was active when the closure was created.
 
+  + 只有当每次makeIncreaser closure被创建的时候，才能访问变量more才会被激活。
+
+```
   scala> val inc1 = makeIncreaser(1)
   inc1: (Int) => Int = <function>
   
   scala> val inc9999 = makeIncreaser(9999)
   inc9999: (Int) => Int = <function>
+```
 
 When you call makeIncreaser(1), a closure is created and returned that captures the value 1 as the binding for more. Similarly, when you call makeIncreaser(9999), a closure that captures the value 9999 for more is returned. When you apply these closures to arguments (in this case, there's just one argument, x, which must be passed in), the result that comes back depends on how more was defined when the closure was created:
 
+  + 当调用`makeIncreaser(1)`，closure会创建返回捕捉的值1给到绑定的more变量。x变脸需要用val传入。
+
+```
   scala> inc1(10)
   res24: Int = 11
   
   scala> inc9999(10)
   res25: Int = 10009
+```
 
 It makes no difference that the more in this case is a parameter to a method call that has already returned. The Scala compiler rearranges things in cases like this so that the captured parameter lives out on the heap, instead of the stack, and thus can outlive the method call that created it. This rearrangement is all taken care of automatically, so you don't have to worry about it. Capture any variable you like: val, var, or parameter.
+
+  + 这些captured parameter不是在堆上，而是在栈上，方法结果后会被自动照顾，不必担心，你尽管用val var 或者 parameter。
 
 ### 8.8 Repeated parameters
 
 Scala allows you to indicate that the last parameter to a function may be repeated. This allows clients to pass variable length argument lists to the function. To denote a repeated parameter, place an asterisk after the type of the parameter. For example:
 
+  + `args: String*`相当于一个String类型的数组`Array[String]`。
+
+```
   scala> def echo(args: String*) = 
            for (arg <- args) println(arg)
   echo: (String*)Unit
+```
 
 Defined this way, echo can be called with zero to many String arguments:
 
+```
   scala> echo()
   
   scala> echo("one")
@@ -413,9 +575,13 @@ Defined this way, echo can be called with zero to many String arguments:
   scala> echo("hello", "world!")
   hello
   world!
+```
 
 Inside the function, the type of the repeated parameter is an Array of the declared type of the parameter. Thus, the type of args inside the echo function, which is declared as type "String*" is actually Array[String]. Nevertheless, if you have an array of the appropriate type, and attempt to pass it as a repeated parameter, you'll get a compiler error:
 
+  + 如果再传入一个`Array[String]`会报错。
+
+```
   scala> val arr = Array("What's", "up", "doc?")
   arr: Array[java.lang.String] = Array(What's, up, doc?)
   
@@ -425,48 +591,77 @@ Inside the function, the type of the repeated parameter is an Array of the decla
    required: String
          echo(arr)
               ^
+```
 
 To accomplish this, you'll need to append the array argument with a colon and an _* symbol, like this:
 
+  + 你可以用以下方式传入，`_*`，下划线相当于arr中的每个元素。
+
+```
   scala> echo(arr: _*)
   What's
   up
   doc?
+```
 
 This notation tells the compiler to pass each element of arr as its own argument to echo, rather than all of it as a single argument.
+
+  + 这个概念相当于是将arr中的每个元素传入`echo(...)`中构建`args: Array[String]`，而不是整个arr数组给echo入参。
 
 ### 8.9 Tail recursion
 
 In Section 7.2, we mentioned that to transform a while loop that updates vars into a more functional style that uses only vals, you may sometimes need to use recursion. Here's an example of a recursive function that approximates a value by repeatedly improving a guess until it is good enough:
 
+  + 7.2节的时候有用递归来只用vals来代替while-loop。
+
+```scala
   def approximate(guess: Double): Double = 
     if (isGoodEnough(guess)) guess
     else approximate(improve(guess))
+```
 
 A function like this is often used in search problems, with appropriate implementations for isGoodEnough and improve. If you want the approximate function to run faster, you might be tempted to write it with a while loop to try and speed it up, like this:
 
+  + 由于要去寻找isGoodEnough和improve方法，所以你也可以写一个while-loop来加速。
+
+```scala
   def approximateLoop(initialGuess: Double): Double = {
     var guess = initialGuess
     while (!isGoodEnough(guess))
       guess = improve(guess)
     guess
   }
+```
 
 Which of the two versions of approximate is preferable? In terms of brevity and var avoidance, the first, functional one wins. But is the imperative approach perhaps more efficient? In fact, if we measure execution times it turns out that they are almost exactly the same! This might seem surprising, because a recursive call looks much more expensive than a simple jump from the end of a loop to its beginning.
 
+  + 哪个版本更好呢？简洁避免var肯定是第一种，第二种会更快吗？其实我们计算过执行时间证明他们两者几乎是一样的！这有些惊讶因为递归看起来需要花费更多比起简单地从最后跳到loop前面。
+
 However, in the case of approximate above, the Scala compiler is able to apply an important optimization. Note that the recursive call is the last thing that happens in the evaluation of function approximate's body. Functions like approximate, which call themselves as their last action, are called tail recursive. The Scala compiler detects tail recursion and replaces it with a jump back to the beginning of the function, after updating the function parameters with the new values.
 
+  + Scala编译器做了一个重要的改在。在递归函数体最后调用他自己叫做尾部调用(tail recursive)，Scala编译器检测到tail recursion会用跳到方法开头来代替，用新的参数来代替方法入参。
+
 The moral is that you should not shy away from using recursive algorithms to solve your problem. Often, a recursive solution is more elegant and concise than a loop-based one. If the solution is tail recursive, there won't be any runtime overhead to be paid.
-Tracing tail-recursive functions
+
+  + 递归调用可以更简洁的算法来解决你的问题比起loop，特别是tail recursive在runntime的时候没有过度开销。
+
+**Tracing tail-recursive functions**
 
 A tail-recursive function will not build a new stack frame for each call; all calls will execute in a single frame. This may surprise a programmer inspecting a stack trace of a program that failed. For example, this function calls itself some number of times then throws an exception:
 
+  + tail-recursive不会创建一个新的栈框stack frame，所有的调用执行都在一个框中。
+
+```scala
   def boom(x: Int): Int = 
     if (x == 0) throw new Exception("boom!")
     else boom(x - 1) + 1
+```
 
 This function is not tail recursive, because it performs an increment operation after the recursive call. You'll get what you expect when you run it:
 
+  + 上面那个不是tail-resursive，因为在递归调用后还有加的操作。所有会有很多栈框。
+
+```
   scala>  boom(3)
   java.lang.Exception: boom!
         at .boom(<console>:5)
@@ -475,17 +670,25 @@ This function is not tail recursive, because it performs an increment operation 
         at .boom(<console>:6)
         at .<init>(<console>:6)
   ...
+```
 
 If you now modify boom so that it does become tail recursive:
 
+```scala
   def bang(x: Int): Int = 
     if (x == 0) throw new Exception("bang!")
     else bang(x - 1)
+```
 
-Tail call optimization
+  +　如果改成这样就是就是tail-recursive。
+
+**Tail call optimization**
 
 The compiled code for approximate is essentially the same as the compiled code for approximateLoop. Both functions compile down to the same thirteen instructions of Java bytecodes. If you look through the bytecodes generated by the Scala compiler for the tail recursive method, approximate, you'll see that although both isGoodEnough and improve are invoked in the body of the method, approximate is not. The Scala compiler optimized away the recursive call:
 
+   + tail-recursive和loop编译出来的Java bytecode都是一样的。Scala编译器改造了下，有isGoodEnough和improve的调用，但是没有approximate的。
+
+```
   public double approximate(double);
     Code:
      0:   aload_0
@@ -501,21 +704,29 @@ The compiled code for approximate is essentially the same as the compiled code f
      14:  invokevirtual   #27; //Method improve:(D)D
      17:  dstore_1
      18:  goto    2
+```
 
 You'll get:
 
+```
   scala> bang(5)
   java.lang.Exception: bang!
         at .bang(<console>:5)
         at .<init>(<console>:6)
   ...
+```
 
 This time, you see only a single stack frame for bang. You might think that bang crashed before it called itself, but this is not the case. If you think you might be confused by tail-call optimizations when looking at a stack trace, you can turn them off by giving a:
 
+  + 这时你可以看到只有一个bang的stack frame。可以用下面的option来关闭tail-recursive stack trace，这样可以来检查哪里出了问题，就会得到下面的stack trace。
+
+```
   -g:notailcalls
+```
 
 argument to the scala shell or to the scalac compiler. With that option specified, you will get a longer stack trace:
 
+```
   scala> bang(5)
   java.lang.Exception: bang!
         at .bang(<console>:5)
@@ -526,24 +737,35 @@ argument to the scala shell or to the scalac compiler. With that option specifie
         at .bang(<console>:5)
         at .<init>(<console>:6)
   ...
+```
 
-Limits of tail recursion
+**Limits of tail recursion**
 
 The use of tail recursion in Scala is fairly limited, because the JVM instruction set makes implementing more advanced forms of tail recursion very difficult. Scala only optimizes directly recursive calls back to the same function making the call. If the recursion is indirect, as in the following example of two mutually recursive functions, no optimization is possible:
 
+  + tail-recursive是有限制的，Scala只可以是递归同样的函数就是自己，如下是没有编译器改造的不是tail-recursive。
+
+```scala
   def isEven(x: Int): Boolean =
     if (x == 0) true else isOdd(x - 1)
   def isOdd(x: Int): Boolean =
     if (x == 0) false else isEven(x - 1)
+```
 
 You also won't get a tail-call optimization if the final call goes to a function value. Consider for instance the following recursive code:
 
+  + 如下同样也不是tail-recursive，下面最后调用的是函数值的方式。而且这种写法有误，编译器会报application does not take parameters。
+
+```scala
   val funValue = nestedFun _
   def nestedFun(x: Int) { 
     if (x != 0) { println(x); funValue(x - 1) }
   }
+```
 
 The funValue variable refers to a function value that essentially wraps a call to nestedFun. When you apply the function value to an argument, it turns around and applies nestedFun to that same argument, and returns the result. You might hope, therefore, the Scala compiler would perform a tail-call optimization, but in this case it would not. Thus, tail-call optimization is limited to situations in which a method or nested function calls itself directly as its last operation, without going through a function value or some other intermediary. (If you don't fully understand tail recursion yet, see Section 8.9).
+
+  + tail-recursive限制的场景就是最后调用的是方法或者nested函数自己，而不是函数值或其他一些中间值。
 
 ### 8.10 Conclusion
 

@@ -3,7 +3,8 @@
 ### Vocabulary
   + handful
   + inception
-  + function literal(匿名字面方法): It's useful for when you want to pass a function as an argument to a method.`(a:Int, b:Int) => a + b`
+  + function literal (匿名字面方法)
+    - It's useful for when you want to pass a function as an argument to a method.`(a:Int, b:Int) => a + b`
   + predominantly
   + sidestep
   + off-by-one error

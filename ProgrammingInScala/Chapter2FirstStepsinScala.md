@@ -1,7 +1,8 @@
 ## Chapter 2 First Steps in Scala
 
 ### Vocabulary
-  + vetern: a person who has had long experience in a particular field.
+  + vetern
+    - a person who has had long experience in a particular field.
   + fire house
   + interpreter
   + interactive
