@@ -139,15 +139,15 @@ png_destroy_read_struct(...);
 
 + `INLINE`关键字是内联函数，将小函数定义在头文件中，为了减小频繁调用小函数所导致的栈空间不足。
 
-+ 内存地址从低到高地址
++ 内存地址从低到高地址，数组中下标低的内存地址低
 
 + 有效位从高到低`0x11223344`
 
 + little-endian
-  - 最高有效位落在低地址上`44 33 22 11`
+  - 最低有效位落在低地址上`44 33 22 11`
 
 + big-endian
-  - 最低有效位落在高地址上`11 22 33 44`
+  - 最高有效位落在低地址上`11 22 33 44`
 
 ```
 int is_little_endian_a(void){
@@ -159,3 +159,68 @@ int is_little_endian_a(void){
     }
 }
 ```
+
++ linux进程与线程的区别
+  - 进程是有独立空间的，系统会给其分配空间，但是不会给线程分配空间
+  - 线程是进程的一部分，如果就一个线程，那这个进程是单线程的，创建了新的线程会共享进程中的资源
+  - 进程控制块PCB比线程控制块TCP要大
+
++ 联合Union大小必须满足两个条件
+  - 大小足够容纳最宽的成员
+  - 大小能被其包含的所有基本数据类型的大小所整除
+
++ 关于字符串和字符数组，sizeof和strlen
+```
+char a[] = "abc";          // sizeof: 4 strlen: 3
+char a[] = {'a','b','c'};  // sizeof: 3 strlen: 3
+char a[3] = {'a','b','c'}; // sizeof: 3 strlen: 3
+char* p = "abc";           // sizeof: 4 strlen: 3
+
+char a[] = "abc"; // 等价于 char a[4] = {'a','b','c','\0'};
+char a[] = "abc"; // 相同于 char a[] = {"abc"}; 花括号可有可无
+char str[]; str = "abc"; // 错误。这种方式只能用在初始化的时候不能用做赋值
+
+char a[0]; // 声明是可以的sizeof大小为0，但是没有初始化其内容是乱的
+char a[]; // 这种声明方式是非法的会报array size missing
+char a[10]; // sizeof大小为10，已分配空间但是没有初始化
+```
+
++ 将宏所定义的多条表达式放在大括号中
+```
+#defineINTI_RECT_VALUE( a, b )\
+{\
+    a = 0;\
+    b = 0;\
+}
+```
+
++ 任意两个指针变量是可以用比较运算符的"== > <"
+
++ 用括号来保持优先级，避免使用默认优先级
+
++ memset fill memory with a constant byte, 因为是void*类型，所以是可以任何指针类型进行字节的set。
+```
+void *memset(void *s, int c, size_t n);
+
+int a[24];
+memset(a, 0, sizeof(a));
+```
+
++ 二维数组高维是不能省略的
+```
+int a[3][4] = {{1,3,5,7},{9,11,13,15},{17,19,21,23}};
+a[0]; // 可以看做是第一行一维数组，第一行的首地址
+void Func(int arrary[3][10]);
+void Func(int array[][10]);
+不对的是:
+void Func(int array[3][]);
+```
+
++ C中的static
+  - 局部变量前的static
+  - 全局变量前的static
+  - 函数前的static
+
++ memcpy和strcpy
+  - 复制内容不同，strcpy只能复制字符串，memcpy可以复制任意内容。
+  - 复制方法不同，strcpy不需要指定长度以字符串结束符"\0"结尾。memcpy以第三个参数决定复制的长度。

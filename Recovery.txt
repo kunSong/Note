@@ -620,15 +620,44 @@ bool verify_package(const unsigned char* package_data, size_t package_size){
 static int try_update_binary(
         const char* path, ZipArchive* zip, 
         bool* wipe_cache, std::vector<std::string>& log_buffer, int retry_count){
-    /* */
+    /* 读取版本号 pre-build-incremental/post-build-incremental */
     read_source_target_build(zip, log_buffer);
     
     /* 创建管道用于父子进程通讯 */
     int pipefd[2];
     pipe(pipefd);
-    /* */
+    /* 
+    1. 读取zip包中META-INF/com/google/android/update-binary文件内容保存到结构体中 
+    2. 将刚才保存到结构体中的内容保存到/tmp/update_binary文件中 */
     int ret = update_binary_command(path, zip, retry_count, pipefd[1], &args);
     mzCloseZipArchive(zip);
+
+    /* 获取入参 */
+    const char* chr_args[args.size() + 1];
+    chr_args[args.size()] = NULL;
+    for(size_t i = 0;i < args.size();i++){
+        chr_args[i] = args[i].c_str();
+    }
+    /* 创建子进程来进行update */
+    pid_t pid = fork();
+    if(pid == 0){
+        /* 函数指针来执行bootable/recovery/updater/updater.cpp文件中的方法 */
+        execv(chr_args[0], const_cast<char**>(chr_args));
+    }
+    /* 关闭管道无用的端口 */
+    close(pipefd[1]);
+
+    /* 通过管道收到子进程发来的消息 */
+    FILE* from_child = fdopen(pipefd[0], "r");
+    while(fgets(buffer, sizeof(buffer), from_child) != NULL){
+        // 父进程显示UI进度
+        // 父进程设置UI进度
+        // 父进程打印信息
+        // 清除cache分区
+        // 清除data和cache分区
+        // 清除UI显示
+    }
+    
 }
 
 /* 1. PUBLIC_KEYS_FILE = "/res/keys" 
@@ -751,6 +780,12 @@ INLINE unsigned int get4LE(unsignde char const* pSrc){
     result |= *pSrc++ << 24;
 
     return result;
+}
+
+/bootable/recovery/updater/updater.cpp
+#define SCRIPT_NAME "META-INF/com/google/android/updater-script"
+int main(int argc, char** argv){
+    
 }
 
 
