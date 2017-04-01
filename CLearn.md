@@ -224,3 +224,48 @@ void Func(int array[3][]);
 + memcpy和strcpy
   - 复制内容不同，strcpy只能复制字符串，memcpy可以复制任意内容。
   - 复制方法不同，strcpy不需要指定长度以字符串结束符"\0"结尾。memcpy以第三个参数决定复制的长度。
+
++ 友元函数
+  - 类A函数访问类B的成员，类A函数就是类B的友元函数，即其他类成员函数直接访问该类私有变量
+  - 运算符重载的某些场合需要使用友元
+  - 两个类要共享数据的时候
+```
+// 普通函数友元函数
+class INTEGER
+{
+    friend void Print(const INTEGER& obj);//声明友元函数
+};
+
+void Print(const INTEGER& obj)
+{
+    //函数体
+}
+
+void main()
+{
+　　INTEGER obj;
+　　Print(obj); //直接调用
+}
+
+// 类Y的所有成员函数都为类X友元函数—友元类
+class girl;
+class boy
+{
+public:
+　　void disp(girl &);
+};
+
+void boy::disp(girl &x) //函数disp()为类boy的成员函数，也是类girl的友元函数
+
+{
+　　cout<<"girl's name is:"<<x.name<<",age:"<<x.age<<endl;//借助友元，在boy的成员函数disp中，借助girl的对象，直接访问girl的私有变量
+}
+
+class girl
+{
+private：
+　　char *name;
+　　int age;
+　　friend boy; //声明类boy是类girl的友元
+};
+```
