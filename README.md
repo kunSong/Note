@@ -8,3 +8,4 @@
 + [Chapter 7 Built-in Control Structures](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter7BuiltInControlStructures.md)
 + [Chapter 8 Functions and Closures](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter8FunctionsAndClosures.md)
 + [Chapter 9 Control Abstractions](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter9ControlAbstraction.md)
++ [Chapter 10 Composition and Inheritance](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter10CompositionAndInheritance.md)
