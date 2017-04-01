@@ -114,7 +114,7 @@ The override modifier in front of a method definition signals that a previous me
   y: Rational = 5/7
 ```
 
-###　6.4 Checking preconditions
+### 6.4 Checking preconditions
 
 As a next step, we will turn our attention to a problem with the current behavior of the primary constructor. As mentioned at the beginning of this chapter, rational numbers may not have a zero in the denominator. Currently, however, the primary constructor accepts a zero passed as d:
 
