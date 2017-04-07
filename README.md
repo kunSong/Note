@@ -10,6 +10,7 @@
 + [Chapter 8 Functions and Closures](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter8FunctionsAndClosures.md)
 + [Chapter 9 Control Abstractions](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter9ControlAbstraction.md)
 + [Chapter 10 Composition and Inheritance](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter10CompositionAndInheritance.md)
++ [Chapter 11 Scala's Hierarchy](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter11ScalasHierarchy.md)
 
 ### Android
 + [Android Blog](https://github.com/kunSong/Note/blob/master/AndroidLearn.md)
