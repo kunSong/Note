@@ -785,10 +785,183 @@ INLINE unsigned int get4LE(unsignde char const* pSrc){
 /bootable/recovery/updater/updater.cpp
 #define SCRIPT_NAME "META-INF/com/google/android/updater-script"
 int main(int argc, char** argv){
-    
+    /* 
+    设置标准输出和标准错误
+    */
+    setbuff(stdout, NULL);
+    setbuff(stderr, NULL);
+
+    /* 获取version */
+    /* 设置管道将命令传回父进程 */
+    FILE* cmd_pipe = fdopen(fd, "wb");
+
+    /* 从package中提取出script脚本放在MemMapping中 */
+    const char* package_filename = argv[3];
+    MemMapping map;
+    if(sysMapFile(package_filename, &map) != 0){
+        ...
+    }
+
+    /* 从script中的文件解析Zip升级文件 */
+    err = mzOpenZipArchive(map.addr, map.length, &za);
+    const ZipEntry* script_entry = mzFindZipEntry(&za, SCRIPT_NAME);
+    if(!mzReadZipEntry(&za, script_entry, sc))
+
+    /* 注册edify功能函数 */
+    RegisterBuiltins();
+    RegisterInstallFunctions();
+    RegisterBlockImageFunctions();
+    RegisterDeviceExtensions();
+    FinishRegistration();
+
+    /* 解析script */
+    Expr* root;
+    int error = parse_string(script, &root, &error_count);
+
+    /* 评估脚本 */
+    char* result = Evaluate(&state, root);
+
 }
 
+build/core/Makefile
+.PHONY: otapackage
+otapackage: $(INTERNAL_OTA_PACKAGE_TARGET)
 
+/*
+1. $(INTERNAL_OTA_PACKAGE_TARGET)依赖于$(KEY_CERT_PAIR),$(HOST_OUT),$(BUILT_TARGET_FILES_PACKAGE)这三个文件
+2. 最后会调用ota_from_target_files和mt_ota_from_target_files.py
+-v : verbose标识，有这个标识在ota生成过程中会打印出更多的执行信息。
+-p : 定义脚本中用到的可执行文件的路径。
+-k : 签名时所用的密钥，防止ota升级包的内容被篡改。
+*/
+INTERNAL_OTA_PACKAGE_TARGET := $(PRODUCT_OUT)/$(name).zip
+$(INTERNAL_OTA_PACKAGE_TARGET): KEY_CERT_PAIR := $(DEFAULT_KEY_CERT_PAIR)
+$(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE)
+    @echo "Package OTA: $@"
+    $(hide) PATH=$(foreach p,$(INTERNAL_USERIMAGES_BINARY_PATHS),$(P):)$$PATH MKBOOTIMG=$(MKBOOTIMG) \
+    ./build/tools/releasetools/ota_from_target_files -v \
+    $(if $(filter true,$(TARGET_USERIMAGES_USE_UBIFS)),-g,--block) \
+    -p $(HOST_OUT) \
+    -k $(KEY_CERT_PAIR) \
+    -s ./device/mediatek/build/releasetools/mt_ota_from_target_files \
+    $(if $(OEM_OTA_CONFIG), -o $(OEM_OTA_CONFIG)) \
+    $(BUILT_TARGET_FILES_PACKAGE) $@
 
+/*
+BUILT_TARGET_FILES_PACKAGE make脚本生成target-files-package临时目标文件
+1. 创建$(zip_root)根目录，接下来都是基于zip_root目录进行其它目录的创建。
+2. 创建并填充RECOVERY目录，包括：kernel镜像文件、RAMDISK目录。此目录最终用来生成recovery.img。
+3. 创建并填充BOOT目录，包括：kernel镜像文件、RAMDISK目录、ramdisk镜像。此目录最终用来生成boot.img。
+4. 填充SYSTEM目录。
+5. 创建并填充OTA/bin目录。
+6. 创建META目录并向该目录下添加一些文本文件。
+7. 最后将目录打包成zip包。
+*/
+BUILT_TARGET_FILES_PACKAGE := $(intermediats)/$(name).zip
 
+/* 开始构建中间zip包 */
+$(BUILT_TARGET_FILES_PACKAGE):\
+        $(INSTALLED_BOOTIMAGE_TARGET) \
+        ...
+    @echo "Package target files: $@"
+    # 删除之前的zip文件
+    $(hide) rm -rf $@ $(zip_root)
+    ...
+    # 向otakeys.txt文件中写入各种信息
+    $(hide) echo "$(PRODUCT_OTA_PUBLIC_KEYS)" > $(zip_root)/META/otakeys.txt
+    ...
+    # 打包zip包
+    $(hide) (cd $(zip_root) && zip -qry ../$(notdir $@) .)
+
+.PHONY: target-files-package
+target-files-package: $(BUILT_TARGET_FILES_PACKAGE)
+
+build/tools/releasetools/ota_from_target_files.py
+/*
+最终Recovery使用的zip升级包
+1. OTA全量包
+2. OTA增量包
+*/
+def main(argv):
+    
+    /*
+    1. 调用getprop.getprop处理我们传入的参数
+    2. 处理参数主要是为了给OPTIONS对象赋值
+    3. 例如，处理之后，OPTIONS对象的成员属性赋值如下：
+    OPTIONS.package_key = build/target/product/security/testkey
+    OPTIONS.verbose = True
+    OPTIONS.search_path = out/host/linux-x86
+    */
+    def option_handler(o, a):
+
+    /*
+    args是getprop.getprop无法处理的参数
+    这里的args是一些参数组成的list
+    */
+    if len(args) != 2:
+        common.Usage(__doc__)
+        sys.exit(1)
+
+    /*
+    主要是解析如下三个文件，并将文件内容以(k,v)键值对形式保存到OPTIONS.info_dict中
+    1. META/misc_info.txt
+    2. SYSTEM/build.prop
+    3. RECOVERY/RAMDISK/etc/recovery.fstab
+    */
+    OPTIONS.info_dict = common.LoadInfoDict(input_zip)
+
+    /* 构造全量包时OPTIONS.incremental_source的值为None */
+    if OPTIONS.incremental_source is None:
+        WriteFullOTAPackage(input_zip, output_zip)
+        if OPTIONS.package_key is None:
+            OPTIONS.package_key = OPTIONS.info_dict.get(
+                "default_system_dev_certificate",
+                "build/target/product/security/testkey")
+
+    output_zip.close()
+    
+    /* 对全量包进行防篡改签名，并进行重命名 */
+    SignOutput(temp_zip_file.name, args[1])
+    temp_zip_file.close()
+
+    print "done."
+
+def WriteFullOTAPackage(input_zip, output_zip):
+    script = edify_generator.EdifyGenerator(3, OPTIONS.info_dict)
+
+    /* 从build.prop文件内容中获取属性构建metadata */
+    metadata = {"post-build": GetBuildProp("ro.build.fingerprint", 
+                                            OPTIONS.info_dict),
+                "pre-device": GetBuildProp("ro.product.device",
+                                            OPTIONS.info_dict),
+                "post-timestamp": GetBuildProp("ro.build.data.utc",
+                                            OPTIONS.info_dict),
+                }
+
+    /* 在updater-script脚本增加时间判断,如果需要升级的版本晚于当前系统的时间，则不进行更新 */
+    if not OPTIONS.omit_prereq:
+        ts = GetBuildProp("ro.build.date.utc", OPTIONS.info_dict)
+        ts_text = GetBuildProp("ro.build.date", OPTIONS.info_dict)
+        script.AssertOlderBuild(ts, ts_text)
+
+    /* 在updater-script脚本中增加产品类型判断 */
+    AppendAssertions(script, OPTIONS.info_dict)
+
+    /* 
+    两步包装策略 Two-step package strategy
+    1. 如果stage不是 2/3 或 3/3 
+      1a. 写入recovery image到boot分区
+      1b. 设置stage 2/3
+      1c. 重启boot分区，重新进入recovery
+    2. 如果stage 2/3
+      2a. 写recovery image到recovery分区
+      2b. 设置stage 3/3
+      2c. 重启recovery分区，重新进入recovery
+    3. 如果stage是 3/3
+      3a. 设置stage ""
+      3b. 做正常全包安装
+        3b1. 清除和安装system, boot, image etc
+        3b2. 第一次设置系统进入recovery模式
+      3c. 完成升级脚本（结束自己并重启）
+    */
 
