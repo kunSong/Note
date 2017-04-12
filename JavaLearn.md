@@ -266,7 +266,27 @@ for(int i=0;i<100;i++){
 }
 ```
 
-## ...
-+ ...
-...
+## Java访问控制
 
++ Java允许外部类型访问其包含的嵌套类型的私有成员。
+
+```java
+class Outter {
+    public void methodOutter() {
+        new Innter().methodInner();
+    }
+    class Inner {
+        private void methodInner(){
+            ...
+        }
+    }
+}
+```
+```
+          | 类内部 本包  子类  外部包
+----------|--------------------------
+public    |  ok     ok   ok    ok
+protected |  ok     ok   ok    x
+default   |  ok     ok   x     x
+private   |  ok     x    x     x
+```

@@ -12,6 +12,7 @@
 + [Chapter 10 Composition and Inheritance](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter10CompositionAndInheritance.md)
 + [Chapter 11 Scala's Hierarchy](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter11ScalasHierarchy.md)
 + [Chapter 12 Traits](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter12Traits.md)
++ [Chapter 13 Packages and Imports](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter13PackagesAndImports.md)
 
 ### Android
 + [Android Blog](https://github.com/kunSong/Note/blob/master/AndroidLearn.md)
