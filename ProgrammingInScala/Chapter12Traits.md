@@ -598,7 +598,7 @@ The main properties of Scala's linearization are illustrated by the following ex
 
 Class Cat's inheritance hierarchy and linearization are shown in Figure 12.1. Inheritance is indicated using traditional UML notation:[3] arrows with white, triangular arrowheads indicate inheritance, with the arrowhead pointing to the supertype. The arrows with darkened, non-triangular arrowheads depict linearization. The darkened arrowheads point in the direction in which super calls will be resolved.
 
-![Figure12.1](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/res/drawable/Figure11.1.jpg)
+![Figure12.1](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/res/drawable/Figure12.1.jpg)
 
 Figure 12.1 - Inheritance hierarchy and linearization of class Cat.
 
