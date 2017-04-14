@@ -269,3 +269,8 @@ private：
 　　friend boy; //声明类boy是类girl的友元
 };
 ```
+
++ qsort功能是排序nmemb个元素，base指向array的开头，根据compar函数比较元素进行ascending的排序。
+```
+void qsort(void *base, size_t nmemb, size_t size, int(*compar)(const void *, const void *))
+```

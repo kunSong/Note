@@ -14,6 +14,7 @@
 + [Chapter 12 Traits](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter12Traits.md)
 + [Chapter 13 Packages and Imports](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter13PackagesAndImports.md)
 + [Chapter 14 Assertions and Unit Testing](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter14AssertionsAndUnitTesting.md)
++ [Chapter 15 Case Classes and Pattern Matching](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter15CaseClassesAndPatternMatching.md)
 
 ### Android
 + [Android Blog](https://github.com/kunSong/Note/blob/master/AndroidLearn.md)
