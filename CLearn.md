@@ -274,3 +274,25 @@ private：
 ```
 void qsort(void *base, size_t nmemb, size_t size, int(*compar)(const void *, const void *))
 ```
+
++ ssize_t和size_t区别
+```
+// 从字面意思来说
+ssize_t = signed size_t
+// 使用位置
+// 对于缓冲区大小等等非负值的长度时一般使用size_t
+// 对于读取文件之类可能返回<0的函数是，则使用ssize_t
+ssize_t (*read)(struct file* filp, char __user* buf, loff_t* pos);
+```
+
++ container_of在Linux内核中是一个常用的宏，用于从包含在某个结构中的指针获得结构本身的指针，通俗地讲就是通过结构体变量中某个成员的首地址进而获得整个结构体变量的首地址。
+```
+#define container_of(ptr, type, member) ({      \
+  const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
+  (type *)( (char *)__mptr - offsetof(type,member) );})
+
+// 第一步，首先定义一个临时的数据类型（通过typeof( ((type *)0)->member )获得）与ptr相同的指针变量__mptr，然后用它来保存ptr的值。
+
+// 第二步，用(char *)__mptr减去member在结构体中的偏移量，得到的值就是整个结构体变量的首地址（整个宏的返回值就是这个首地址）。
+```
+

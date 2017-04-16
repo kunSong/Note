@@ -37,3 +37,13 @@ git push origin HEAD:master
 git commit -amend
 git push origin HEAD:master
 ```
+
+```
+cd .repo/manifest
+ls
+croot
+repo init -b gingerbread-release 
+repo sync (not needed if your local copy is up to date)
+repo start gingerbread-release --all 
+repo branches
+```

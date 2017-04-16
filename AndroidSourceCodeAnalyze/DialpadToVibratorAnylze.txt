@@ -1,0 +1,175 @@
+
+App层
+packages/apps/Dialer/src/com/android/dialpadDialpadFragment.java
+TAG = "DialpadFragment"
+    public void onPressed(View view, boolean pressed){
+        ...
+        Log.d(TAG, "onPressed(). view: " + view + ", pressed: " + pressed);
+        ...
+    }
+    private void keyPressed(int keyCode) {
+        ...
+        Log.d(TAG, "songkun performHapticFeedback begin");
+        getView().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+        Log.d(TAG, "songkun performHapticFeedback end");
+        ...
+    }
+    private void playTone(int tone, int durationMs) {
+        int ringerMode == audioManager.getRingerMode();
+        Log.d(TAG, "songkun playTone(). tone: " + tone + " .durationMs: " + durationMs + " .ringerMode: " + ringerMode);
+        ...
+        synchronized (mToneGeneratorLock) {
+            Log.d(TAG, "songkun playTone() mToneGenerator.startTone(tone, durationMs));
+        }
+    }
+    
+Framework层
+View.java
+  performHapticFeedback
+    mAttachInfo.mRootCallbacks.performHapticFeedback
+
+ViewRootImpl.java
+  performHapticFeedback
+    mWindowSession.performHapticFeedback
+
+Session.java
+  PhoneWindowManager
+    mService.mPolicy.performHapticFeedbackLw
+
+PhoneWindowManager.java
+  performHapticFeedbackLw
+    mVibrator.vibrate
+
+SystemVibrator.java
+  vibrate
+    mService.vibratePattern
+
+VibratorService.java
+  vibratePattern
+    startVibrationLocked(vib)
+
+  startVibrationLocked(vib)
+    //mH.postDelayed(mVibrationRunnable, vib.mTimeout);
+    mThread = new VibrateThread(vib)
+
+  class VibrateThread
+    VibratorService.this.doVibratorOn(duration, uid, usageHint);
+
+  doVibratorOn(duration, uid, usageHint)
+    native static void vibratorOn(long milliseconds)
+
+frameworks/base/services/core/jni/com_android_server_VibratorService.cpp
+  static void vibrator(JNIEnv* , jobject, jlong timeout_ms)
+    gVibraDevice->vibrator_on(gVibraDevice, timeout_ms)
+
+vibrator.c
+  static int vibra_on(vibradev __unused, timeout_ms)
+    sendit(timeout_ms)
+
+  sendit(unsigned int timeout_ms)
+
+
+
+DialpadFragment.java TAG = "DialpadFragment"
+Log.d(TAG, "songkun onPressed(). view: " + view + ", pressed: " + pressed);
+Log.d(TAG, "songkun keyPressed(). keyCode: " + keyCode);
+Log.d(TAG, "songkun performHapticFeedback begin");
+Log.d(TAG, "songkun performHapticFeedback end");
+Log.d(TAG, "songkun playTone(). tone: " + tone + ".durationMs: " + durationMs);
+Log.d(TAG, "songkun playTone() .ringerMode: " + ringerMode);
+Log.d(TAG, "songkun playTone() .ringerMode: " + ringerMode + " startTone");
+
+View.java TAG = "View"
+Log.d(VIEW_LOG_TAG, "songkun performHapticFeedback(). feedbackConstant: " + feedbackConstant);
+Log.d(VIEW_LOG_TAG, "songkun performHapticFeedback(). feedbackConstant: " + feedbackConstant + " .flags " + flags);
+
+ViewRootImpl.java mTag = TAG = "ViewRootImpl"
+Log.d(mTag, "songkun performHapticFeedback(). effectId: " + effectId + " .always " + always);
+
+Session.java
+Log.d("Session", "songkun performHapticFeedback(). effectId: " + effectId + " .always " + always);
+
+PhoneWindowManager.java TAG = "WindowManager"
+Log.d(TAG, "songkun performHapticFeedback(). effectId: " + effectId + " .always " + always);
+Log.d(TAG, "songkun mVibrator.vibrate()");
+
+SystemVibrator.java TAG = "Vibrator"
+Log.d(TAG, "songkun vibrate() .uid " + uid + " .opPkg " + opPkg);
+
+VibratorService.java TAG = "VibratorService"
+Log.d(TAG, "songkun vibratePattern() .uid " + uid + " .packageName " + packageName);
+Log.d(TAG, "songkun vibratePattern() .repeat " + repeat);
+Log.d(TAG, "songkun startVibrationLocked() .vib.mTimeout " + vib.mTimeout);
+Log.d(TAG, "songkun VibrateThread.run() duration " + duration + " index " + index + " uid " + uid + " usageHint " + usageHint);
+Log.d(TAG, "songkun VibrateThread.delay() bedtime " + bedtime);
+Log.d(TAG, "songkun VibrateThread.delay() duration " + duration);
+Log.d(TAG, "songkun Turning vibrator on for " + millis + " ms.");
+Log.d(TAG, "songkun doVibratorOn() .vibratorOn()");
+Log.d(TAG, "songkun doVibratorOn() .vibratorCount " + vibratorCount);
+
+vibrator.c
+ALOGE("songkun vibrator_on");
+ALOGE("songkun sendit");
+
+InputReader.cpp
+void InputReader::loopOnce(){
+  size_t count = mEventHub->getEvents(timeoutMillis, mEventBuffer, EVENT_BUFFER_SIZE);
+  if(count){
+    processEventsLocked(mEventBuffer, count);
+  }
+}
+
+void InputReader::processEventsLocked(const RawEvent* rawEvents, size_t count){
+  ...
+  processEventsForDeviceLocked(deviceId, rawEvent, batchSize);
+  ...
+}
+
+void InputReader::processEventsForDeviceLocked(int32_t deviceId, const RawEvent* rawEvents, size_t count){
+  ...
+  device->process(rawEvents, count);
+  ...
+}
+
+void InputDevice::process(const RawEvent* rawEvents, size_t count){
+  ...
+  mapper->process(rawEvent);
+  ...
+}
+
+void TouchInputMapper::process(cont RawEvent* rawEvent){
+  ...
+  sync(rawEvent->when)
+  ...
+}
+
+void TouchInputMapper::sync(nsecs_t when){
+  ...
+  processRawTouches(false);
+  ...
+}
+
+void TouchInputMapper::processRawTouches(bool timeout){
+  ...
+  cookAndDispatch(when)
+  ...
+}
+
+void TouchInputMapper::cookAndDispatch(nsecs_t when){
+  ...
+  dispatchTouches(when, policyFlags);
+  ...
+}
+
+void TouchInputMapper::dispatchTouches(nsecs_t when, uint32_t policyFlags){
+  ...
+  dispatchMotion(...)
+  ...
+}
+
+void TouchInputMapper::dispatchMotion(...){
+  ...
+  notifyMotionArgs args(...)
+  getListener()->notifyMotion(&args);
+}
+

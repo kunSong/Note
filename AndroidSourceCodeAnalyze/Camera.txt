@@ -1,0 +1,22 @@
+1. AndroidManifest.xml
+
+```
+<activity-alias
+    android:targetActivity="com.android.camera.CameraActivity">
+    <intent-filter>
+        <action android:name="android.intent.category.LAUNCHER"/>
+    <intent-filter>
+</activity-alias>
+```
+
+2. package/app/Camera2/src/com/android/camera/CameraActivity.java
+
+3. 拍照流程
+  1. openCamera
+  2. CameraDevice.StateCallback#onOpened
+  3. createCaptureSession
+  4. CameraCaptureSession.StateCallback#onConfigured
+  5. CameraCaptureSession.StateCallback#setRepeatingRequest
+  6. CameraCaptureSession.StateCallback#onCaptureCompleted
+  7. Take picture
+Capture方法是拍一张，setRepeatingRequest是连续发送拍照请求，比如连拍，预览模式也是这个只是不处理照片
