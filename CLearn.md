@@ -296,3 +296,23 @@ ssize_t (*read)(struct file* filp, char __user* buf, loff_t* pos);
 // 第二步，用(char *)__mptr减去member在结构体中的偏移量，得到的值就是整个结构体变量的首地址（整个宏的返回值就是这个首地址）。
 ```
 
++ 引用传递
+
+```
+void Exchg3(int &x, int &y) /* 注意定义处的形式参数的格式与值传递不同 */
+{
+   int tmp = x;x = y;
+   y = tmp;
+   printf("x = %d, y = %d.\n", x, y);
+}
+main()
+{
+   int a = 4;
+   int b = 6;
+   Exchg3(a, b); /*注意：这里调用方式与值传递一样*/
+   printf("a = %d, b = %d.\n”, a, b);
+}
+输出结果：
+x = 6, y = 4.
+a = 6, b = 4. /*这个输出结果与值传递不同。*/
+```

@@ -302,6 +302,8 @@ Midtest
     1. 构造方法中选在数据库名maintest.db, midtest.db和midteastagain.db
     2. 创建DatebaseHelper做数据库操作。
 
+ 三. 什么是NV，高通平台的NV，保存了系统运行过程中各个模块可能用到的一些参数值，它是以单个文件的形式保存在EFS中，但用户是不能随意访问的，只能通过QXDM来进行读写。对于60X0平台，NV就有将近5千多项。
+
      
   
 
