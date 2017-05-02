@@ -639,7 +639,7 @@ Which of the two versions of approximate is preferable? In terms of brevity and 
 
 However, in the case of approximate above, the Scala compiler is able to apply an important optimization. Note that the recursive call is the last thing that happens in the evaluation of function approximate's body. Functions like approximate, which call themselves as their last action, are called tail recursive. The Scala compiler detects tail recursion and replaces it with a jump back to the beginning of the function, after updating the function parameters with the new values.
 
-  + Scala编译器做了一个重要的改在。在递归函数体最后调用他自己叫做尾部调用(tail recursive)，Scala编译器检测到tail recursion会用跳到方法开头来代替，用新的参数来代替方法入参。
+  + Scala编译器做了一个重要的改进。在递归函数体最后调用他自己叫做尾部调用(tail recursive)，Scala编译器检测到tail recursion会用跳到方法开头来代替，用新的参数来代替方法入参。
 
 The moral is that you should not shy away from using recursive algorithms to solve your problem. Often, a recursive solution is more elegant and concise than a loop-based one. If the solution is tail recursive, there won't be any runtime overhead to be paid.
 

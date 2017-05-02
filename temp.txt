@@ -1,0 +1,229 @@
+Vocabulary
++ compactly
++ tedium
+
+17.1
+
++ scala的collections库涉及到很多类和traits。结果如下图17.1。
+
++ 主要的trait是Iterable，他是mutable和immutable的sequences，sets和maps的父trait。Sequences是有序集合，类似的有arrays和lists。Sets中每个对象只有一个，通过`==`来判断。Maps每次添加一个键值对。
+
++ Iterable通过调用elements方法返回一个Iterator对象来展现collection对象。
+
++ A代表的是Iterator的类型参数，他是表示集合中元素对象的类型的。返回一个Iterator[A]，例如Iterator[Int]。
+
++ Iterable提供了很多有用的具体的方法，以element返回的Iterator形式实现的，他们每个都是在trait Iterable中的抽象方法。这些方法中许多都是high-order方法，比如map，flatMap，filter，exists和find。这些方法都是为了特殊目的简洁的遍历了整个集合，比如map方法改造元素产生新的集合，find方法通过提供的预判找到第一个符合要求的元素。
+
++ Iterator许多和Iterable一样的方法，包括high-order方法，但不属于相同的继承关系。trait Iterator是继承自AnyRef。Iterable和Iterator的不同之处在于，Iterable是用来表示可以被迭代的类型，比如集合。而trait Iterator是一种机制用来完成这个迭代。虽然Iterable(maps)可以被迭代多次，但是Iterator只能被用一次。你用Iterator来遍历整个集合，你就不能重用他了。如果你想再迭代一遍集合就需要重新调用elements方法来获得新的Iterator。
+
++ Iterator提供的许多具体的现都是根据这两个抽象方法hasNext和next。
+
++ hasNext表示有没有下一个，next表示先一个迭代项。
+
+17.2
+
++ Sequences，序列是继承自trait Seq，是一串有序连续的成线的序列。因为元素是有序的，你可以访问第一个，第二个，第103个元素。这节会快速看下几个重要的sequences。
+
+Lists
+
++ 上一章讲了具体的linked-list。Lists支持在list开头快速插入和删除，但是不能在任意位置进行访问因为他的实现就是要线性遍历整个list。
+
++ 由于初始化元素的快速添加和删除能使pattern matching工作出色。immutability能帮助开发准确，高效的算法，因为我们不需要去做这些list的拷贝。
+
++ null
+
+Arrays
+
++ Arrays允许你持有一系列的元素并且可以在任意位置高效地访问元素，包括得到和更新元素，是以0开头的index。下面创建一个知道大小的Array。
+
++ 之前提到scala通过小括号里放index来访问元素，而不是Java的方括号。
+
++ scala和java表达arrays是相同的。
+
++ null
+
+List buffers
+
++ list可以快速的在头部添加元素，但是如果你想要在尾部append元素，那你会创建一个从后往前的list并在开头添加元素，完成后调用reverse来得到你想要的序列顺序。
+
++ 另一种方法是使用ListBuffer来避免reverse操作。ListBuffer是mutable对象，可以高效地帮助你来创建append的list。通过`+=`来完元素append，`+:`完成在开头添加，而且是瞬间的。最后用toList生成List对象。
+
++ 另一个考虑用ListBuffer是为了防止栈溢出。如果你通过前面加元素来创建一个有序的序列，但是递归算法调用并不需要尾部递归，你就可以用while或for和ListBuffer来代替。
+
+Array Buffer
+
++ ArrayBuffer像Array一样，除此之外，还可以在开头和结尾添加删除元素。所有的Array操作都是可以用的，尽管因为实现被包装了几层显得有些慢。新的增加和删除功能平均来说是瞬时的，但是由于实现需要分配array空间和持有buffer内容会花费线性的时间。
+
++ 使用ArrayBuffer需要导入包。
+
++ 当你创建ArrayBuffer需要有类型参数，但你不需要指定ArrayBufer大小，因为ArrayBuffer会自动分配大小。
+
++ 你可以用`+=`方法来append。
+
++ 同样你也可以用Array的方法来获得length和小括号index来访问元素。
+
+Queues
+
++ 如果你想要一个先进先出的集合，那你可以使用Queue。Scala的库提供了mutable和immutable的Queue。下面是创建immutable Queue。
+
++ 通过enqueue方法来append元素。
+
++ 需要append多个元素，可以调用enqueue方法有集合作为入参的重载方法。
+
++ 通过dequeue来从头部删除元素。
+
++ 在immutable Queue上，dequeue会返回一个Tuple2，第一个元素是Queue的头部元素，第二个元素是Queue中剩下的元素组成的Queue。
+
++ 使用mutable和immutable是类似的，但是用`+=`和`++=`来代替enqueue方法来append元素，`++=`是用来append包含多个元素的集合，同样dequeue来删除头部元素并返回单个元素。
+
+Stacks
+
++ 如果你想要一个先进后出的集合可以St用acks。同样也有mutable和immutable两种在Scala库中。使用push来加到集合中，拿出元素用pop，得到最后层元素并不删除用top。
+
+Strings
+
++ 两一个sequence是RichString，类型为Seq[Char]，因为Predef中有一个隐式转换从String到RichString。你可以把任何一个string当做Seq[Char]。
+
++ 因为exists方法在string中是没有定义的，隐式转换为RichString，exists方法把string看做事Seq[Char]。
+
+17.3
+
++ null
+
++ 同样Maps和Sets有mutable和immutable。
+
++ 默认的Set和Map是immutable的，如果你想访问mutable的集合对象那就需要导包。immutable包因为在Predef中已经显示定义了，而且还默认导入了所有的scala文件。
+
++ type关键字是traits immutable Sets和Maps的包名加类名的别名。val Set和Map是指向immutable Set和Map的单例对象的。所以Map就是Predef.Map，Predef.Map也是被定义为scala.collection.immutable.Map。这是同时持有Map type和Map Object的。
+
++ 如果你想同时使用immutable和mutable的set或map，就要导入scala.collection.mutable。
+
++ 你可以继续使用Set作为immutable Set。用mutable.Set作为mutable的。
+
+Using sets
+
++ Set最主要的特性就是其中每个对象保证只有一个，用`==`来决定。
+
++ String的split方法能分割字符串，通过上述正则表达式可以在特定的地方进行分割。
+
++ 因为Set中不能有重复的元素，可以将上述分割后的字符串变成小写，加入到set中，set会自动排除相同项。通过伴随对象empty方法来创建一个空的set。
+
++ 通过for表达式来迭代字符串，并变成小写，通过`+=`方法加入set。
+
++ null
+
+Using maps
+
++ 你可以结合一个值到集合中的每个元素。使用map有点像使用array，用key找对应的元素来代替使用index。如果你导入了scala.collection.mutable，你可以用如下的empty方法来创建一个空的mutable map。
+
++ 当你创建map是需要指key和value的类型。
+
++ map设值是和读取值，是和array类似的。
+
++ null
+
++ 解释上述代码。
+
++ 许多普通的mutable和immutable map操作如下表。
+
+Default sets and maps
+
++ 快速的查找算法，设计Hashtable，所以可以快速判断对象是否在集合中。
+
++ mutable中的Set和Map，他们的工厂方法返回的都是HashSet和HashMap。
+
++ immutable Set的工厂方法取决于你构造时的入参个数，如下表，5个或以上会返回HashSet。
+
++ 同样的immutable Map会取决于构造时入参的键值对个数，如下表，5个或以上会返回HashMap。
+
++ 默认immutable实现给你最大性能。比如你加一个元素到emptySet，会返回你新的Set1。加一个元素到Set1，会返回新的Set2。从Set2删掉一个元素，会返回你新的Set1。
+
+Sorted sets and maps
+
++ 偶尔我们会需要用到有序的Set和Map。TreeSet和TreeMap是trait SortedSet和SortedMap的实现，通过红黑树进行对Set的元素和Map的key进行排序。trait Ordered来维护顺序。
+
+Synchronized sets and maps
+
++ 如果想要个线程安全的map，可以mix in trait SynchroizedMap在实现的Map上。下面的例子Object定义了一个方法makeMap，返回HashMap mix in trait SynchronizedMap。
+
++ null
+
++ null
+
++ 如果你想要找某个特定的key，如果没有找到这个特定的key。就会从override的default返回自定义的话。
+
++ 可以多线程访问。
+
++ 同map一样可以创建SynchronizedSet。
+
++ null
+
++ 17.4 选择mutable还是immutable集合
+
++ 有些是mutable好，有些是immutable好。如果有疑问，那就先以immutable集合开始，如果后面需要可以改变他。因为immutable集合更容易推导。
+
++ 有时你觉得用mutable很难推导，那就换immutable。如果有时自己会担心会做了mutable集合的拷贝，考虑谁有或包含mutable集合。考虑换immutable集合。
+
++ 除了immutable更容易推导，如果immutable集合中的元素较少会比mutable集合存储更加简洁。为什么immutable比mutable存储简洁可以看下上述段落中的例子。immutable可以更节省空间和性能优势。
+
++ 为了让immutable和mutable互转简单，scala有办法，但是`+=`在immutable是不可以行的如下。scala会想办法把其变成`a = a + b`。
+
++ 如果用var代替val定义，尽管是immutable的集合，`+=`操作会创建一个新的集合，会赋值给people。
+
++ 这个不仅限于`+=`操作，以=结尾的都适用如下。
+
++ 上述代码使用的是immutable Map，如果你想要用mutable Map，直接导包import scala.collection.mutable.Map来override默认的immutable Map。
+
++ 但并不是所有的转换都是那么简单的，但是var这种=好的处理可以减少很多代码。
+
++ var这种转换适用于各种值，不仅仅是集合。
+
++ 只有以=结尾的可以被转换可变与不可变。
+
+17.5
+
++ 通常我们创建集合通过伴随对象加入参的方式，编译器会调用伴随对象的apply方法。
+
++ 虽然编译器会从我们的入参推断出集合元素的类型，但是我们经常会想创建一个集合指明与编译器选择不同的类型，这问题经常发生在mutable上。
+
++ 因为入参是Int，你想要加入任意的类型，需要在初始化时指明。
+
++ 另外一个特殊情况是，你想用另一个集合来初始化一个新的集合。
+
++ 你不能直接传给TreeSet，因为没有隐式入参来匹配。
+
++ 你可以先创建一个空的TreeSet集合，然后用`++`操作来吧List集合加入。
+
+Converting to array or list
+
++ 如果你想通过一个集合来创建Array或List，很简单，直接了当的调用toList或toArray方法。
+
++ 记住虽然List最初是没有顺序的，但是TreeSet是排序的，他调用toList拷贝给新的List还是会用相同的排序顺序。
+
++ 记住这种转化需要从一个集合把元素拷贝到另外一个，所以如果大的集合会很慢。
+
+Converting between mutable and immutable sets and maps
+
++ 另外一种情形是将immutable Set和Map转为mutable的。也可以通过上述方式来完成。比如创建一个新的空的immutable集合，然后通过`++`操作把mutable的元素加到immutable空的集合中。
+
+17.6
+
++ 不像Array和List，Tuple可以持有不同类型的元素。
+
++ 用Tuple来代替一个只是持有一些字段的类可以节省很多工作。
+
++ Tuple可以整合不同的数据类型，他不是继承自Iterable。如果你发现你只需要一个Int和一个String，那你会用Tuple而不是Array和List。
+
++ 一个通用的Tuple的应用是方法返回多个值。
+
++ 解释上述代码。
+
++ 要访问Tuple的元素，使用`_1`来访问第一个元素，`_2`第二个，以此类推。
+
++ 同时，也可以用Tuple来被赋值变量。
+
++ 顺便说一句，如果你把括号删掉，那会得到不同的结果。如下。
+
++ 每个变量都被右边的内容进行了初始化。
+
++ 警告记住，元组几乎太容易使用。元组是伟大的，你可以结合没有意义的两个数据A or B，但是，每当组合有一些意义，或者你想添加一些方法的组合，最好是去创建一个类。例如，不要用一个三元组去结合日，月，年。写个Date类，意图明确，提高代码可读性，并提供编译器帮助您捕捉错误。
