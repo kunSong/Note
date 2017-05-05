@@ -17,6 +17,7 @@
 + [Chapter 15 Case Classes and Pattern Matching](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter15CaseClassesAndPatternMatching.md)
 + [Chapter 16 Working with Lists](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter16WorkingWithLists.md)
 + [Chapter 17 Collections](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter17Collections.md)
++ [Chapter 18 Stateful Objects](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter18StatefulObjects.md)
 
 ### Android
 + [Android Blog](https://github.com/kunSong/Note/blob/master/AndroidLearn.md)
