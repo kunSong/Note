@@ -1,0 +1,48 @@
+Vocabulary
++ spotlight
+
++ null
+
++ null
+
+18.1
+
++ 你可以看到纯粹的functional对象和stateful对象的主要区别，甚至不看他们的实现。当你调用方法会简洁引用字段在纯粹的functional对象上，你会一直得到同样的结果。
+
++ 上述代码cs.head始终返回a。也可以甚至是其他任意数字。
+
++ 对于stateful对象，换句话说，方法调用或字段访问的结果取决于之前在对象上的操作。一个好的例子上bank account。
+
++ 解释上述代码。
+
++ 即使你不知道BankAccount内部是什么实现，你同样能知道他是一个stateful对象。
+
++ 记住，最后两个withdrawals返回的结果是不同的。一个是true，一个false。所有很清楚bank accounts是一个mutable state的。因为在不同时间相同的操作会产生不同的结果。
+
++ 你看到BankAccount的statefulness很明显。因为有var定义。state和var总是在一起出现的，但是不一定总是那么的清晰。比如，一个类可能是stateful的，但并没有定义var和继承var之类的因为可能直接调用了其他的mutable对象的方法。但是有时可能也会是相反的，一个类可能包含vars也可能是functional的。例如下面的cache例子。
+
++ computeKey既没读也没写任何var。
+
++ 使用MemoKey可以提速，因为在cache中已经存储了之前的值，直接返回即可。除此之外，memoKey和Keyed是相同同的，Keyed是纯粹的functional，所以memoKey也是，尽管他有可赋值的var。
+
+18.2
+
++ 在可赋值变量上可以完成两个基本操作，get and set value。Java显示定义封装了两个方法getter and setter。在Scala，对于每个non-private的var都隐式定义了getter和setter方法。名字与java有所不同，var x的get方法就是x，var x的set方法就是`x_=`。
+
++ 产生了get方法hour，set方法`hour_=`。如果这个字段被标记了`private[this]`意思是只有包含此字段的对象才能访问此字段，那getter and setter有相同的可见性对于原来var。
+
++ 18.2的实现相当于18.3。18.3中字段的名字可以任意取但不要和类中名字重复就好。
+
++ 直接定义getter和setter方法来代替定义var，你可以控制变量的访问操作和变量赋值。
+
++ 一些语言可以使用特殊的语法来重新定义getter和setter方法。scala转化了这个功能但是没有用特殊的语法。属性可以被用来做很多事。18.4中的require方法控制了入参x的限制。
+
++ 同样你可以定义，有时有用的getter和setter方法与相关字段是无关的。如下。
+
++ 第一行的字段初始化`= _`。会给个0作为初始值。0取决于变量类型，0是给数值，false给boolean，null给reference的。
+
++ 作为初始化你不能去掉`= _`。
+
++ 上面这样写是作为抽象变量(abstrace variable)，不是个初始化值。
+
++ 解释代码功能。注意下面调用`t.fahrenheit = -40`，celsius也会跟着变。fahrenheit相当于一个字段。
