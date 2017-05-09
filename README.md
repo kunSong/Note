@@ -18,6 +18,8 @@
 + [Chapter 16 Working with Lists](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter16WorkingWithLists.md)
 + [Chapter 17 Collections](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter17Collections.md)
 + [Chapter 18 Stateful Objects](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter18StatefulObjects.md)
++ [Chapter 19 Type Parameterization](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter19TypeParameterization.md)
+
 
 ### Android
 + [Android Blog](https://github.com/kunSong/Note/blob/master/AndroidLearn.md)

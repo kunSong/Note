@@ -214,7 +214,7 @@ We'll start with a "little language" to describe digital circuits. A digital cir
 
 Figure 18.1 shows three basic function boxes (or gates):
 
-+ An inverter, which negates its signal.
++ An inverter, which negates its signal. 
 + An and-gate, which sets its output to the conjunction of its inputs.
 + An or-gate, which sets its output to the disjunction of its inputs.
 
