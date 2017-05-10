@@ -1,6 +1,7 @@
 ## Stateful Objects
 
 ### Vocabulary
++ spotlight
 
 In previous chapters, we put the spotlight on functional (immutable) objects. We did so because the idea of objects without any mutable state deserves to be better known. However, it is also perfectly possible to define objects with mutable state in Scala. Such stateful objects often come up naturally when you want to model objects in the real world that change over time.
 
@@ -10,13 +11,19 @@ This chapter explains what stateful objects are, and what Scala provides in term
 
 You can observe the principal difference between a purely functional object and a stateful one even without looking at the object's implementation. When you invoke a method or dereference a field on some purely functional object, you will always get the same result. For instance, given a list of characters:
 
++ 你可以看到纯粹的functional对象和stateful对象的主要区别，甚至不看他们的实现。当你调用方法会简洁引用字段在纯粹的functional对象上，你会一直得到同样的结果。
+
 ```
   val cs = List('a', 'b', 'c')
 ```
 
 an application of cs.head will always return 'a'. This is the case even if there is an arbitrary number of operations on the list cs between the point where it is defined and the point where the access cs.head is made.
 
++ 上述代码cs.head始终返回a。也可以甚至是其他任意数字。
+
 For a stateful object, on the other hand, the result of a method call or field access may depend on what operations were previously performed on the object. A good example of a stateful object is a bank account. Listing 18.1 shows a simplified implementation of bank accounts:
+
++ 对于stateful对象，换句话说，方法调用或字段访问的结果取决于之前在对象上的操作。一个好的例子上bank account。
 
 ```
     class BankAccount {
@@ -43,7 +50,11 @@ Listing 18.1 - A mutable bank account class.
 
 The BankAccount class defines a private variable, bal, and three public methods: balance returns the current balance; deposit adds a given amount to bal; and withdraw tries to subtract a given amount from bal while assuring that the remaining balance won't be negative. The return value of withdraw is a Boolean indicating whether the requested funds were successfully withdrawn.
 
++ 解释上述代码。
+
 Even if you know nothing about the inner workings of the BankAccount class, you can still tell that BankAccounts are stateful objects:
+
++ 即使你不知道BankAccount内部是什么实现，你同样能知道他是一个stateful对象。
 
 ```
   scala> val account = new BankAccount
@@ -60,7 +71,11 @@ Even if you know nothing about the inner workings of the BankAccount class, you 
 
 Note that the two final withdrawals in the previous interaction returned different results. The first withdraw operation returned true because the bank account contained sufficient funds to allow the withdrawal. The second operation, although the same as the first one, returned false, because the balance of the account had been reduced so that it no longer covered the requested funds. So, clearly bank accounts have mutable state, because the same operation can return different results at different times.
 
++ 记住，最后两个withdrawals返回的结果是不同的。一个是true，一个false。所有很清楚bank accounts是一个mutable state的。因为在不同时间相同的操作会产生不同的结果。
+
 You might think that the statefulness of BankAccount is immediately apparent because it contains a var definition. State and vars usually go hand in hand, but things are not always so clear-cut. For instance, a class might be stateful without defining or inheriting any vars because it forwards method calls to other objects that have mutable state. The reverse is also possible: A class might contain vars and still be purely functional. An example would be a class that caches the result of an expensive operation in a field for optimization purposes. To pick an example, assume the following unoptimized class Keyed with an expensive operation computeKey:
+
++ 你看到BankAccount的statefulness很明显。因为有var定义。state和var总是在一起出现的，但是不一定总是那么的清晰。比如，一个类可能是stateful的，但并没有定义var和继承var之类的因为可能直接调用了其他的mutable对象的方法。但是有时可能也会是相反的，一个类可能包含vars也可能是functional的。例如下面的cache例子。
 
 ```
   class Keyed {
@@ -70,6 +85,8 @@ You might think that the statefulness of BankAccount is immediately apparent bec
 ```
 
 Provided that computeKey neither reads nor writes any vars, you can make Keyed more efficient by adding a cache:
+
++ computeKey既没读也没写任何var。
 
 ```
   class MemoKeyed extends Keyed {
@@ -83,9 +100,13 @@ Provided that computeKey neither reads nor writes any vars, you can make Keyed m
 
 Using MemoKeyed instead of Keyed can speed up things, because the second time the result of the computeKey operation is requested, the value stored in the keyCache field can be returned instead of running computeKey once again. But except for this speed gain, the behavior of class Keyed and MemoKeyed is exactly the same. Consequently, if Keyed is purely functional, then so is MemoKeyed, even though it contains a reassignable variable.
 
++ 使用MemoKey可以提速，因为在cache中已经存储了之前的值，直接返回即可。除此之外，memoKey和Keyed是相同同的，Keyed是纯粹的functional，所以memoKey也是，尽管他有可赋值的var。
+
 ### 18.2 Reassignable variables and properties
 
 You can perform two fundamental operations on a reassignable variable: get its value or set it to a new value. In libraries such as JavaBeans, these operations are often encapsulated in separate getter and setter methods, which need to be defined explicitly. In Scala, every var that is a non-private member of some object implicitly defines a getter and a setter method with it. These getters and setters are named differently from the Java convention, however. The getter of a var x is just named "x", while its setter is named "x_=".
+
++ 在可赋值变量上可以完成两个基本操作，get and set value。Java显示定义封装了两个方法getter and setter。在Scala，对于每个non-private的var都隐式定义了getter和setter方法。名字与java有所不同，var x的get方法就是x，var x的set方法就是`x_=`。
 
 For example, if it appears in a class, the var definition:
 
@@ -94,6 +115,8 @@ For example, if it appears in a class, the var definition:
 ```
 
 generates a getter, "hour", and setter, "hour_=", in addition to a reassignable field. The field is always marked private[this], which means it can be accessed only from the object that contains it. The getter and setter, on the other hand, get the same visibility as the original var. If the var definition is public, so are its getter and setter, if it is protected they are also protected, and so on.
+
++ 产生了get方法hour，set方法`hour_=`。如果这个字段被标记了`private[this]`意思是只有包含此字段的对象才能访问此字段，那getter and setter有相同的可见性对于原来var。
 
 For instance, consider the class Time shown in Listing 18.2, which defines two public vars named hour and minute:
 
@@ -107,6 +130,8 @@ For instance, consider the class Time shown in Listing 18.2, which defines two p
 Listing 18.2 - A class with public vars.
 
 This implementation is exactly equivalent to the class definition shown in Listing 18.3. In the definitions shown in Listing 18.3, the names of the local fields h and m are arbitrarily chosen so as not to clash with any names already in use.
+
++ 18.2的实现相当于18.3。18.3中字段的名字可以任意取但不要和类中名字重复就好。
 
 ```
     class Time {
@@ -125,6 +150,8 @@ This implementation is exactly equivalent to the class definition shown in Listi
 Listing 18.3 - How public vars are expanded into getter and setter methods.
 
 An interesting aspect about this expansion of vars into getters and setters is that you can also choose to define a getter and a setter directly instead of defining a var. By defining these access methods directly you can interpret the operations of variable access and variable assignment as you like. For instance, the variant of class Time shown in Listing 18.4 contains requirements that catch all assignments to hour and minute with illegal values.
+
++ 直接定义getter和setter方法来代替定义var，你可以控制变量的访问操作和变量赋值。
 
 ```
     class Time {
@@ -150,7 +177,11 @@ Listing 18.4 - Defining getter and setter methods directly.
 
 Some languages have a special syntactic construct for these variable-like quantities that are not plain variables in that their getter or setter can be redefined. For instance, C# has properties, which fulfill this role. Scala's convention of always interpreting a variable as a pair of setter and getter methods gives you in effect the same capabilities as C# properties without requiring special syntax. Properties can serve many different purposes. In the example shown in Listing 18.4, the setters enforced an invariant, thus protecting the variable from being assigned illegal values. You could also use a property to log all accesses to getters or setters of a variable. Or you could integrate variables with events, for instance by notifying some subscriber methods each time a variable is modified (you'll see examples of this in Chapter 33).
 
++ 一些语言可以使用特殊的语法来重新定义getter和setter方法。scala转化了这个功能但是没有用特殊的语法。属性可以被用来做很多事。18.4中的require方法控制了入参x的限制。
+
 It is also possible, and sometimes useful, to define a getter and a setter without an associated field. An example is the following class Thermometer, which encapsulates a temperature variable that can be read and updated. Temperatures can be expressed in Celsius or Fahrenheit degrees. The class below allows you to get and set the temperature in either measure.
+
++ 同样你可以定义，有时有用的getter和setter方法与相关字段是无关的。如下。
 
 ```
     class Thermometer {
@@ -169,7 +200,11 @@ Listing 18.5 - Defining a getter and setter without an associated field.
 
 The first line in the body of this class defines a var, celsius, which will contain the temperature in degrees Celsius. The celsius variable is initially set to a default value by specifying `_' as the "initializing value" of the variable. More precisely, an initializer "= _" of a field assigns a zero value to that field. The zero value depends on the field's type. It is 0 for numeric types, false for booleans, and null for reference types. This is the same as if the same variable was defined in Java without an initializer.
 
++ 第一行的字段初始化`= _`。会给个0作为初始值。0取决于变量类型，0是给数值，false给boolean，null给reference的。
+
 Note that you cannot simply leave off the "= _" initializer in Scala. If you had written:
+
++ 作为初始化你不能去掉`= _`。
 
 ```
   var celsius: Float
@@ -177,7 +212,11 @@ Note that you cannot simply leave off the "= _" initializer in Scala. If you had
 
 this would declare an abstract variable, not an uninitialized one.[1]
 
++ 上面这样写是作为抽象变量(abstrace variable)，不是个初始化值。
+
 The celsius variable definition is followed by a getter, "fahrenheit", and a setter, "fahrenheit_=", which access the same temperature, but in degrees Fahrenheit. There is no separate field that contains the current temperature value in Fahrenheit. Instead the getter and setter methods for Fahrenheit values automatically convert from and to degrees Celsius, respectively. Here's an example of interacting with a Thermometer object:
+
++ 解释代码功能。注意下面调用`t.fahrenheit = -40`，celsius也会跟着变。fahrenheit相当于一个字段。
 
 ```
   scala> val t = new Thermometer
@@ -198,7 +237,11 @@ The celsius variable definition is followed by a getter, "fahrenheit", and a set
 
 The rest of this chapter shows by way of an extended example how stateful objects can be combined with first-class function values in interesting ways. You'll see the design and implementation of a simulator for digital circuits. This task is decomposed into several subproblems, each of which is interesting individually: First, you'll see a little language for digital circuits. The definition of this language will highlight a general method for embedding domain-specific languages in a host language like Scala. Second, we'll present a simple but general framework for discrete event simulation. The main task of this framework will be to keep track of actions that are performed in simulated time. Finally, we'll show how discrete simulation programs can be structured and built. The idea of such simulations is to model physical objects by simulated objects, and to use the simulation framework to model physical time.
 
++ 本章的其余部分展示了一个扩展的例子，如何有stateful对象可以与first-class function值相结合的有趣的方式。您将看到数字电路模拟器的设计和实现。这个任务分解成几个子，每一个都是有趣的个别：首先，你会看到一个小语言的数字电路。这种语言的定义将突出一个通用的方法，在scala宿主语言中嵌入特定于域的语言。其次，我们将提出一个简单的，但通用的离散事件仿真框架。这个框架的主要任务是跟踪在模拟时间内进行的动作。最后，我们将展示如何离散模拟程序可以结构化和构建。这种模拟的想法是通过模拟对象来模拟物理对象，并使用模拟框架来模拟物理时间。
+
 The example is taken from the classic textbook Structure and Interpretation of Computer Programs by Abelson and Sussman abelson-sussman:structure. What's different here is that the implementation language is Scala instead of Scheme, and that the various aspects of the example are structured into four software layers: one for the simulation framework, another for the basic circuit simulation package, a third for a library of user-defined circuits, and the last layer for each simulated circuit itself. Each layer is expressed as a class, and more specific layers inherit from more general ones.
+
++ 各方面都分为四层：一个软件的仿真框架，一个基本的电路仿真软件包，用于自定义电路库，最后一层为每个模拟电路本身。每个层表示为一个类，更具体的层继承自更一般的。
 
 **The fast track**
 
