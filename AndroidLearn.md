@@ -78,3 +78,4 @@
 + [老罗的Android之旅罗升阳前辈所写博客，从各个层面介绍Android系统Android系统源代码情景分析](http://blog.csdn.net/luoshengyang/article/details/8923485)
 + [Gityuan源码分析关于Android6.0源码系列的博文](http://gityuan.com/android/)
 
++ android源码中有很多@hide标记的api，这些api默认是不对外开放的，app是访问不到的。 我在修改android_root/packages/apps/Email下的文件，就遇到了不能访问到@hide api 的问题。 解决方法： 找到你app工程下的Android.mk ， 找到LOCAL_SDK_VERSION:=current 这一行，然后注释掉，再编译就可以。
