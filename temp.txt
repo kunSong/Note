@@ -1,5 +1,7 @@
 Vocabulary
 + caveats
++ radical
++Intuitively
 
 + null
 
@@ -47,5 +49,23 @@ Vocabulary
 + null
 
 + 我们可以添加可以用初始元素序列创建队列的工厂方法。定义与类同名的Queue对象及apply方法。
+
++ 通过放在一个文件中的伴随对象Object Queue来构造class Queue。
+
++ `Queue(1,2,3)`扩展为`Queue.apply(1,2,3)`，因为Queue用对象代替了函数，scala没有全局可见的方法，方法都是在object或class中。
+
++ 使用私有类的方法可以更彻底的把类本身隐藏掉，仅提供能够暴露类公共接口的特质。代码中定义了特质Queue，声明了方法head、tail和append。 这三个方法都实现在子类QueueImpl中，而它本身是对象Queue的内部类。这个方案暴露给客户的信息与前面相同，但使用了不同的技术。代之以逐个隐藏构造器与方法，这个版本隐藏全部实现类。
+
+19.3
+
++ 因为Queue是一个trait不是类型type，因为他带了type parameter`[T]`所以不是type。所以不能创建变量如下编译。
+
++ trait Queue指明type parameter例如Queue[Int]，Queue[String]，就可以编译了。
+
++ Queue是一个trait，Queue[String]是一个type。Queue被叫做type constructure类型构造器，可以明确指定一种类型参数type parameter。
+
++ 你可以叫Queue[T]是泛型，Queue[Int]就是特殊类型的Queue。
+
++ S是T的子类型，那么Queue[S]是Queue[T]的子类型。那么Queue叫做是协变的。例如Queue[AnyRef]作为入参类型，可以传入Queue[String]为类型的入参。
 
 + 
