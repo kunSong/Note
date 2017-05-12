@@ -229,7 +229,7 @@ Why not append to lists?
 
 Class List does not offer an append operation, because the time it takes to append to a list grows linearly with the size of the list, whereas prepending with :: takes constant time. Your options if you want to build a list by appending elements is to prepend them, then when you're done call reverse; or use a ListBuffer, a mutable list that does offer an append operation, and when you're done call toList. ListBuffer will be described in Section 22.2.
 
-  + List不用append方法而是用`::`，是因为append到一个List的时间会随着List的增大而线性增长，相反`::`只是瞬间。如果你想append可以先加到头部然后是用反转方法或者使用可变ListBuffer完成后调用toList方法。
+  + List不用append方法而是用`::`，是因为append到一个List的时间会随着List的增大而线性增长，相反`::`只是恒定的。如果你想append可以先加到头部然后是用反转方法或者使用可变ListBuffer完成后调用toList方法。
 
   + List is packed with useful methods
     - List() or Nil: The empty List

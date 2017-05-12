@@ -333,7 +333,7 @@ Like head and tail, these methods throw an exception when applied to an empty li
 
 Unlike head and tail, which both run in constant time, init and last need to traverse the whole list to compute their result. They therefore take time proportional to the length of the list.
 
-+ 不像head和tail，它们执行是瞬间的。而last和init需要遍历整个list，它们花费的时间相当于整个list的长度。
++ 不像head和tail，它们执行是恒定的。而last和init需要遍历整个list，它们花费的时间相当于整个list的长度。
 
 It's a good idea to organize your data so that most accesses are at the head of a list, rather than the last element. 
 

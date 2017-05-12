@@ -131,7 +131,7 @@ Class List provides fast access to the head of the list, but not the end. Thus, 
 
 Another alternative, which avoids the reverse operation, is to use a ListBuffer. A ListBuffer is a mutable object (contained in package scala.collection.mutable), which can help you build lists more efficiently when you need to append. ListBuffer provides constant time append and prepend operations. You append elements with the += operator, and prepend them with the +: operator. When you're done building, you can obtain a List by invoking toList on the ListBuffer. Here's an example:
 
-+ 另一种方法是使用ListBuffer来避免reverse操作。ListBuffer是mutable对象，可以高效地帮助你来创建append的list。通过`+=`来完元素append，`+:`完成在开头添加，而且是瞬间的。最后用toList生成List对象。
++ 另一种方法是使用ListBuffer来避免reverse操作。ListBuffer是mutable对象，可以高效地帮助你来创建append的list。通过`+=`来完元素append，`+:`完成在开头添加，而且是恒定的。最后用toList生成List对象。
 
 ```
   scala> import scala.collection.mutable.ListBuffer
@@ -164,7 +164,7 @@ Another reason to use ListBuffer instead of List is to prevent the potential for
 
 An ArrayBuffer is like an array, except that you can additionally add and remove elements from the beginning and end of the sequence. All Array operations are available, though they are a little slower due to a layer of wrapping in the implementation. The new addition and removal operations are constant time on average, but occasionally require linear time due to the implementation needing to allocate a new array to hold the buffer's contents.
 
-+ ArrayBuffer像Array一样，除此之外，还可以在开头和结尾添加删除元素。所有的Array操作都是可以用的，尽管因为实现被包装了几层显得有些慢。新的增加和删除功能平均来说是瞬时的，但是由于实现需要分配array空间和持有buffer内容会花费线性的时间。
++ ArrayBuffer像Array一样，除此之外，还可以在开头和结尾添加删除元素。所有的Array操作都是可以用的，尽管因为实现被包装了几层显得有些慢。新的增加和删除功能平均来说是恒定的，但是由于实现需要分配array空间和持有buffer内容会花费线性的时间。
 
 To use an ArrayBuffer, you must first import it from the mutable collections package:
 
