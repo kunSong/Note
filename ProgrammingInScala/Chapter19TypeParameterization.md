@@ -227,7 +227,7 @@ Besides +, there is also a prefix -, which indicates contravariant subtyping. If
   trait Queue[-T] { ... } 
 ```
 
-then if T is a subtype of type S, this would imply that Queue[S] is a subtype of Queue[T] (which in the case of queues would be rather surprising!). Whether a type parameter is covariant, contravariant, or nonvariant is called the parameter's variance. The + and - symbols you can place next to type parameters are called variance annotations.
+then if T is a subtype of type S, this would imply that Queue[S] is a subtype of `Queue[T]` (which in the case of queues would be rather surprising!). Whether a type parameter is covariant, contravariant, or nonvariant is called the parameter's variance. The + and - symbols you can place next to type parameters are called variance annotations.
 
 In a purely functional world, many types are naturally covariant (flexible). However, the situation changes once you introduce mutable data. To find out why, consider the simple type of one-element cells that can be read or written, shown in Listing 19.5.
 
