@@ -1,3 +1,51 @@
 Vocabulary
-+
++ caveats
 
++ null
+
++ 类型参数化允许您编写通用类和特征。例如，Set泛型Set[T]。其实例化结果是Set[String]和Set[Int]等，但它必须是something。不同于Java，它允许原始类型，Scala要求您指定类型参数。差异是parameterization types的继承关系，例如Set[String]是否是Set[AnyRef]的子类型。
+
++ 本章包含三部分。第一部分为开发纯粹functional queue的数据结构。第二部分开发隐藏此结构内部表示细节的技术。最后一部分解释了类型参数的差异以及它与信息隐藏的相互作用。
+
+19.1
+
++ functional queue是一个具有以下功能的数据结构。
+
++ 不像mutable queue，functional queue是不会改变其内容来append的，而是返回一个包含新元素的新queue。本章的目的是为了来创建一个名叫Queue的类，能像如下工作。
+
++ 如果是mutable queue，上述代码q和q1的元素都会变成1234，但是过是functional queue只有q1会是1234，而q还是原来的。
+
++ functional queue和List有点像，他们都是永久持有对象的，就是说在修改和扩展之后旧版本对象仍然是可以用的。这样才能实现head和tail的功能，但是List是用cons`::`在头部加入元素，而queue是用append在尾部加入元素。
+
++ 效率如何？理想情况下, functional queue(immutable)的开销不应该比imperative(mutable)
+更高。也就是说, 所有三操作head，tail和append都应在恒定时间内操作。
+
++ 一个简单方法来实现functional queue，就是使用list来作为元素类型。使用list的head，tail和`:::`。
+
++ 但是append方法不是恒定的，取决于list中的元素数量。所以使用了反转顺序来添加元素实现append。
+
++ 现在append是恒定了，但是head和tail不是了，需要花费元素数量的时间量。
+
++ 看到这两个例子都不能很好的权衡这三个方法，所以我们可以用两个list，leading和tailing，来表达队列。leading包含前段元素，而trailing包含了反向排列的后段元素。队列在任何时刻的所有内容都可以表示为`leading ::: trailing.reverse`。
+
++ 想要添加新元素，只要使用::操作符将其添加到trailing，使得append是常量时间。当原始的空队列通过后继的append操作构建起来时，trailing将不断增加，而leading始终是空白的。于是，在对空的leading第一次执行head或者tail操作之前，trailing应该被反转并复制给leading，这个操作称为mirror。
+
++ 那这个queue的复杂度呢？mirror操作花费的时间大概与队列的元素数量成正比，但仅在leading为空时。如果leading非空，它将直接返回。因为head和tail调用了mirror，所以他们的复杂度与队列长度呈线性关系。实际上，假设leading为空时，mirror才翻转并复制，那么n个元素需要进行n次tail之后才进行复制。这n次tail操作平均分担了mirror操作的时间复杂度，也相当于常量时间了。所以Queue和mutable对象效率是差不多的。
+
++ 对于这个论据的两个告诫。第一，常数可能不同。第二，论据是在head，tail和append操作频率差不多的情况下。如果头操作比其他两个多，则论据无效，因为需要调用mirror方法重组成本高昂。如果要避免第二个告诫，设计一个functional queue在连续的head操作中，仅有第一次操作需要重组。会在本章末尾得到。
+
+19.2
+
++ 上面实现的Queue以暴露本不该暴露的实现细节为代价，全局可访问Queue构造器，带有两个列表参数，不能作为直观表达队列的形式。
+
++ Scala的主构造方法并没有显示定义，可以通过把private修饰符添加在类参数列表的前面把主构造器隐藏起来。
+
++ 构造器是私有的，它只能被类本身及伴生对象访问。Queue是public，类型是可以访问的。
+
++ null
+
++ null
+
++ 我们可以添加可以用初始元素序列创建队列的工厂方法。定义与类同名的Queue对象及apply方法。
+
++ 
