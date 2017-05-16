@@ -1,7 +1,13 @@
+Chapter 19
+
 Vocabulary
 + caveats
 + radical
-+Intuitively
++ Intuitively
++ soundness
++ sake
++ arguably
++ prominent
 
 + null
 
@@ -67,5 +73,120 @@ Vocabulary
 + 你可以叫Queue[T]是泛型，Queue[Int]就是特殊类型的Queue。
 
 + S是T的子类型，那么Queue[S]是Queue[T]的子类型。那么Queue叫做是协变的。例如Queue[AnyRef]作为入参类型，可以传入Queue[String]为类型的入参。
+
++ 默认的Queue[T]就是非变。所以Queue[String]不能用做Queue[AnyRef]，但是通过改变如下类型前加一个`+`来控制是协变的。
+
++ 通过前缀`+`就可以协变，Queue[String]是Queue[AnyRef]的子类型。
+
++ 除了`+`还有`-`，这是逆变的。
+
++ 如果T是S的子类型，这就暗示了Queue[S]是Queue[T]的。协变，逆变，不变被统称为参数变化。`+``-`被放在参数旁边被叫做变化解释。
+
++ 在纯粹的函数式世界里，许多类型是自然变化的。但是, 一旦引入可变数据, 情况就会发生变化。要了解原因, 请考虑如下例子。
+
++ 上述19.5声明为非变的。为了论证起见, 假定Cell已被声明为协变。被声明为`Class[+T]`。很快会解释，你可能构建下列疑难语句。
+
++ 解释上述每一行，前三句看起来不错，最后一句将一个integer 1赋值给string s，这显然是对类型健全的侵犯。
+
++ 运行时的错误归因于使用了协变。Cell[String]不是Cell[Any]，因为你可以对Cell[Any]做的不能对Cell[String]做。
+
++ 事实上把协变版本的Cell给到编译器会发生编译错误。
+
++ 可以用Java的arrays来做比较，arrays和上述Cell很像，只是arrays多几个元素。arrays可以被看做是协变的。可以用arrays来模拟上述Cell的代码。
+
++ 可以编译通过但是执行时会报错ArrayStore exception，因为a2[0]被赋值了Integer。
+
++ 因为Java在在运行时存储array中的元素的，当每次更新元素的时候会检查对应的类型。如果不是那个类型实例就会抛出ArrayStore异常。
+
++ 为什么Java会采用如此设计，看似不安全并且昂贵的。他们想用一种简单的方法来处理数组。例如, 他们希望能够编写一个方法来对数组中的所有元素进行排序, 使用类似下面的签名, 它接受了一个对象数组。
+
++ 协变是需要的，这样任意引用类型的数组能传入这个方法。当然，由于Java泛型的到来，这个排序方法可以用类型参数type parameter来写，因此不需要协变。出于兼容性考虑，一直沿用到现在。
+
++ Scala试图比Java更纯净而不是把arrays当做协变处理。前两行转为scala会看到如下。
+
++ 这里Scala把arrays当做了非变的，所以不能把Array[String]被考虑成Array[Any]。但是有时需要和Java中的旧方法进行交互，就用了对象数组来模拟泛型数组。比如你想调用之前描述的排序方法用Strings作为入参。为了实现可能，Scala允许你把Array[T]强转为Array[Any]，Any是T的父类。
+
++ 在编译时, 强制转换始终是合法的, 并且它总是在run-time上成功, 因为JVM的底层run-time模型将数组视为协变。但你可能还会得到ArrayStore exception, 就像你在java中。
+
+19.4
+
++ 目前，违反类型健全涉及到可被赋值字段或array元素。纯粹的函数式实现Queue看起来是很好的协变候选。但是, 下面的示例显示, 即使没有reassignable字段, 也可以有不健全的情况。
+
++ 假设在19.4中定义的Queue是协变的。那定义一个子类型指明元素类型为Int，然后重载append方法。
+
++ 在调用父类append前计算传入x的根号值。
+
++ 这两行的第一行是有效的，因为StrangeIntQueue是Queue[Int]的子类，假设Queue是协变的，Queue[Int]是Queue[Any]的子类。第二行也是有效的因为你可以在Queue[Any]上append String。然而把这两个放在一起，在string上起到平方根的作用是没有意义的。
+
++ 显然, 不只是可变字段使协变类型不健全。结果表明, 当泛型参数类型以方法参数的类型显示时, 该类型参数中的包含类或特征可能不具有协变。对于Queue, append方法违反了此条件:
+
++ reassignable字段是特例, 它不允许用`+` 批注的类型参数作为方法参数类型。18.2提到, reassignable字段`var x: T`, 在 scala中作为getter方法处理`def x: T`和setter方法`def x_= (y: T)`。您可以看到, setter方法具有字段类型T的参数。因此, 该类型可能不是协变的。
+
++ the fast track
+
+19.5
+
++ 回到Queue类，你看到Queue[T]不能协变，因为T是作为append方法的类型参数type parameter。
+
++ 有办法来摆脱，你可以泛化append方法通过多态，在type parameter上使用a lower bound。如下。
+
++ 这新的定义是给append方法一个类型参数type parameter U，语法是`U >: T`。定义T是U的下界。结果，U是T的父类。那现在用U代替了T作为append的入参类型。返回值也从Queue[T]变成了Queue[U]。
+
++ 例如，假设现在有两个Fruit类的子类，Apple和Orange。通过新的Queue的定义，可以在Queue[Apple]上append Orange，结果是Queue[Fruit]。
+
++ 修正定义了append的类型是正确的。如果T是比期望更加具体的类型比如Apple代替Fruit，调用append始终可以工作，因为U(Fruit)是T(Apple)的父类。
+
++ 新定义的append好，因为他更加通用化。新定义允许你append类型为T的Queue的元素的父类型U的任意元素。结果是Queue[U]。结合queue的协变，可以很自然的构建不同类型元素的queue。
+
++ variance annotations(即非变，协变和逆变)可以和lower bounds完美结合。他是一个很好的类型驱动设计。
+
++ Scala会倾向于declaration-site variance，因为可以在编译的时候就检查，不至于像use-site variance在使用时就发现某个方法不适用。
+
+19.6
+
++ 这里讲下逆变。
+
++ 这里OutputChannel被定义为逆变T。所以OutputChannel[AnyRefs]是OutputChannel[String]的子类。是有意义的，考虑OutputChannel[String]的操作是写一个字符串。那OutputChannel[AnyRefs]可以来代替OutputChannel[String]来完成操作，但还相反OutputChannel[String]不能代替OutputChannel[AnyRefs]，因为OutputChannel[String]都是string的操作。
+
++ 当T是U的子类型，需要U的地方可以安全的替换T。这是Liskvo替换原则。
+
++ 有时协变和逆变是混合在相同类型的。一个突出的例子是Scala的function traits。例如，当你写一个function value `A => B`会扩展为Function1[A, B]。A是逆变的，B是协变的。
+
++ 解释下列代码，入参为Book，返回的是AnyRef，最后调用的方法返回的是String。
+
++ null
+
++ 最后一行的结果是String是AnyRef的子类，因为function是协变的，所以可以这样。
+
++ 解释最后一行代码。
+
++ getTitle的入参是Publication，而printBookList的入参类型是Book。这是工作的因为Function1定义的是逆变的。Book具有Publication的所有功能。
+
++ 解释下图协变和逆变的继承关系。左边是逆变，右边是协变的。
+
+19.7
+
++ 到目前为止，Queue类仍有一些问题。如果head被一遍遍的调用很多次，而leading列表为空，那么mirror操作可能会重复的把trailing复制到leading列表。
+
++ 可以将leading和trailing指定为可以重新复制的变量，而mirror从trailing反向复制到leading的操作是在当前队列上的副作用，而不再返回新的队列。通过将leading和trailing用private[this]修饰，声明为对象私有变量，使得这种副作用纯粹是Queue操作的内部实现，从而使它对于Queue的客户不可见。
+
++ null
+
++ null
+
++ 被定义在同一个对象内访问对象私有变量不会引起与变化型有关的问题。Scala的变化型检查规则包含了关于对象私有定义的特例。当检查到带有`+``-`号的类型参数只出现在具有相同变化型分类的位置上时，这种定义将被忽略。如果把this去掉会报错如下。
+
+19.8
+
++ 在这重新看下16.1，我们为list写了merge sort函数，第一个入参为比较函数，第二个入参是要比较list。另一种方法是采用混入mix-in Ordered trait，实现Ordered的抽象compare方法，你可以使客户端通过大于，小于，小于等于和大于等于来比较类实例。
+
++ 当你传入新的sort function混入了Ordered的类型需要用upper bound。upper bound和lower bound类似。上界使用了`<:`语法，意思是T有一个上界Ordered[T]。这意味着传入orderedMergeSort的list的元素类型必须是Ordered的子类型。你可以传入List[Person]给orderedMergeSort，因为Person混入了Ordered。
+
++ 但是你不能来用orderedMergeSort来排序Int类型的类，因为Int不是Ordered[Int]的子类型。
+
+Chapter 20
+
+Vocabulary
++ 
 
 + 
