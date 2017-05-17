@@ -19,7 +19,7 @@
 + [Chapter 17 Collections](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter17Collections.md)
 + [Chapter 18 Stateful Objects](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter18StatefulObjects.md)
 + [Chapter 19 Type Parameterization](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter19TypeParameterization.md)
-
++ [Chapter 20 Abstract Members](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter20AbstractMembers.md)
 
 ### Android
 + [Android Blog](https://github.com/kunSong/Note/blob/master/AndroidLearn.md)
