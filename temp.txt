@@ -187,6 +187,129 @@ Vocabulary
 Chapter 20
 
 Vocabulary
-+ 
++ resembles
++ subtle
++ analogous
++ analogy
++ exemplifies
 
-+ 
++  抽象class或者trait的成员没有完成实现定义，抽象成员可以在子类中实现。Scala中除了抽象方法，还有抽象字段和抽象类型作为class或trait的成员
+
++ 讨论内容看下。
+
+20.1
+
++ 如下定义了抽象成员。
+
++ 具体抽象类的实现。
+
++ type T定义为type String的别名。其他的进行了实现和初始化。
+
++ null
+
+20.2
+
++ 一个抽象类型abstract type永远是一个class或trait的成员。
+
++ 定义非抽象的type成员，可以给类型起新的名字或别名。例如，在定义的类中出现T，那就是代表String类型。
+
++ 第一个目的是为了简洁，更容易检查代码。第二个目的是父类定义抽象type，子类可以来继承实现。
+
+20.3
+
++ 抽象val的定义如下。
+
++ 提供了名字和类型，但没有值。值是在子类中实现的。
+
++ 你可以来使用这个抽象的val当你不知道准确值的时候，但是你要知道这是一个不可改变的变量在每个实例类中。
+
++ 抽象val定义类似于一个没有括号的的抽象方法定义，如下。
+
++ 调用者可以通过`obj.initial`来调用val和method。如果initial是abstract val，那保证调用者每次得到的引用值是相同的。而如果是abstract method，那具体子类实现的方法，得到的值会不同。
+
++ abstract method可以被子类用method和val override，但是abstract val只能是val。
+
+20.4
+
++ 像abstract val一样，var也定义了名字和类型。
+
++ 在18.2节你看到定以vars会配备getter和setter。同理定以abstract vars也会隐式定以abstract getter和abstract setter方法。如下。这里不会有可赋值字段定义会在子类中具体实现abstract var。
+
+20.5
+
++ abstract vals有时扮演了一个类似父类构造参数，父类中没有的在子类中提供具体的。特别重要的是traits，因为trait没有构造方法你可以传构造参数给他。所以可以用abstract val来在子类中实现。下面是Chapter 6的重新构造的Rational。
+
++ Chapter 6的Rational类有两个参数一个是分子一个是分母。RationalTrait用两个abstract val来定义。如果要实例化一个trait实例，需要实现absract val的定义。
+
++ new关键字来实例化一个RationalTrait，后面大括号中是类体，这个实例化了一个匿名类mix-in了一个trait。类似于`new Rational(1, 2)`，但是这样类比不是很好，考虑到如果写成如下表达式就会有微妙的不同在初始化的先后顺序。
+
++ expr1和expr2在类Rational初始化前就已经被评估了，所以他们是Rational初始化时可以访问的。但是对于trait来说就是相反的。
+
++ expr1和expr2的评估是匿名类初始化的一部分，而匿名类初始化是在RationalTrait初始化之后。所以这两个abstract val在RationalTrait初始化的时候是访问不到的，如果是Int型会给一个默认的0。因为上面代码这两个值没有用到，所以没关系。但是看下面的代码这两个值被用到了，就会有问题。当new的时候会报错。
+
++ null
+
++ 因为在RationalTrait初始化的时候始终还是0，所以报了require的错。
+
++ 所以证明了类构造参数和abstract val的初始化顺序有区别的。前者在类构造前就初始化好了，后在是在子类中实现，需要在父类初始化后在被评估的。
+
++ 那解决这个问题，scala提供了两种方法，pre-initialized和lazy vals。
+
+Pre-initialized fields
+
++ 在父类调用前就初始化子类字段。如下。
+
++ Pre-initialized fields不仅限于匿名类。还可以用在对象或命名的子类中。在20.6和20.7中你可以看到Pre-initialized的部分是在extends关键字后的。20.7中的RationalClass类展现了一个通用的模式，类参数如何可以被父trait初始化时访问到的。
+
++ 因为Pre-initialized是在父类构造方法调用前初始化的，他们的初始化者是不能引用到要被构建的对象的。如下this.numerArg。
+
++ null
+
+Lazy vals
+
++ 除了前面介绍的预先初始化成员值外，你还是让系统自行决定何时初始化成员的初始值，这是通过在val定义前面添加 lazy，也是说直到你第一次需要引用该成员时，系统才会去初始化，否则该成员就不初始化。
+
++ 正如你所看到的，当引用Demo对象时，它的成员x也会初始化，初始化x伴随着初始化Demo的过程。然后，如果我们在val x前添加lazy，情况就有所不同了。
+
++ 在使用lazy之后，初始化Demo时，不会初始化x，只有在引用到Demo.x该初始化代码才会执行。
+
++ 这有点类似定义了一个无参数的方法，但和def不同的是，lazy变量初始化代码只会执行一次。事实上，第一次评估后，lazy变量的值就被存储了，等后续同样的val被调用的时再使用。
+
++ 可以看到例如Demo的对象本身也像一个lazy变量，也是在第一次引用时才会初始化。实际上一个object定义可以看成是使用了lazy val定义一个匿名类实例的简化方式。
+
++ 使用lazy val，修改之前的RationalTrait，在这个新的Trait定义中，所有的类成员变量的实现(非抽象成员)都使用lazy来修饰。同时把require移动到g里面，这样所有的lazy val初始化代码都移动到val定义的右边。我们不再需要预先初始化成员变量。
+
++ 分析一下这段代码中命令行的执行顺序。
+  - 首先，创建了一个新的LazyRationalTrait的实例，执行LazyRationalTrait的初始化代码，这部分代码为空，LazyRationalTrait所有成员变量都没有初始化。
+  - 其次，该Trait的匿名子类的主构造函数被执行，这部分初始化numberArg和denomArg 为2和4.
+  - 接下来，命令行需要调用该实例的toString方法来显示该实例的值。
+  - 接下来，toString需要访问成员number这是第一次访问该成员，因此lazy val 初始化代码被执行。初始化代码调用私有成员g，因此需要计算g的值，用到之前定义过的numberArg和denomArg。
+  - 接下来toString需要访问成员denom这是第一次访问该成员，因此lazy val初始化代码被执行。初始化代码调用私有成员g，因此需要计算g的值，因为g已经计算过，无需再计算。
+  - 最后，toString的结果1/2构造出来并显示。
+
++ 在这个例子中，我们在写代码时，g定义在number和denom的后面，然而，由于这三个变量都是使用lazy来定义的，因此它们在代码中出现的顺序并不重要，因为值会按需求初始化。
+
++ null
+
++ null
+
+20.6
+
++ Type T的用法，这是声明一个抽象类型，本篇介绍这种声明的意义和用途。和其它类型的抽象类型一样，抽象类型定义也是定义了一个占位符类型，其具体定义由其子类声明。不同的子类可以定义不同T的具体类型。 
+
++ 一个例子，假定你需要为动物的饮食习性建模， 你可能会定义如下的数据结构。
+
++ 怎么会出错呢，这是因为类Cow中的eat不能重载其父类，这是因为参数类型不一致，Animal中food类型为Food，而Cow中类型为Grass。
+
++ 仅管有人会说Grass是Food的子类，编译器没有必要这么严格。但是如果编译器允许这种情况存在，那么很快就出现新问题了。假定前面的编译没有问题，我们在定义一个Fish类。
+
++ 问题来了，我们给牛喂了鱼。如果前面的Cow可以编译通过的话，这段代码也是合法的，但结果却显然不对，因此编译器编译不通过Cow是有道理的。
+
++ 对于这个问题，我们可以通过抽象类型来解决，哪种动物吃哪种食物由动物决定。
+
++ 当定义新的Animal子类时，动物只能吃合适的食物，而Animal类本身不能决定那种食物合适，因此我们使用抽象类型定义。但这个抽象类型有类型上界限制，表示Animal子类中使用的SuitableFood必须是Food的子类。我们重新定义Cow如下。
+
++ 如果再给牛喂鱼会得到类型不match错误。
+
+
+

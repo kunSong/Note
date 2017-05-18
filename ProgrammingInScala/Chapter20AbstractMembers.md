@@ -31,6 +31,7 @@ A concrete implementation of Abstract needs to fill in definitions for each of i
 ```
 
 The implementation gives a concrete meaning to the type name T by defining it as an alias of type String. The transform operation concatenates a given string with itself, and the initial and current values are both set to "hi".
+
 This example gives you a rough first idea of what kinds of abstract members exist in Scala. The remainder of the chapter will present the details and explain what the new forms of abstract members, as well as type members in general, are good for.
 
 ### 20.2 Type members
@@ -64,6 +65,7 @@ An abstract val declaration resembles an abstract parameterless method declarati
 ```
 
 Client code would refer to both the val and the method in exactly the same way, i.e., obj.initial. However, if initial is an abstract val, the client is guaranteed that obj.initial will yield the same value every time it is referenced. If initial were an abstract method, that guarantee would not hold, because in that case initial could be implemented by a concrete method that returns a different value every time it's called.
+
 In other words, an abstract val constrains its legal implementation: any implementation must be a val definition; it may not be a var or a def. Abstract method declarations, on the other hand, may be implemented by both concrete method definitions and concrete val definitions. Given the abstract class Fruit shown in Listing 20.1, class Apple would be a legal subclass implementation, but class BadApple would not.
 
 ```
@@ -317,6 +319,7 @@ Using lazy vals, you could reformulate RationalTrait as shown in Listing 20.8. I
 ```
 
 No pre-initialization is needed. It's instructive to trace the sequence of initializations that lead to the string 1/2 to be printed in the code above:
+
 First, a fresh instance of LazyRationalTrait gets created, and the initialization code of LazyRationalTrait is run. This initialization code is empty—none of the fields of LazyRationalTrait is as yet initialized.
 
 Next, the primary constructor of the anonymous subclass defined by the new expression is executed. This involves the initialization of numerArg with 2 and denomArg with 4.
