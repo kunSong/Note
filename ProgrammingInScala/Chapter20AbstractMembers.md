@@ -547,6 +547,7 @@ and then just use Red, Green, and Blue. But what is the type of these values? En
 ```
 
 then Direction.Value would be different from Color.Value because the path parts of the two types differ.
+
 Scala's Enumeration class also offers many other features found in the enumeration designs of other languages. You can associate names with enumeration values by using a different overloaded variant of the Value method:
 
 ```

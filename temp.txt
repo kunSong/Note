@@ -311,5 +311,48 @@ Lazy vals
 
 + 如果再给牛喂鱼会得到类型不match错误。
 
+20.7
 
++ `bessy.SuitableFood`包含一个的对象引用bessy和一个类型字段SuitableFood。Scala把一个type作为成员。`bessy.SuitableFood`叫path-dependent类型。path意思是一个对象的引用，是一个变量名引用到对象。
 
++ path-dependent是依赖于路径。通常，不同的路径会得到不同的类型。如下
+
++ 如果你给狗喂牛的食物就不会编译通过。
+
++ 这里的问题是给狗的SuitableFood是bessy.SuitableFood是Gress，所以类型不匹配。lassie.SuitableFood是DogFood，如下变量名字换换仍然是适合的food。
+
++ path-dependent类型语法类似Java的内部类。但是有很大区别，path-dependent是以outer对象命名，反之内部类是以outer类命名。Java样式的内部类也可以在Scala中表达，但是他们写法不同。
+
++ 在Scala中，用`Outer#Innter`来代替Java的`Outer.Inner`作为类型。`.`是保留给对象用的。
+
++ 这里o1.Innter和o2.Inner是两个不同的path-dependent的类型。但是他们都是Outer#Inner的子类型，这个是用来表达任意Outer类型outer对象的Inner class。o1和o2都是用来指出特定outer对象的Inner class。
+
++ 在Scala，像Java，inner class的实例有一个引用到它自己外部的outer class实例。允许inner clsas可以访问其外部outer class的成员。你不能实例化一个inner class没有指定外部类实例。你可以在外部类实例中进行实例化inner类，也可以使用path-dependent来实例化inner class。
+
++ inner对象会包含其外部对象引用中。你不能使用Outer#Inner来实例化，因为没有特别指定Outer实例。
+
+20.8
+
++ path-dependent类型应用是Scala的enumerations，你可以继承自scala.Enumeration来创建一个新类。
+
++ Scala简化定义。
+
++ 通过导包直接使用Red，Green，and Blue。Enumeration定义了一个内部类叫Value，通过一个同样名字的无参方法返回这个类的实例。Color.Red相当于Color.Value。
+
++ Direction.Value和Color.Value不同，因为path不一样。
+
++ Scala的Enumeration提供了很多功能，你可以关联values用不同的重载变量的Value方法。
+
++ 可以用foreach表达式来迭代enumeration。
+
++ enumeration是从0开始的，你可以通过方法读到某个value的index。
+
++ 通过如下类名加小括号index方法来得到某个元素。
+
++ null
+
+20.9
+
++ 剩下的部分为货币的例子来展现abstract types。
+
++ 

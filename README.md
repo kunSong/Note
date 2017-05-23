@@ -20,6 +20,7 @@
 + [Chapter 18 Stateful Objects](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter18StatefulObjects.md)
 + [Chapter 19 Type Parameterization](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter19TypeParameterization.md)
 + [Chapter 20 Abstract Members](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter20AbstractMembers.md)
++ [Chapter 21 Implicit Conversions and Parameters](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter21ImplicitConversionsAndParameters.md)
 
 ### Android
 + [Android Blog](https://github.com/kunSong/Note/blob/master/AndroidLearn.md)
