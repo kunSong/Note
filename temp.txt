@@ -355,4 +355,34 @@ Lazy vals
 
 + 剩下的部分为货币的例子来展现abstract types。
 
-+ 
++ 第一个是个错误的设计。
+
++ val amount的类型是Long，后面会在具体的子类中定义。designation方法返回Stirng，是指货币的种类。
+
++ `+`用来货币加，`*`用来乘一个浮点型数字。
+
++ 这个设计如果只是针对一种货币比如美元，欧元是可以的。但是如果处理多种货币。假设你构建美元和欧元作为货币的子类。如下。
+
++ 如果让把美元加到欧元上，结果类型是Currency，但是这个结果是混着美元和欧元的。有没有更特别的`+`方法，就是当美元作为入参，产生美元结果，当欧元入参，产生欧元结果。结果的产生取决于你在哪种类中。否则只能加一次，并不能每次产生新的货币定义。
+
++ 在Scala中有个办法就是如果某些东西在类定义的时候不知道，那就把他弄成abstract的。可以应用在valus和types上。在货币这个例子里，加这个方法的确切入参和返回结果类型不是很清楚，所以它是成为abstract type的好的候选者。第二个不是太完美的设计如下。
+
++ 这一版叫AbstractCurrency，同时包含了一个叫abstract type Currency。每个具体的子类会把Currency类型引用到子类自己上。
+
++ 这个设计工作了，但是有一个问题加和乘的方法在AbstractCurrency中没有定义。加法的实现很简单就是`this.amount + that.amount`，但是你如何将amount转换成合适的类型呢？如下是不会编译通过的。
+
++ scala对待abstract type有个规则，不用创建abstract type实例，也不用把abstract type作为其他类的子类型。
+
++ 你可以用factory method来使这条规则起效。
+
++ 为何要将factory method放在AbstractCurrency类中。至少有两个原因，第一如果你有一些钱，你可以有能力去拿更多的钱。
+
++ 第二个问题是如果你已经有了货币对象的引用还能创建更多的货币引用，但是你不知道第一个货币的对象的引用，你需要另外一个创建的方法，和make做同样的事，就涉及到代码复制的问题。
+
++ 解决办法就是将工厂方法移到外部类AbstractCurrency中。需要创建一个新的外部类CurrencyZone类来包含AbstractCurrency。
+
++ 解释上述代码。
+
++ 还有个问题就是子单位。例如美元有美分。所以需要有一个字段CurrencyUnit在类CurrencyZone中来将美分转化为美元。
+
++ 这个版本的定义中，还增加了3个新的字段。Cent字段代表1个US.Currency(USD)，Dollar字段代表100个USD。类型Dollar是被抽象内部类Dollar定义的。

@@ -828,6 +828,7 @@ Then, you could add a conversion method, from, to class Currency, which converts
 ```
 
 The from method takes an arbitrary currency as argument. This is expressed by its formal parameter type, CurrencyZone#AbstractCurrency, which indicates that the argument passed as other must be an AbstractCurrency type in some arbitrary and unknown CurrencyZone. It produces its result by multiplying the amount of the other currency with the exchange rate between the other and the current currency.[3]
+
 The final version of the CurrencyZone class is shown in Listing 20.14.
 
 ```
@@ -892,6 +893,7 @@ You can then do some currency conversions:
 ```
 
 The fact that we obtain almost the same amount after three conversions implies that these are some pretty good exchange rates!
+
 You can also add up values of the same currency:
 
 ```
