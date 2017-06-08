@@ -931,6 +931,8 @@ This definition is just like the previous definition of the US object, except th
 
 The toString method in class Currency also needs to be adapted to take subunits into account. For instance, the sum of ten dollars and twenty three cents should print as a decimal number: 10.23 USD. To achieve this, you could implement Currency's toString method as follows:
 
++ toString需要表达适合的货币格式。比如，10.23USD，下面的formatted方法就是可以实现这个格式并返回string。
+
 ```
   override def toString = 
     ((amount.toDouble / CurrencyUnit.amount.toDouble)
@@ -939,6 +941,8 @@ The toString method in class Currency also needs to be adapted to take subunits 
 ```
 
 Here, formatted is a method that Scala makes available on several classes, including Double.[2] The formatted method returns the string that results from formatting the original string on which formatted was invoked according to a format string passed as the formatted method's right-hand operand. The syntax of format strings passed to formatted is the same as that of Java's String.format method. For instance, the format string %.2f formats a number with two decimal digits. The format string used in the toString shown previously is assembled by calling the decimals method on CurrencyUnit.amount. This method returns the number of decimal digits of a decimal power minus one. For instance, decimals(10) is 1, decimals(100) is 2, and so on. The decimals method is implemented by a simple recursion:
+
++ `%.2f`是保留小数点后两位有效数字。decimals方法是返回10的几次方。
 
 ```
   private def decimals(n: Long): Int = 
@@ -978,6 +982,8 @@ Listing 20.12 - Currency zones for Europe and Japan.
 
 As another refinement you can add a currency conversion feature to the model. As a first step, you could write a Converter object that contains applicable exchange rates between currencies, as shown in Listing 20.13.
 
++ 可以做一个货币汇率兑换的map。
+
 ```
     object Converter {
       var exchangeRate = Map(
@@ -997,6 +1003,8 @@ Listing 20.13 - A converter object with an exchange rates map.
 
 Then, you could add a conversion method, from, to class Currency, which converts from a given source currency into the current Currency object:
 
++ 可以有一个转换方法。
+
 ```
   def from(other: CurrencyZone#AbstractCurrency): Currency = 
     make(Math.round(
@@ -1005,6 +1013,8 @@ Then, you could add a conversion method, from, to class Currency, which converts
 ```
 
 The from method takes an arbitrary currency as argument. This is expressed by its formal parameter type, CurrencyZone#AbstractCurrency, which indicates that the argument passed as other must be an AbstractCurrency type in some arbitrary and unknown CurrencyZone. It produces its result by multiplying the amount of the other currency with the exchange rate between the other and the current currency.[3]
+
++ from方法可以用任意货币作为如参。正规的参数类型为`CurrencyZone#AbstractCurrency`，这暗示了传入需要是一个AbstractCurrency类型在任意的不知道的CurrencyZone中。返回货币是乘以汇率的的货币
 
 The final version of the CurrencyZone class is shown in Listing 20.14.
 
@@ -1080,6 +1090,8 @@ You can also add up values of the same currency:
 
 On the other hand, you cannot add amounts of different currencies:
 
++ 你不能把两个不同货币相加。
+
 ```
   scala> US.Dollar + Europe.Euro
   <console>:7: error: type mismatch;
@@ -1090,6 +1102,8 @@ On the other hand, you cannot add amounts of different currencies:
 ```
 
 By preventing the addition of two values with different units (in this case, currencies), the type abstraction has done its job. It prevents us from performing calculations that are unsound. Failures to convert correctly between different units may seem like trivial bugs, but they have caused many serious systems faults. An example is the crash of the Mars Climate Orbiter spacecraft on September 23, 1999, which was caused because one engineering team used metric units while another used English units. If units had been coded in the same way as currencies are coded in this chapter, this error would have been detected by a simple compilation run. Instead, it caused the crash of the orbiter after a near ten-month voyage.
+
++ 为了避免两个不同的单位数据进行相加，抽象类型完成了这一工作。
 
 ### 20.10 Conclusion
 
