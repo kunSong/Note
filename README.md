@@ -21,6 +21,7 @@
 + [Chapter 19 Type Parameterization](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter19TypeParameterization.md)
 + [Chapter 20 Abstract Members](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter20AbstractMembers.md)
 + [Chapter 21 Implicit Conversions and Parameters](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter21ImplicitConversionsAndParameters.md)
++ [Chapter 22 Implementing Lists](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter22Implementing Lists.md)
 
 ### Android
 + [Android Blog](https://github.com/kunSong/Note/blob/master/AndroidLearn.md)
