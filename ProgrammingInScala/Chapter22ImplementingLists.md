@@ -333,6 +333,6 @@ The design of Scala's List and ListBuffer is quite similar to what's done in Jav
 
 In this chapter, you saw how lists are implemented in Scala. List is one of the most heavily used data structures in Scala, and it has a refined implementation. List's two subclasses, Nil and ::, are both case classes. Instead of recursing through this structure, however, many core list methods are implemented using a ListBuffer. ListBuffer, in turn, is carefully implemented so that it can efficiently build lists without allocating extraneous memory. It is functional on the outside, but uses mutation internally to speed up the common case where a buffer is discarded after toList is been called. After studying all of this, you now know the list classes inside and out, and you might have learned an implementation trick or two.
 
-Footnotes for Chapter 22:
+### Footnotes for Chapter 22:
 
 [1] To be precise, the types would also permit for head to always go into an infinite loop instead of throwing an exception, but this is clearly not what's wanted.
