@@ -168,7 +168,7 @@ If the two queens are on the same diagonal, i.e., the difference between their r
 
 The first case, that the two queens have the same row coordinate, cannot happen in the application because placeQueens already takes care to place each queen in a different row. So you could remove the test without changing the functionality of the program as a whole.
 
-23.3 Querying with for expressions
+### 23.3 Querying with for expressions
 
 The for notation is essentially equivalent to common operations of database query languages. For instance, say you are given a database named books, represented as a list of books, where Book is defined as follows:
 
