@@ -22,6 +22,7 @@
 + [Chapter 20 Abstract Members](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter20AbstractMembers.md)
 + [Chapter 21 Implicit Conversions and Parameters](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter21ImplicitConversionsAndParameters.md)
 + [Chapter 22 Implementing Lists](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter22ImplementingLists.md)
++ [Chapter 23 For Expressions Revisited](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter23ForExpressionsRevisited.md)
 
 ### Android
 + [Android Blog](https://github.com/kunSong/Note/blob/master/AndroidLearn.md)
