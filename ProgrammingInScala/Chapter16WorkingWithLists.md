@@ -535,6 +535,7 @@ xs.mkString     equals    xs mkString ""
 
 Here are some examples:
 
+```
   scala> abcde mkString ("[", ",", "]")
   res17: String = [a,b,c,d,e]
   
