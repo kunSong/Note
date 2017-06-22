@@ -23,6 +23,16 @@
 + [Chapter 21 Implicit Conversions and Parameters](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter21ImplicitConversionsAndParameters.md)
 + [Chapter 22 Implementing Lists](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter22ImplementingLists.md)
 + [Chapter 23 For Expressions Revisited](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter23ForExpressionsRevisited.md)
++ Extractors
++ Annotations
++ Working with XML
++ Modular Programming Using Objects
++ Object Equality
++ Combining Scala and Java
++ Actors and Concurrency
++ Combinator Parsing
++ GUI Programming
++ The SCells Spreadsheet
 
 ### Android
 + [Android Blog](https://github.com/kunSong/Note/blob/master/AndroidLearn.md)
