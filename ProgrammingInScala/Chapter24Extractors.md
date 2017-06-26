@@ -339,10 +339,10 @@ Forming regular expressions
 
 Scala inherits its regular expression syntax from Java, which in turn inherits most of the features of Perl. We assume you know that syntax already; if not, there are many accessible tutorials, starting with the Javadoc documentation of class java.util.regex.Pattern. Here are just some examples that should be enough as refreshers:
 
-ab? An `a', possibly followed by a `b'.
-[1em] \d+ A number consisting of one or more digits represented by \d.
-[a-dA-D]\w* A word starting with a letter between a and d in lower or upper case, followed by a sequence of zero or more "word characters" denoted by \w. (A word character is a letter, digit, or underscore.)
-[1em] (-)?(\d+)(\.\d*)? A number consisting of an optional minus sign, followed by one or more digits, optionally followed by a period and zero or more digits. The number contains three groups, i.e., the minus sign, the part before the decimal point, and the fractional part including the decimal point. Groups are enclosed in parentheses.
+ab? `An `a', possibly followed by a `b'`.
+[1em] \d+ `A number consisting of one or more digits represented by \d`.
+[a-dA-D]\w* `A word starting with a letter between a and d in lower or upper case, followed by a sequence of zero or more "word characters" denoted by \w`. (A word character is a letter, digit, or underscore.)
+[1em] (-)?(\d+)(\.\d*)? `A number consisting of an optional minus sign, followed by one or more digits, optionally followed by a period and zero or more digits. The number contains three groups, i.e., the minus sign, the part before the decimal point, and the fractional part including the decimal point. Groups are enclosed in parentheses.`
 
 Scala's regular expression class resides in package scala.util.matching.
 
