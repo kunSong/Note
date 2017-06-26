@@ -354,7 +354,7 @@ An XML pattern looks just like an XML literal. The main difference is that if yo
     }
 ```
 
-This function has a pattern match with three cases. The first case looks for an <a> element whose contents consist of a a single sub-node. It binds those contents to a variable named contents and then evaluates the code to the right of the associated right arrow (=>). The second case does the same thing but looks for a <b> instead of an <a>, and the third case matches anything not matched by any other case. Here is the function in use:
+This function has a pattern match with three cases. The first case looks for an <a> element whose contents consist of a a single sub-node. It binds those contents to a variable named contents and then evaluates the code to the right of the associated right arrow (=>). The second case does the same thing but looks for a `<b>` instead of an `<a>`, and the third case matches anything not matched by any other case. Here is the function in use:
 
 ```
   scala> proc(<a>apple</a>)
