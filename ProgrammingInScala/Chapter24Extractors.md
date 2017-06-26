@@ -335,14 +335,14 @@ Of course, there are also situations where it's clear from the start that the st
 
 One particularly useful application area of extractors are regular expressions. Like Java, Scala provides regular expressions through a library, but extractors make it much nicer to interact with them.
 
-Forming regular expressions
+**Forming regular expressions**
 
 Scala inherits its regular expression syntax from Java, which in turn inherits most of the features of Perl. We assume you know that syntax already; if not, there are many accessible tutorials, starting with the Javadoc documentation of class java.util.regex.Pattern. Here are just some examples that should be enough as refreshers:
 
-ab? `An `a', possibly followed by a `b'`.
-[1em] \d+ `A number consisting of one or more digits represented by \d`.
-[a-dA-D]\w* `A word starting with a letter between a and d in lower or upper case, followed by a sequence of zero or more "word characters" denoted by \w`. (A word character is a letter, digit, or underscore.)
-[1em] (-)?(\d+)(\.\d*)? `A number consisting of an optional minus sign, followed by one or more digits, optionally followed by a period and zero or more digits. The number contains three groups, i.e., the minus sign, the part before the decimal point, and the fractional part including the decimal point. Groups are enclosed in parentheses.`
++ ab? `An `a', possibly followed by a `b'`.
++ [1em] \d+ `A number consisting of one or more digits represented by \d`.
++ [a-dA-D]\w* `A word starting with a letter between a and d in lower or upper case, followed by a sequence of zero or more "word characters" denoted by \w`. (A word character is a letter, digit, or underscore.)
++ [1em] (-)?(\d+)(\.\d*)? `A number consisting of an optional minus sign, followed by one or more digits, optionally followed by a period and zero or more digits. The number contains three groups, i.e., the minus sign, the part before the decimal point, and the fractional part including the decimal point. Groups are enclosed in parentheses.`
 
 Scala's regular expression class resides in package scala.util.matching.
 
@@ -388,7 +388,7 @@ In other words, simply append a .r to a string to obtain a regular expression. T
 
 Listing 24.7 - How the r method is defined in RichString.
 
-Searching for regular expressions
+**Searching for regular expressions**
 
 You can search for occurrences of a regular expression in a string using several different operators:
 
@@ -432,7 +432,7 @@ For instance, you could define the input sequence below and then search decimal 
   res2: Option[String] = None
 ```
 
-Extracting with regular expressions
+**Extracting with regular expressions**
 
 What's more, every regular expression in Scala defines an extractor. The extractor is used to identify substrings that are matched by the groups of the regular expression. For instance, you could decompose a decimal number string as follows:
 
