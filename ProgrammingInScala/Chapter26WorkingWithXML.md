@@ -365,7 +365,7 @@ This function has a pattern match with three cases. The first case looks for an 
   res18: String = It's something else.
 ```
 
-Most likely this function is not exactly what you want, because it looks precisely for contents consisting of a single sub-node within the <a> or <b>. Thus it will fail to match in cases like the following:
+Most likely this function is not exactly what you want, because it looks precisely for contents consisting of a single sub-node within the `<a>` or `<b>`. Thus it will fail to match in cases like the following:
 
 ```
   scala> proc(<a>a <em>red</em> apple</a>)
