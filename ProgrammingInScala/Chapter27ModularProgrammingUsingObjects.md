@@ -363,7 +363,7 @@ Now, if you use the simple database, you will find a recipe for fruit salad. If 
   fruit salad
   $ scala GotApples student
   $
-``
+```
 
 Configuring with Scala code
 
