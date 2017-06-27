@@ -215,26 +215,26 @@ Any encoded characters are decoded automatically:
   res9: String =  input ---> output 
 ```
 
-Extracting sub-elements. If you want to find a sub-element by tag name, simply call \ with the name of the tag:
+Extracting sub-elements. If you want to find a sub-element by tag name, simply call `\` with the name of the tag:
 
 ```
-  scala> <a><b><c>hello</c></b></a> ~"b"
+  scala> <a><b><c>hello</c></b></a> \"b"
   res10: scala.xml.NodeSeq = <b><c>hello</c></b>
 ```
 
-You can do a "deep search" and look through sub-sub-elements, etc., by using \\ instead of the \ operator:
+You can do a "deep search" and look through sub-sub-elements, etc., by using `\\` instead of the `\` operator:
 
 ```
-  scala>  <a><b><c>hello</c></b></a> ~"c"
+  scala>  <a><b><c>hello</c></b></a> \"c"
   res11: scala.xml.NodeSeq = 
   
-  scala>  <a><b><c>hello</c></b></a> \~"c"
+  scala>  <a><b><c>hello</c></b></a> \\"c"
   res12: scala.xml.NodeSeq = <c>hello</c>
   
-  scala>  <a><b><c>hello</c></b></a> ~"a"
+  scala>  <a><b><c>hello</c></b></a> \"a"
   res13: scala.xml.NodeSeq = 
   
-  scala>  <a><b><c>hello</c></b></a> \~"a"
+  scala>  <a><b><c>hello</c></b></a> \\"a"
   res14: scala.xml.NodeSeq = <a><b><c>hello</c></b></a>
 ```
 
@@ -252,10 +252,10 @@ Extracting attributes. You can extract tag attributes using the same \ and \\ me
   joe: scala.xml.Elem = <employee rank="code monkey" name="Joe"
    serial="123"></employee>
   
-  scala>  joe ~"@name"
+  scala>  joe \"@name"
   res15: scala.xml.NodeSeq = Joe
   
-  scala>  joe ~"@serial"
+  scala>  joe \"@serial"
   res16: scala.xml.NodeSeq = 123
 ```
 
