@@ -23,10 +23,10 @@
 + [Chapter 21 Implicit Conversions and Parameters](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter21ImplicitConversionsAndParameters.md)
 + [Chapter 22 Implementing Lists](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter22ImplementingLists.md)
 + [Chapter 23 For Expressions Revisited](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter23ForExpressionsRevisited.md)
-+ Extractors
-+ Annotations
-+ Working with XML
-+ Modular Programming Using Objects
++ [Chapter 24 Extractors](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter24Extractors.md)
++ [Chapter 25 Annotations](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter25Annotations.md)
++ [Chapter 26 Working with XML](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter26WorkingWithXML.md)
++ [Chapter 27 Modular Programming Using Objects](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter27ModularProgrammingUsingObjects.md)
 + Object Equality
 + Combining Scala and Java
 + Actors and Concurrency
