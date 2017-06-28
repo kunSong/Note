@@ -27,12 +27,10 @@
 + [Chapter 25 Annotations](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter25Annotations.md)
 + [Chapter 26 Working with XML](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter26WorkingWithXML.md)
 + [Chapter 27 Modular Programming Using Objects](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter27ModularProgrammingUsingObjects.md)
-+ Object Equality
++ [Chapter 28 Object Equality](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter28ObjectEquality.md)
 + Combining Scala and Java
 + Actors and Concurrency
 + Combinator Parsing
-+ GUI Programming
-+ The SCells Spreadsheet
 
 ### Android
 + [Android Blog](https://github.com/kunSong/Note/blob/master/AndroidLearn.md)
