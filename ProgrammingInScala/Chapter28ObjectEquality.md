@@ -217,8 +217,7 @@ The contract of the equals method in scala.Any specifies that equals must implem
 + It is symmetric: for any non-null values x and y, x.equals(y) should return true if and only if y.equals(x) returns true.
 + It is transitive: for any non-null values x, y, and z, if x.equals(y) returns true and y.equals(z) returns true, then x.equals(z) should return true.
 + It is consistent: for any non-null values x and y, multiple invocations of x.equals(y) should consistently return true or consistently return false, provided no information used in equals comparisons on the objects is modified.
-
-For any non-null value x, x.equals(null) should return false.
++ For any non-null value x, x.equals(null) should return false.
 
 The definition of equals developed so far for class Point satisfies the contract for equals. However, things become more complicated once subclasses are considered. Say there is a subclass ColoredPoint of Point that adds a field color of type Color. Assume Color is defined as an enumeration, as presented in Section 20.8:
 
