@@ -29,10 +29,10 @@ This is problematic, because equality is at the basis of many other things. For 
 
 Here are four common pitfalls[2] that can cause inconsistent behavior when overriding equals:
 
-Defining equals with the wrong signature.
-Changing equals without also changing hashCode.
-Defining equals in terms of mutable fields.
-Failing to define equals as an equivalence relation.
++ Defining equals with the wrong signature.
++ Changing equals without also changing hashCode.
++ Defining equals in terms of mutable fields.
++ Failing to define equals as an equivalence relation.
 
 These four pitfalls are discussed in the remainder of this section.
 
