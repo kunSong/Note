@@ -213,10 +213,10 @@ Pitfall #4: Failing to define equals as an equivalence relation
 
 The contract of the equals method in scala.Any specifies that equals must implement an equivalence relation on non-null objects:[5]
 
-It is reflexive: for any non-null value x , the expression x.equals(x) should return true.
-It is symmetric: for any non-null values x and y, x.equals(y) should return true if and only if y.equals(x) returns true.
-It is transitive: for any non-null values x, y, and z, if x.equals(y) returns true and y.equals(z) returns true, then x.equals(z) should return true.
-It is consistent: for any non-null values x and y, multiple invocations of x.equals(y) should consistently return true or consistently return false, provided no information used in equals comparisons on the objects is modified.
++ It is reflexive: for any non-null value x , the expression x.equals(x) should return true.
++ It is symmetric: for any non-null values x and y, x.equals(y) should return true if and only if y.equals(x) returns true.
++ It is transitive: for any non-null values x, y, and z, if x.equals(y) returns true and y.equals(z) returns true, then x.equals(z) should return true.
++ It is consistent: for any non-null values x and y, multiple invocations of x.equals(y) should consistently return true or consistently return false, provided no information used in equals comparisons on the objects is modified.
 
 For any non-null value x, x.equals(null) should return false.
 
