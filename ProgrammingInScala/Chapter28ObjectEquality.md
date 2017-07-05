@@ -563,7 +563,7 @@ The implementation of the canEqual method used a typed pattern match. It would a
   def canEqual(other: Any) = other.isInstanceOf[Branch[_]]
 ```
 
-If you feel like nit-picking (and we encourage you to do so!), you might wonder what the occurrence of the underscore in the type above signifies. After all, Branch[_] is a technically a type parameter of a method, not a type pattern, so how is it possible to leave some parts of it undefined? The answer to that question is found in the next chapter: Branch[_] is a shorthand for a so-called existential type, which is roughly speaking a type with some unknown parts in it. So even though technically the underscore stands for two different things in a pattern match and in a type parameter of a method call, in essence the meaning is the same: it lets you label something that is unknown. The final version of Branch is shown in Listing 28.4.
+If you feel like nit-picking (and we encourage you to do so!), you might wonder what the occurrence of the underscore in the type above signifies. After all, `Branch[_]` is a technically a type parameter of a method, not a type pattern, so how is it possible to leave some parts of it undefined? The answer to that question is found in the next chapter: `Branch[_]` is a shorthand for a so-called existential type, which is roughly speaking a type with some unknown parts in it. So even though technically the underscore stands for two different things in a pattern match and in a type parameter of a method call, in essence the meaning is the same: it lets you label something that is unknown. The final version of Branch is shown in Listing 28.4.
 
 ```
     class Branch[T](
