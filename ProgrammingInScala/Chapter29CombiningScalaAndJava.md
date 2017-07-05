@@ -258,9 +258,9 @@ Read this from left to right. This is an Iterator of T's for some type T. The ty
 
 This is an Iterator of T, for some type T that is a subtype of Component. In this case T is still unknown, but now it is sure to be a subtype of Component.
 
-By the way, there is a shorter way to write these examples. If you write Iterator[_], it means the same thing as Iterator[T] forSome { type T }. This is placeholder syntax for existential types, and is similar in spirit to the placeholder syntax for function literals that was described in Section 8.5. If you use an underscore (_) in place of an expression, then Scala treats this as a placeholder and makes a function literal for you. For types it works similarly. If you use an underscore in place of a type, Scala makes an existential type for you. Each underscore becomes one type parameter in a forSome clause, so if you use two underscores in the same type, you will get the effect of a forSome clause with two types in it.
+By the way, there is a shorter way to write these examples. If you write `Iterator[_]`, it means the same thing as Iterator[T] forSome { type T }. This is placeholder syntax for existential types, and is similar in spirit to the placeholder syntax for function literals that was described in Section 8.5. If you use an underscore `(_)` in place of an expression, then Scala treats this as a placeholder and makes a function literal for you. For types it works similarly. If you use an underscore in place of a type, Scala makes an existential type for you. Each underscore becomes one type parameter in a forSome clause, so if you use two underscores in the same type, you will get the effect of a forSome clause with two types in it.
 
-You can also insert upper and lower bounds when using this placeholder syntax. Simply add them to the underscore instead of in the forSome clause. The type Iterator[_ <: Component] is the same as this one, which you just saw:
+You can also insert upper and lower bounds when using this placeholder syntax. Simply add them to the underscore instead of in the forSome clause. The type `Iterator[_ <: Component]` is the same as this one, which you just saw:
 
 ```
   Iterator[T] forSome { type T <: Component }
