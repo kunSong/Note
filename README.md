@@ -28,8 +28,8 @@
 + [Chapter 26 Working with XML](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter26WorkingWithXML.md)
 + [Chapter 27 Modular Programming Using Objects](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter27ModularProgrammingUsingObjects.md)
 + [Chapter 28 Object Equality](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter28ObjectEquality.md)
-+ Combining Scala and Java
-+ Actors and Concurrency
++ [Chapter 29 Combining Scala and Java](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter29CombiningScalaAndJava.md)
++ [Chapter 30 Actors and Concurrency](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter30ActorsAndConcurrency.md)
 + Combinator Parsing
 
 ### Android
