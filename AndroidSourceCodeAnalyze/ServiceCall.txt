@@ -1,5 +1,5 @@
 Service Call命令
-JIM项目中处理安全问题DTS单时，需要用到Service Call 命令，所以研究了一下各参数的含义以及使用方法。
+
 一、通过adb shell 命令，执行service，我们可以看到如下说明：
  
 其中service call SERVICE CODE [i32 INT | s16 STR]...表明了该命令调用的格式：
