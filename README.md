@@ -30,7 +30,6 @@
 + [Chapter 28 Object Equality](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter28ObjectEquality.md)
 + [Chapter 29 Combining Scala and Java](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter29CombiningScalaAndJava.md)
 + [Chapter 30 Actors and Concurrency](https://github.com/kunSong/Note/blob/master/ProgrammingInScala/Chapter30ActorsAndConcurrency.md)
-+ Combinator Parsing
 
 ### Android
 + [Android Blog](https://github.com/kunSong/Note/blob/master/AndroidLearn.md)
