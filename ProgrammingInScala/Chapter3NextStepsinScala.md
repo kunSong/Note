@@ -582,7 +582,7 @@ All that remains is to print out the lines with proper formatting. You can do th
 
 In this for expression, you once again iterate through the lines. For each line, you first calculate the number of spaces required before the line length and assign it to numSpaces. Then you create a string containing numSpaces spaces with the expression " " * numSpaces. Finally, you print out the information with the desired formatting. The entire script looks as shown in Listing 3.11:
     
-  + 找到最大行字数宽度和每行字数宽度得到需要空个数，加管道符，加行内容。
+  + 找到最大行字数宽度和每行字数宽度得到需要空个数，加管道符，加行内容。注意这里的List.reduceLeft函数。
 
     ```scala
     import scala.io.Source
