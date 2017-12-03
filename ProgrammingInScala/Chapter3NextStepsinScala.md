@@ -166,7 +166,7 @@ One of the big ideas of the functional style of programming is that methods shou
 
 As you've seen, a Scala array is a mutable sequence of objects that all share the same type. An Array[String] contains only strings, for example. Although you can't change the length of an array after it is instantiated, you can change its element values. Thus, arrays are mutable objects.
 
-  + Scala Array[String]是一个只含有相同类型strings元素的可变对象
+  + Scala Array[String]是一个只含有相同类型strings元素的可变对象，初始化后是不能改变长度，但是可以改变元素值的。
 
 For an immutable sequence of objects that share the same type you can use Scala's List class. As with arrays, a List[String] contains only strings. Scala's List, scala.List, differs from Java's java.util.List type in that Scala Lists are always immutable (whereas Java Lists can be mutable). More generally, Scala's List is designed to enable a functional style of programming. Creating a list is easy. Listing 3.3 shows how:
 
