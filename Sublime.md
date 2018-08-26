@@ -11,7 +11,8 @@
 	"translate_tabs_to_spaces": true,
 	"preview_on_click": false,
 	"save_on_focus_lost": true,
-	"overlay_scroll_bars": "enabled"
+	"overlay_scroll_bars": "enabled",
+	"font_options": ["gdi"]
 }
 ```
 
