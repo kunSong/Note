@@ -26,3 +26,6 @@
         Fn键只能调节音量，不能调节亮度等其他功能
         睡眠后会滴滴响，所以就不睡眠，不能按Fn+F5
         电池电量显示问题
+
++ 精简office 2016 for mac
+`sudo bash -c "curl -s https://raw.githubusercontent.com/goodbest/OfficeThinner/master/OfficeThinner.sh | bash"`
