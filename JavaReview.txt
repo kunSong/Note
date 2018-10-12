@@ -160,8 +160,8 @@ Exception类又分为运行时异常（Runtime Exception）和受检查的异常
 Error类一般是指与虚拟机相关的问题，如系统崩溃，虚拟机错误，内存空间不足，方法调用栈溢等。对于这类错误的导致的应用程序中断，仅靠程序本身无法恢复和和预防，遇到这样的错误，建议让程序终止。
 Exception类表示程序可以处理的异常，可以捕获且可能恢复。遇到这类异常，应该尽可能处理异常，使程序恢复运行，而不应该随意终止异常。
 
-43、Java中的异常处理机制的简单原理和应用。................................................ 2
-
+43、Java中的异常处理机制的简单原理和应用。
+同42和44
 
 44、请写出你最常见到的5个runtime exception。
 NullPointException
@@ -170,93 +170,231 @@ IOException
 ArithmaticException
 TypeMismatchException
 
-45、JAVA语言如何进行异常处理，关键字：throws,throw,try,catch,finally分别代表什么意义？在try块中可以抛出异常吗？............................................................................................................ 2
+45、JAVA语言如何进行异常处理，关键字：throws,throw,try,catch,finally分别代表什么意义？在try块中可以抛出异常吗？
+throws是获取异常
+throw是抛出异常
+try是将会发生异常的语句括起来，从而进行异常的处理，
+catch是如果有异常就会执行他里面的语句，
+而finally不论是否有异常都会进行执行的语句。
 
-46、java中有几种方法可以实现一个线程？用什么关键字修饰同步方法? stop()和suspend()方法为何不推荐使用？............2
+public void doA(int a) throws Exception1,Exception3{
+           try{
+                 ......
 
-47、sleep() 和 wait() 有什么区别?..................................................................... 2
+           }catch(Exception1 e){
+              throw e;
+           }catch(Exception2 e){
+              System.out.println("出错了！");
+           }
+           if(a!=b)
+              throw new  Exception3("自定义异常");
+}
 
-48、同步和异步有何异同，在什么情况下分别使用他们？举例说明。................. 2
+46、java中有几种方法可以实现一个线程？用什么关键字修饰同步方法? stop()和suspend()方法为何不推荐使用?
+一、继承Thread类来实现自定义的线程，然后用start()方法启动
+二、继承Runnable Callable FutureTask在run方法中来实现自己的逻辑，将其放入线程池ExecuteService来执行run方法
+How to make Thread in Java?
+There are two ways of implementing threading in Java
+1) By extending java.lang.Thread class, or
+2) By implementing java.lang.Runnable interface.
+which way of implementing Thread is better?
+用Runnable的方法更好是因为Runnable接口可以多实现，而继承是单继承，受到一定的局限性
 
-49. 下面两个方法同步吗？（自己发明）........................................................... 2
+synchronized
 
-50、多线程有几种实现方法?同步有几种实现方法?............................................. 2
+JDK 1.0本来有一些像stop(), suspend() 和 resume()的控制方法但是由于潜在的死锁威胁因此在后续的JDK版本中他们被弃用了，之后Java API的设计者就没有提供一个兼容且线程安全的方法来停止一个线程。当run() 或者 call() 方法执行完的时候线程会自动结束,如果要手动结束一个线程，你可以用volatile 布尔变量来退出run()方法的循环或者是取消任务来中断线程。
+
+47、sleep() 和 wait() 有什么区别?
+Java程序中wait 和 sleep都会造成某种形式的暂停，它们可以满足不同的需要。wait()方法用于线程间通信，如果等待条件为真且其它线程被唤醒时它会释放锁，而sleep()方法仅仅释放CPU资源或者让当前线程停止执行一段时间，但不会释放锁。
+
+48、同步和异步有何异同，在什么情况下分别使用他们？举例说明。
+同步和异步都属于方法调用
+举例
+同步就好比是去便利店买东西结账，需要排队进行结帐就是同步的
+异步就好比是看今日头条，ui线程还在继续工作不会阻塞，而加载图片就用异步线程来完成
+
+49. 下面两个方法同步吗？（自己发明）
+同50
+
+50、多线程有几种实现方法?同步有几种实现方法?
+同46
+ReentrantLock lock.lock() lock.unlock() / 可重入 lock.lock() anotherLock.lock() anotherLock.unLock() lock.unlock()
+Synchronized synchronized public void ...(...) {...} / synchronized (...) {...} 
+Condition ReentrantLock lock.newCondition  condition.await() condition.signalAll()
+Semaphore semaphore.acquire() semaphore.release()
+wait() notify() notifyAll()
+ThreadLocl 
+AbstractQueueSynchronizer
+CountDownLatch latch.countDown() latch.await()
+CyclicBarrier await() 可重用
 
 51、启动一个线程是用run()还是start()? 
 start()
 
-52、当一个线程进入一个对象的一个synchronized方法后，其它线程是否可进入此对象的其它方法?......2
+52、当一个线程进入一个对象的一个synchronized方法后，其它线程是否可进入此对象的其它方法?
+synchronized方法不能进入，但是非synchronized方法是可以进入的
 
-53、线程的基本概念、线程的基本状态以及状态之间的关系............................... 2
+53、线程的基本概念、线程的基本状态以及状态之间的关系
+https://www.cnblogs.com/guweiwei/p/6617606.html
 
-54、简述synchronized和java.util.concurrent.locks.Lock的异同？....................... 2
+54、简述synchronized和java.util.concurrent.locks.Lock的异同？
+主要相同点：Lock能完成synchronized所实现的所有功能
+主要不同点：Lock有比synchronized更精确的线程语义和更好的性能。synchronized会自动释放锁，而Lock一定要求程序员手工释放，并且必须在finally从句中释放。
 
-55、设计4个线程，其中两个线程每次对j增加1，另外两个线程对j每次减少1。写出程序。.......2
+55、设计4个线程，其中两个线程每次对j增加1，另外两个线程对j每次减少1。写出程序。
+https://www.cnblogs.com/guweiwei/p/6626450.html
 
-56、子线程循环10次，接着主线程循环100，接着又回到子线程循环10次，接着再回到主线程又循环100，如此循环50次，请写出程序。.................................................................................. 2
+56、子线程循环10次，接着主线程循环100，接着又回到子线程循环10次，接着再回到主线程又循环100，如此循环50次，请写出程序。
+https://www.cnblogs.com/guweiwei/p/6626780.html
 
-57、介绍Collection框架的结构........................................................................... 2
+57、介绍Collection框架的结构
+Collection 
+List        有序 可重复 可用元素的整数索引
+ArrayList   数组 查询速度快 线程不安全
+LinkedList  链表 增删改查快 线程不安全
+Vector      数组 查询速度慢 线程安全
+Set         无序 不可重复 使用迭代器 插入数据如果有此元素则返回false，成功插入则返回true
+HashSet     查询速度快    线程不安全
+TreeSet     可对元素排序  线程不安全
+Map         底层hash结构
+HashTable   线程安全    查询速度慢 会锁住整个表结构    
+HashMap     线程不安全  查询速度快 数组 + 链表
+TreeMap     按键值排序
+LinkedHashMap 存取有序 存入顺序和取出顺序是一样的
+ConcurrentHashMap 线程安全 查询速度还行 只要锁住某个segment + 链表 + 红黑树
 
-58、Collection框架中实现比较要实现什么接口................................................... 2
+58、Collection框架中实现比较要实现什么接口
+Comparable Comparator
 
-59、ArrayList和Vector的区别............................................................................ 2
+59、ArrayList和Vector的区别
+ArrayList  数组 线程不安全 性能快 可以自定义大小默认为10 不可以设置      扩容 newCap = oldCap + (oldCap >> 1)
+Vector     数组 线程安全   性能慢 可以自定义大小默认为10 可以设置增长大小 扩容 newCap = oldCap + (CapInc > 0 ? CapInc : oldCap)
 
-60、HashMap和Hashtable的区别........................................................................ 2
+60、HashMap和Hashtable的区别
+hashmap 线程不安全 允许有null的键和值 效率高一点 方法不是Synchronize的要提供外同步 有containsvalue和containsKey方法
 
-61、List 和 Map 区别?...................................................................................... 2
+HashMap 是Java1.2 引进的Map interface 的一个实现 HashMap是Hashtable的轻量级实现 默认16 负载因子0.75 扩容 newCap = oldCap << 1
 
-62、List, Set, Map是否继承自Collection接口?.................................................... 2
+hashtable 线程安全 不允许有null的键和值 效率稍低 方法是是Synchronize的 有contains方法方法 Hashtable 继承于Dictionary Hashtable比HashMap 要旧
 
-63、List、Map、Set三个接口，存取元素时，各有什么特点？............................ 2
+61、List 和 Map 区别?
+https://www.cnblogs.com/guweiwei/p/6635120.html
 
-64、说出ArrayList,Vector, LinkedList的存储性能和特性...................................... 2
+62、List, Set, Map是否继承自Collection接口?
+见57
 
-65、去掉一个Vector集合中重复的元素.............................................................. 2
+63、List、Map、Set三个接口，存取元素时，各有什么特点？
+见57
 
-66、Collection 和 Collections的区别。............................................................... 2
+64、说出ArrayList,Vector, LinkedList的存储性能和特性
+见57
 
-67、Set里的元素是不能重复的，那么用什么方法来区分重复与否呢? 是用==还是equals()? 它们有何区别?      2
+65、去掉一个Vector集合中重复的元素..........2
 
-68、你所知道的集合类都有哪些？主要方法？.................................................... 2
 
-69、两个对象值相同(x.equals(y) == true)，但却可有不同的hash code，这句话对不对?   2
+66、Collection 和 Collections的区别
+Collection 是最顶层接口
+collections 此类完全由在 collection 上进行操作或返回 collection 的静态方法组成。它包含在 collection 上操作的多态算法，即“包装器”，包装器返回由指定 collection 支持的新 collection，以及少数其他内容。 如果为此类的方法所提供的 collection 或类对象为 null，则这些方法都会抛出 NullPointerException。
 
-70、TreeSet里面放对象，如果同时放入了父类和子类的实例对象，那比较时使用的是父类的compareTo方法，还是使用的子类的compareTo方法，还是抛异常！................................................ 2
+67、Set里的元素是不能重复的，那么用什么方法来区分重复与否呢? 是用==还是equals()? 它们有何区别?
+https://www.cnblogs.com/guweiwei/p/6637120.html
 
-71、说出一些常用的类，包，接口，请各举5个................................................ 2
+68、你所知道的集合类都有哪些？主要方法？
+https://www.cnblogs.com/guweiwei/p/6638022.html
 
-72、java中有几种类型的流？JDK为每种类型的流提供了一些抽象类以供继承，请说出他们分别是哪些类？    2
+69、两个对象值相同(x.equals(y) == true)，但却可有不同的hash code，这句话对不对?
+对
+如果对象要保存在HashSet或HashMap中，它们的equals相等，那么，它们的hashcode值就必须相等。
+如果不是要保存在HashSet或HashMap，则与hashcode没有什么关系了，这时候hashcode不等是可以的，例如arrayList存储的对象就不用实现hashcode，当然，我们没有理由不实现，通常都会去实现的。
 
-73、字节流与字符流的区别................................................................................ 2
+70、TreeSet里面放对象，如果同时放入了父类和子类的实例对象，那比较时使用的是父类的compareTo方法，还是使用的子类的compareTo方法，还是抛异常！
+https://www.cnblogs.com/guweiwei/p/6638555.html
+
+71、说出一些常用的类，包，接口，请各举5个
+System String List HashMap ConcurrentHashMap FileWriter
+java.lang
+java.io
+java.concurrent
+javax.servlet
+java.sql
+org.hibernate
+HttpRequest HttpResponse Transaction Session Servlet
+
+72、java中有几种类型的流？JDK为每种类型的流提供了一些抽象类以供继承，请说出他们分别是哪些类？
+java.io
+字节流 InputStream 
+        FileInputStream
+        FilterInputStream
+            BufferedInputStream
+            DataInputStream
+        ObjectInputStream
+        ByteArrayInputStream
+
+      OutputStream
+        FileOutputStream
+        FilterOutputStream
+            BufferedOutputStream
+            DataOutputStream
+        ObjectOutputStream
+        ByteArrayOutputStream
+
+字符流 Reader 
+        BufferedReader
+        InputStreamReader 
+            FileReader
+
+      Writer
+        BufferedWriter
+        OutputStreamWriter 
+            FileWriter
+
+73、字节流与字符流的区别
+字符流和字节流是根据处理数据的不同来区分的。
+
+字节流按照8位传输，字节流是最基本的，所有文件的储存是都是字节（byte）的储存，在磁盘上保留的并不是文件的字符而是先把字符编码成字节，再储存这些字节到磁盘。
+
+1.字节流可用于任何类型的对象，包括二进制对象，而字符流只能处理字符或者字符串；
+
+2. 字节流提供了处理任何类型的IO操作的功能，但它不能直接处理Unicode字符，而字符流就可以。
+
+读文本的时候用字符流，例如txt文件。读非文本文件的时候用字节流，例如mp3。理论上任何文件都能够用字节流读取，但当读取的是文本数据时，为了能还原成文本你必须再经过一个转换的工序，相对来说字符流就省了这个麻烦，可以有方法直接读取。
+
+字符流处理的单元为2个字节的Unicode字符，分别操作字符、字符数组或字符串，而字节流处理单元为1个字节， 操作字节和字节数组。所以字符流是由Java虚拟机将字节转化为2个字节的Unicode字符为单位的字符而成的，所以它对多国语言支持性比较好！
 
 74、什么是java序列化，如何实现java序列化？或者请解释Serializable接口的作用。
 将对象序列化到文件，可以进行永久存储和传输
 实现Serializable接口，Android是实现Parcelable接口
 Parcelable比Serializable接口内存开销小
 
-75、描述一下JVM加载class文件的原理机制?................................................... 2
+75、描述一下JVM加载class文件的原理机制?
+https://www.cnblogs.com/guweiwei/p/6640145.html
+https://www.cnblogs.com/sunniest/p/4574080.html
 
 76、heap和stack有什么区别。
+heap堆内存 二叉树
+stack栈内存 先进后出
+https://www.cnblogs.com/guweiwei/p/6640382.html
 
 77、GC是什么? 为什么要有GC?
+垃圾回收，因为有些资源没有手动释放，需要被系统定时清理，否则会导致内存不足
 
 78、垃圾回收的优点和原理。并考虑2种回收机制。
+分代垃圾回收，标记复制
 
 79、垃圾回收器的基本原理是什么？垃圾回收器可以马上回收内存吗？有什么办法主动通知虚拟机进行垃圾回收？
+https://www.cnblogs.com/guweiwei/p/6641597.html
 
-80、什么时候用assert。..................................................................................... 2
+80、什么时候用assert。
+
 
 81、java中会存在内存泄漏吗，请简单描述。
 当对象互相引用的时候，gc无法根据引用计数来判断是否可以回收，导致内存泄露
 
 82、能不能自己写个类，也叫java.lang.String？
 可以，但是使用不到，会被原生的代替
+如果用户自己写了一个java.lang.String类就会因为双亲委派机制不能被加载，不会破坏原生的String类的加载）
 
 83. Java代码查错
-
-
-
-
 
 二. 算法与编程
 
