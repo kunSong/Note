@@ -2,17 +2,18 @@
 
 ```
 {
-	"color_scheme": "Packages/Color Scheme - Default/Mac Classic.tmTheme",
-	"caret_extra_width": 2,
-	"highlight_line": true,
-	"font_face": "Monaco",
+	"color_scheme": "Packages/Color Scheme - Default/Mariana.sublime-color-scheme",
+	"font_face": "YaHei Consolas Hybird",
 	"font_size": 11,
-	"tab_size": 2,
-	"translate_tabs_to_spaces": true,
-	"preview_on_click": false,
-	"save_on_focus_lost": true,
+	"highlight_line": true,
 	"overlay_scroll_bars": "enabled",
-	"font_options": ["gdi"]
+	"save_on_focus_lost": true,
+	"tab_size": 4,
+	"theme": "Adaptive.sublime-theme",
+	"translate_tabs_to_spaces": true,
+    "bold_folder_labels": true,
+    "line_padding_bottom": 1,
+    "line_padding_top": 1
 }
 ```
 
