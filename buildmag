@@ -1,0 +1,38 @@
+#!/bin/bash
+CLONE_PATH=$1
+PROJECT_NAME=$2
+MODE=$3
+
+if [ "$CLONE_PATH" != "xxx" ] ; then
+    git clone $CLONE_PATH $PROJECT_NAME
+fi
+
+echo "clone finish"
+
+cd mag39_alps-mp-p0.mp1/alps
+
+source ./mag $PROJECT_NAME
+
+CONFIG_FILE=$(find $PROJECT_PATH -name "ProjectConfig.mk")
+
+echo $CONFIG_FILE
+
+var=${CONFIG_FILE#/*/*/*/*/*/*/*/*/}
+
+BSP=${var%%/*}
+
+COMBO=full_$BSP-$MODE
+
+echo $COMBO
+
+source build/envsetup.sh 1>/dev/null
+
+print_lunch_menu
+
+lunch $COMBO
+
+make -j8 2>&1 | tee build.log
+
+#make otapackage
+
+#source copybin.sh
