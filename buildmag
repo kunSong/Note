@@ -1,38 +1,86 @@
 #!/bin/bash
-CLONE_PATH=$1
-PROJECT_NAME=$2
-MODE=$3
+PROJECT_NAME=$1
+MODE=$2
+CLEAN=$3
+CLONE_PATH=$4
 
-if [ "$CLONE_PATH" != "xxx" ] ; then
-    git clone $CLONE_PATH $PROJECT_NAME
+echo $PROJECT_NAME
+echo $MODE
+echo $CLONE_PATH
+echo $CLEAN
+
+if [ "$PROJECT_NAME" == "" ] ; then
+    
+    echo "project name can't be empty"
+    
+    exit 1
+    
 fi
 
-echo "clone finish"
+FOLDER_NAME=$PROJECT_NAME-$MODE
 
-cd mag39_alps-mp-p0.mp1/alps
+if [ "$CLONE_PATH" == "" ] ; then
 
-source ./mag $PROJECT_NAME
+    if [ ! -d $FOLDER_NAME ] ; then
+    
+        echo "no this project please git clone"
+        
+        exit 1
+        
+    fi
 
-CONFIG_FILE=$(find $PROJECT_PATH -name "ProjectConfig.mk")
+    cd $FOLDER_NAME/alps
+    
+    pwd
+    
+    if [ "$CLEAN" == "true" ] ; then
+    
+        git clean -df
+    
+        git reset --hard
+    
+        git pull
+        
+        echo "clean done"
+        
+    fi
+    
+else
 
-echo $CONFIG_FILE
+    rm -rf $FOLDER_NAME
+    
+    git clone $CLONE_PATH $FOLDER_NAME
+    
+    echo "clone finish"
+    
+    cd $FOLDER_NAME/alps
+    
+    pwd
+    
+fi
 
-var=${CONFIG_FILE#/*/*/*/*/*/*/*/*/}
+#source ./mag $PROJECT_NAME
 
-BSP=${var%%/*}
+#CONFIG_FILE=$(find $PROJECT_PATH -name "ProjectConfig.mk")
 
-COMBO=full_$BSP-$MODE
+#echo $CONFIG_FILE
 
-echo $COMBO
+#var=${CONFIG_FILE#/*/*/*/*/*/*/*/*/}
 
-source build/envsetup.sh 1>/dev/null
+#BSP=${var%%/*}
 
-print_lunch_menu
+#COMBO=full_$BSP-$MODE
 
-lunch $COMBO
+#echo $COMBO
 
-make -j8 2>&1 | tee build.log
+#source build/envsetup.sh 1>/dev/null
 
-#make otapackage
+#print_lunch_menu
+
+#lunch $COMBO
+
+#make -j8 2>&1 | tee build.log
+
+#make otepackage
 
 #source copybin.sh
