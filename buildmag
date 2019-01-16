@@ -1,13 +1,23 @@
 #!/bin/bash
-PROJECT_NAME=$1
+PROJECT=$1
 MODE=$2
-CLEAN=$3
-CLONE_PATH=$4
+FULL_BUILD=$3
+CLEAN=$4
+NEW_CODE=$5
 
-echo $PROJECT_NAME
+echo $PROJECT
 echo $MODE
-echo $CLONE_PATH
+echo $NEW_CODE
 echo $CLEAN
+echo $FULL_BUILD
+
+PROJECT_NAME=${PROJECT%%-*}
+
+PLATFORM=${PROJECT#*-}
+
+FOLDER_NAME=$PROJECT_NAME-$MODE
+
+CLONE_HEAD="magcomm@192.168.0.16:/home/magcomm/magcomm_project/"
 
 if [ "$PROJECT_NAME" == "" ] ; then
     
@@ -17,9 +27,35 @@ if [ "$PROJECT_NAME" == "" ] ; then
     
 fi
 
-FOLDER_NAME=$PROJECT_NAME-$MODE
+if [ "$PLATFORM" == "M" ] ; then
 
-if [ "$CLONE_PATH" == "" ] ; then
+    sudo update-alternatives --set java /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java
+    
+    CLONE_BODY="git2017/mag37_ALPS-MP-M0.MP1-V2.164.3_MAGC6737M_65_A_M0"
+
+fi
+    
+if [ "$PLATFORM" == "O" ] ; then
+
+    sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+    
+    CLONE_BODY="git2018/mago1_alps-mp-o1.mp1-V1.git"
+   
+fi
+
+if [ "$PLATFORM" == "P" ] ; then
+
+    sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+    
+    CLONE_BODY="git2018/mag39_alps-mp-p0.mp1.git"
+   
+fi
+
+echo $CLONE_BODY
+
+java -version
+
+if [ "$NEW_CODE" == "false" ] ; then
 
     if [ ! -d $FOLDER_NAME ] ; then
     
@@ -49,7 +85,7 @@ else
 
     rm -rf $FOLDER_NAME
     
-    git clone $CLONE_PATH $FOLDER_NAME
+    git clone $CLONE_HEAD$CLONE_BODY $FOLDER_NAME
     
     echo "clone finish"
     
@@ -59,28 +95,36 @@ else
     
 fi
 
-#source ./mag $PROJECT_NAME
+if [ "$FULL_BUILD" == "true" ] ; then
 
-#CONFIG_FILE=$(find $PROJECT_PATH -name "ProjectConfig.mk")
+    source ./mag $PROJECT_NAME
 
-#echo $CONFIG_FILE
+    CONFIG_FILE=$(find $PROJECT_PATH -name "ProjectConfig.mk")
 
-#var=${CONFIG_FILE#/*/*/*/*/*/*/*/*/}
+    echo $CONFIG_FILE
 
-#BSP=${var%%/*}
+    var=${CONFIG_FILE#/*/*/*/*/*/*/*/*/}
 
-#COMBO=full_$BSP-$MODE
+    BSP=${var%%/*}
 
-#echo $COMBO
+    COMBO=full_$BSP-$MODE
 
-#source build/envsetup.sh 1>/dev/null
+    echo $COMBO
 
-#print_lunch_menu
+    source build/envsetup.sh 1>/dev/null
 
-#lunch $COMBO
+    print_lunch_menu
 
-#make -j8 2>&1 | tee build.log
+    lunch $COMBO
 
-#make otepackage
+    make -j8
 
-#source copybin.sh
+fi
+
+if [ "$BUILD_OTA" == "true" ] ; then
+
+    make otapackage
+    
+fi
+
+source copybin.sh
