@@ -1,0 +1,78 @@
+#!/bin/bash
+
+echo $PROJECT_NAME
+echo $MODE
+echo $CLONE_PATH
+echo $CLEAN
+
+if [ "$PROJECT_NAME" == "" ] ; then
+    
+    echo "project name can't be empty"
+    
+    exit 1
+    
+fi
+
+FOLDER_NAME=$PROJECT_NAME-$MODE
+
+if [ "$CLONE_PATH" == "" ] ; then
+
+    if [ ! -d $FOLDER_NAME ] ; then
+    
+        echo "no this project please git clone"
+        
+        exit 1
+        
+    fi
+
+    cd $FOLDER_NAME/alps
+    
+    pwd
+    
+    if [ "$CLEAN" == "true" ] ; then
+    
+        git clean -df
+    
+        git reset --hard
+    
+        git pull
+        
+        echo "clean done"
+        
+    fi
+    
+else
+
+    rm -rf $FOLDER_NAME
+    
+    git clone $CLONE_PATH $FOLDER_NAME
+    
+    echo "clone finish"
+    
+    cd $FOLDER_NAME/alps
+    
+    pwd
+    
+fi
+
+source ./mag $PROJECT_NAME
+
+CONFIG_FILE=$(find $PROJECT_PATH -name "ProjectConfig.mk")
+
+echo $CONFIG_FILE
+
+var=${CONFIG_FILE#/*/*/*/*/*/*/*/*/}
+
+BSP=${var%%/*}
+
+COMBO=full_$BSP-$MODE
+
+echo $COMBO
+
+source build/envsetup.sh 1>/dev/null
+
+print_lunch_menu
+
+lunch $COMBO
+
+make -j8 2>&1 | tee build.log

@@ -1,0 +1,310 @@
+Midtest
+
+一. Android.mk
+1. 包含了三个文件夹下的所以Java文件
+   src/com/longcheertel/midtest/codeshare
+   src/com/mediatek
+   src/com/android
+
+2. 过滤不同产品和平台来包含不同网络制式和单双卡
+   src/com/longcheertel/midtest/cellinfo/cdma/single
+   src/com/longcheertel/midtest/cellinfo/wcdma/single
+   src/com/longcheertel/midtest/cellinfo/wcdma/dsds
+
+3. aw886_ideafriend 130916 LCT_FOR_LENOVO_FRIEND包含Java库
+
+4. package name: midtest
+
+5. 签名 platform
+
+6. 包含Midtest/libs下的tp和fingerprint库
+
+7. 包含两个apk：HimaxMPAP 和 RawDataTest(for tp)
+
+二. AndroidManifest.xml中的3个Receiver
+1. com.longcheertel.midtest.FactoryTestReceiver
+   AndroidManifest.xml中定义了暗码*#xxx#
+   在Receiver中启动Activity
+   87 -- Combile.class
+   88 -- CombileAgain.class
+   89 -- PCBATest.class
+   79837 -- HardwareDebug.class
+   2008 -- Custom.class 
+  
+2. com.longcheertel.midtest.CustomReceiver
+   AndroidManifest.xml中定义了暗码*#xxx#
+   在Receiver中启动Activity
+   1111 -- Midtest.class
+   7599 -- com.longcheertel.midtest.DevicesInfo.class
+   9327 -- com.longcheertel.midtest.SpkRcvActivity
+   2270 -- 设置"persist.sys.capsensor"属性为false
+   2271 -- 设置"presist.sys.capsensor"属性为true
+   682 -- Countrycode_select.class
+   07 -- 通过属性"persist.sys.lang_country"得到国家语言，如果是IN则启动LenovoSecretCodeActivity.class;如果是MY或SG则启动com.android.music.SettingsWarranityActivity
+
+3. com.longcheertel.midtest.BootCmpReceiver
+   收到开完机的广播启动服务WriteVersionToNvramService.class
+
+三. 暗码启动 -- *#87#
+1. Combile继承自PreferenceActivity
+  1. onCreate方法
+    1. 从R.xml.combile中读取preferenceScreen
+    2. 设置Dolby音效开启
+    3. 通过onPreferenceTreeClick来点击启动哪个测试，如果按到跟换语言的就切换语言
+
+2. R.xml.combile
+  1. Midtest.java
+    1. onCreate
+      1. 创建BGWCheck对象
+      2. readFromXml返回一个值给result判断是否成功
+        1. 87,88,89都会调用PCBATest.readFromExternalXml方法来解析/data/local/tmp/midtest.xml，从midtest.xml中直到需要自动测试的项放在Config的testItem二维数组中
+        2. 如果xml没内容从readFromExternalXml返回false，就根据sim卡单双卡信息来选择对应的xml来解析加载测试item放在Config的testItem。
+          1. skuid = 2 R.xml.midtest_3600_emea_single
+          2. skuid = 4 R.xml.midtest_3600_latam_single
+          3. skuid = 1 R.xml.midtest_3600_emea
+          4. skuid = 3 R.xml.midtest_3600_latam
+          5. 其他 R.xml.midtext_3600
+      3. 启动writeMmiFlagActivity来获取一个远程服务NvRAMAgent写入一个MMI_FLAG_FILE值，根据87,88,89     
+      4. 清除/data/data/com.longcheertel.midtest/databases/midtest.db数据库
+      5. 检查测试item中是否有BT,WIFI,GPS,SDCARD
+      6. FactorytestInit初始化，获得一系列远程服务
+        1. WindowManager.setTestFlag(true)
+        2. PowerManger设置亮度100，得到唤醒锁和关闭飞行模式
+        3. 打开BT
+        4. WifiManager打开WIFI
+        5. 设置SettingProvider的值来开启GPS
+      7. 绑定BGWService服务
+        1. 测试GPS，通过LocationListener locationListener来更新位置，通过GpsStatus.Listener mReceiverGPS来得到卫星信息，高度等信息，将结果放在mTestResult中
+        2. 通过注册广播接收器和过滤条件来监听BT状态调用BluetoothAdapter.starDiscovery方法，保存测试结果
+        3. 通过注册广播接收器和过滤条件来监听WIFI状态，保存结果
+        4. 使用HandlerThread来绑定远程远程服务判断SDCARD是否有连接，使用异步消息处理机制来计算SDCARD每个种类的存储大小，最后完成计算用mUiHandler.post(runnableUi)来保存测试结果
+        5. 结束的时候将各种listener,receiver和handler消息进行释放
+      8. 启动一个从Config中获取的第一个Activity进行测试会结束回调onActivityResult方法
+      9. 最后创建一个异步消息handler来处理message为EVENT_TIME_OUT的消息将启动TestResult在屏幕上显示测试结果
+
+  2. SimStatusCheck.java(SIM_STATUS_TEST，以Midtest解析的R.xml.midtest_3600_emea_single为例启动第一个Item)
+    1. onCreate
+      1. 布局R.layout.simstatuscheck
+      2. 通过TelephonyManager来获取Sim卡信息
+    2. 忽略来自back,foucus,camera,volume up and down等键的影响
+    3. 通过listener监听并调用destory方法中来反馈结果
+
+  3. FrontCamera.java(Front camera)
+    1. onCreate
+      1. 布局R.layout.camera
+      2. 通过Intent来启动"android.media.action.MIDTEST_CAMERA"，在Intent中定义前设并用handler来处理打开摄像头超时所出现的问题，然后回调onActivityResult
+    2. onActivityResult来处理返回的结果
+    3. destory处理返回结果
+
+  4. BackCamera.java(Back camera)同上Intent中设置为back
+
+  5. FrontFlash.java(Front Flash Led)
+    1. onCreate调用FlashLedControl(true)
+    2. FlashLedControl通过写/sys/class/leds/sub_flashlight/brightness文件来控制开关
+    3. destory中关闭并保存结果返回
+
+  6. Flash.java(Flash Led)同上但是文件为/sys/class/leds/flashlight/brightness
+
+  7. Earphone.java(Earphone test)
+    1. onCreate
+      1. 获得AudioManager
+      2. 初始化Record
+      3. 注册PhoneApppBroadcastReceiver
+    2. initRecored
+      1. 创建AudioRecord对象
+      2. 创建AudioTrack对象
+      3. 获取音乐音量
+    3. onReceive中判断消息是否有耳机插入和录音和播放声音
+    4. destory结果返回
+
+  8. FM.java(FM)
+    1. onCreate
+      1. 设置系统属性"persist.sys.fm"为"qn8035"
+      2. 启动ActivityForResult为com.longcheer.fmradio.FmMidTest，如果有异常启动com.thunderst.radio.FmMidTest，返回码为10001
+    2. 在onActivityResult调用destory来返回结果
+  9. FMTest.java
+    1. onCreate
+      1. 布局R.layout.fm_test_layout
+      2. initUIComponent进行布局的初始化
+    2. onResume
+      1. 绑定FmService的服务
+      2. 监听耳机插入的广播消息
+    3. BroadcastReceiver mHeadsetReceiver
+      1. 通过FmService调用powerUpAsync和powerDownAsync来开关FM
+  10. FmService.java
+    1. onCreate
+      1. 获得AudioManager
+      2. 获得PowerManager
+      3. registerFmBroadcastReceiver来监听广播并对Fm进行操作
+      4. 创建FmRadioServiceHandler用异步消息来处理FM开关，调台，搜台，录音，插拔耳机等事件。
+      4. openDevice在Fm PowerUp前先要调用FmNative方法opendev来开启。
+      5. initAudioRecordSink这个方法是同步的保证mAudioRecord和mAudioTrack初始化为最新的
+      6. createRenderThread创建RenderThrad，如果是想用喇叭和BT耳机来放，就要在这里录音到AudioRecord，写入AudioTrack。
+    2. powerUpAsync调用FmRadioServiceHandler中handleMessage来处理异步消息
+    3. handlePowerUp调用PowerUp传入curFrequency
+    4. powerUp调用initAudioRecordSink和createAudioPatch，如果PowerStatus是POWER_UP则requestAudioFocus，反之则要重新调用opendev方法来开启并调用FmNative.powerup方法
+    5. createAudioPatch进行晒选是创建哪种类型的AudioPatch
+    6. createAudioPatchByEarphone获取Audio输出的ports来决定使用哪个输出，如果没有或发生改变就会调用startRender来创建新的audio record 和 audio play back track
+    7. powerUp方法返回true则会调用firstPlaying调用FmNative.seek和FmNative.tune来调到指定电台
+    8. 调用FmUtils.setIsFirstTimePlayFm用sharePreference来保存当前电台。
+
+  11. BacklightKeypadLight.java(Back Light key pad light)
+    1. onCreate
+      1. 初始化布局和控件
+      2. 获得PowerManager对象
+      3. 获得现在Brightness模式是手动还是自动
+      4. 创建SurfaceView对象用SurfaceHolder来增加回调
+    2. SurfaceCreated方法中创建线程MyThread
+    3. MyThread的run方法调用BacklightControl方法来控制
+    4. BacklightContorl中使用PowerManager来设置255和0
+    5. destory方法返回测试结果
+
+  12. Motor1.java(Motor)
+    1. onCreate
+      1. 初始化布局和控件
+      2. 获得系统服务Vibrator
+    2. onResume
+      1. Vibrator调用vibrate方法入参为间隔时间long[]和重复次数
+      2. destory方法返回结果
+
+  13. MidKeyboard.java(Keyboard)
+    1. onCreate
+      1. 初始化布局和和表示各个按键的控件
+      2. 从R.xml.midkeytest中解析出哪些按键需要测试然后将控件显示
+      3. 给handle注册一个time_out的runnable来反馈结果。
+    2. dispatchKeyEvent来处理按键事件的测试并保存结果。
+
+  14. AutoSpeaker.java
+    1. onCreate
+      1. 初始化控件和布局
+      2. 获得AudioManager
+      3. setVolume用AudioManager来设置音量
+    2. onResume
+      1. playNum调用MediaPlayer来播放声音
+
+  15. Mic1Loopback.java(Mic1)
+    1. onCreate
+      1. 初始化布局和按键
+      2. 创建Record对象
+      3. 获得AudioManager对象得到音量值并设置
+      4. 设置为第1个MIC
+    2. onResume
+      1. 开始录音
+      2. 用handler控制在3s后停止
+    3. PhoneAppBroadcastReceiver来收耳机插入的广播并处理record动作。
+    4. 控件点击事件删除录音然后调用destory来返回结果
+
+  16. Mic2Loopback.java(Mic2)
+    1. onResume
+      1. 将其设置为参数第2个MIC
+      2. 因为是继承自Mic1Loopback，直接调用父类super.onResume()
+
+  17. AutoReceive.java类似于AutoSpeaker
+  
+  18. Led3Color.java(LED)
+    1. onCreate
+      1. 初始化布局和控件
+      2. 用handler执行task在300ms后调用FlashLedMethod
+    2. FlashLedMethod
+      1. 通过调用doControlLed
+      2. 获得远程服务PowerManager.setMidtestAttentionLight来控制哪个颜色的灯亮。
+    3. 在IPowerManager.aidl中定义了setMidtestAttentionLight
+    4. BinderService中实现setMidtestAttentionLight
+    5. 调用light.setFlashing来完成
+
+  19. FingerprintSensorTest.java(Finger Print Sensor)
+    1. onCreate
+      1. 初始化布局和控件
+      2. 调用egistecFPSensorTest
+    2. egistecFPSensorTest
+      1. 创建FpExtraLib对象进行读写测试
+
+  20. Charge.java(Charge)
+    1. onCreate
+      1. 初始化控件和布局，电压电流
+    2. onResume
+      1. 注册广播接收器mIntentReceiver
+    3. BroadcastReceiver mIntentReceiver
+      1. 当收到电池发生改变消息的时候，从文件中读取电压电流值
+      2. 当收到电池充电消息，在status上显示
+      3. 当收到电池满的消息，在status上显示
+
+  21. Acce.java(Accelerator test)
+    1. onCreate
+      1. 获得系统服务SensorManager
+      2. 初始化布局和控件显示
+    2. Acce实现SensorListener
+      1. 回调onSensorChanged进行测试处理
+
+  22. LightAProximity同上Acce
+
+  23. Otg.java
+    1.onCreate
+      1. 初始化布局和显示
+      2. 调用measureApproxmiateStorage来计算容量
+    2. 注册广播来监听MEDIA_MOUNTED等广播然后进行处理
+
+  24. NfcTag
+    1. onCreate
+      1. openNFCService开启Nfc服务
+      2. 发送PendingIntent
+    2. 在onNewIntent中调用toneMediaPlayer来调用MediaPlayer播放tag。
+
+  25. QRCode.java
+    1. onCreate
+      1. startActivityForResult调用CaptureActivity
+    2. onActivityResult如果返回结果ok就震动1000ms并返回ok
+  26. CaptureActivity.java
+    1. onCreate
+      1. Window设置FLAG_KEEP_SCREEN_ON
+      2. 设置布局
+      3. inactivityTimer创建对象用来当在电池的环境下，如果Activity在一段时间内没有动作就把他finish掉
+    2. onResume
+      1. 需要在onResume中创建CameraManager
+      2. 创建SurfaceView作为intiCamera的入参
+      3. initCamera
+        1. CameraManager调用openDriver入参为SurfaceHolder
+        2. 创建CaptureActivityHandler
+      4. handleDecode回调传入扫到barcode的Bitmap和rawResult
+  27.CaptureActivityHandler.java继承自Handler
+    1. 构造方法
+      1. 创建DecodeThread在其中创建DecodeHandler
+      2. CameraManager调用startPreview
+      3. restartPreviewAndDecode
+    2. handleMessage
+      1. 当收到State.PREVIEW时调用cameraManager.requestAutoFocus方法，requestAutoFocus调用camera.autoFocus，同时将CaptureActivityHandler注册给回调autoFocusCallback。当回调onAutoFocus时，会向CaptureActivityHandler发送成功的消息
+      2. 当收到R.id.decode_succeeded成功的消息，会生成Bitmap交给CaptureActivity的handleDecode处理结果
+      3. 当收到R.id.decode_failed消息，会由cameraManager来调用requestPreviewFrame并传入DecodeHandler来进行decode方法得到rawResult和Bitmap
+    3. handleDecode
+      1. drawResultPoints进行绘制
+      2. setResult
+
+  28. TouchPanel.java
+    1. onCreate
+      1. 用DisplayMetrics得到屏幕数据
+      2. 用GestureOverlayView添加MyView
+    2. MyView继承自GestureOverlayView
+      1. 在MyView中进行图案绘制
+
+  29. Softversion.java
+    1. 主要是从文件读取系统信息然后设置控件
+    2. 通过send_command执行linux命令cat等
+
+  30. DeviceInfo同上
+
+  31. 回到Midtest.java
+    1. 调用onActivityForResult
+    2. 调用saveItemTestResult
+    3. 创建DBAdapter
+    4. 调用open打开和updateTitle方法
+
+  32. DBAdapter.java
+    1. 构造方法中选在数据库名maintest.db, midtest.db和midteastagain.db
+    2. 创建DatebaseHelper做数据库操作。
+
+ 三. 什么是NV，高通平台的NV，保存了系统运行过程中各个模块可能用到的一些参数值，它是以单个文件的形式保存在EFS中，但用户是不能随意访问的，只能通过QXDM来进行读写。对于60X0平台，NV就有将近5千多项。
+
+     
+  
+
+

@@ -1,0 +1,133 @@
+#!/bin/bash
+PROJECT=$1
+MODE=$2
+FULL_BUILD=$3
+CLEAN=$4
+NEW_CODE=$5
+
+echo $NAME
+echo $MODE
+echo $NEW
+echo $CLEAN
+echo $BUILD
+echo $OTA
+
+if [ "$NAME" == "" ] ; then
+    
+    echo "project name can't be empty"
+    
+    exit 1
+    
+fi
+
+PROJECT_NAME=${NAME%%-*}
+
+PLAT=${NAME#*-}
+
+FOLDER_NAME=$PROJECT_NAME-$MODE
+
+echo $PROJECT_NAME
+echo $PLAT
+echo $FOLDER_NAME
+
+CLONE_HEAD="magcomm@192.168.0.16:/home/magcomm/magcomm_project/"
+
+if [ "$PLAT" == "M" ] ; then
+
+    sudo update-alternatives --set java /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java
+    
+    CLONE_BODY="git2017/mag37_ALPS-MP-M0.MP1-V2.164.3_MAGC6737M_65_A_M0"
+
+fi
+    
+if [ "$PLAT" == "O" ] ; then
+
+    sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+    
+    CLONE_BODY="git2018/mago1_alps-mp-o1.mp1-V1.git"
+   
+fi
+
+if [ "$PLAT" == "P" ] ; then
+
+    sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+    
+    CLONE_BODY="git2018/mag39_alps-mp-p0.mp1.git"
+   
+fi
+
+echo $CLONE_HEAD$CLONE_BODY
+
+if [ "$NEW" == "false" ] ; then
+
+    if [ ! -d $FOLDER_NAME ] ; then
+    
+        echo "no this project please git clone"
+        
+        exit 1
+        
+    fi
+
+    cd $FOLDER_NAME/alps
+    
+    pwd
+    
+    if [ "$CLEAN" == "true" ] ; then
+    
+        git clean -df
+    
+        git reset --hard
+    
+        git pull
+        
+        echo "clean done"
+        
+    fi
+    
+else
+
+    rm -rf $FOLDER_NAME
+    
+    git clone $CLONE_HEAD$CLONE_BODY $FOLDER_NAME
+    
+    echo "clone finish"
+    
+    cd $FOLDER_NAME/alps
+    
+    pwd
+    
+fi
+
+if [ "$BUILD" == "true" ] ; then
+
+    source ./mag $PROJECT_NAME
+
+    CONFIG_FILE=$(find $PROJECT_PATH -name "ProjectConfig.mk")
+
+    echo $CONFIG_FILE
+
+    var=${CONFIG_FILE#/*/*/*/*/*/*/*/*/}
+
+    BSP=${var%%/*}
+
+    COMBO=full_$BSP-$MODE
+
+    echo $COMBO
+
+    source build/envsetup.sh 1>/dev/null
+
+    print_lunch_menu
+
+    lunch $COMBO
+
+    make -j8
+
+fi
+
+if [ "$OTA" == "true" ] ; then
+
+    make otapackage
+    
+fi
+
+source copybin.sh
