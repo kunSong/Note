@@ -1,0 +1,168 @@
+From cab31da08601aa782b2033cd19730bead6ff5f77 Mon Sep 17 00:00:00 2001
+From: Fang Yunong <c_yunong@qti.qualcomm.com>
+Date: Thu, 13 Oct 2016 10:54:14 +0800
+Subject: [PATCH] Settings: Add wifi call state for device reporting
+
+1. Add intent report for turning off WiFi Calling scenario
+2. Add intent report for turning off Wifi scenario
+3. Ignore intent report for IMS Registering scenario
+4. Remove duplicate registration success message
+
+Change-Id: Ib76a1c206319e90e63a2dbe146b937cb06fdbd95
+CRs-Fixed: 1039338
+---
+ .../qti/wfcservice/WifiCallingStatusControl.java   | 97 ++++++++++++++++++++++
+ 1 file changed, 97 insertions(+)
+
+diff --git a/system/apps/WFCService/src/qualcomm/qti/wfcservice/WifiCallingStatusControl.java b/system/apps/WFCService/src/qualcomm/qti/wfcservice/WifiCallingStatusControl.java
+index 180bbe1..bfbddda 100644
+--- a/system/apps/WFCService/src/qualcomm/qti/wfcservice/WifiCallingStatusControl.java
++++ b/system/apps/WFCService/src/qualcomm/qti/wfcservice/WifiCallingStatusControl.java
+@@ -22,11 +22,13 @@ import android.os.Bundle;
+ import android.os.IBinder;
+ import android.os.Parcel;
+ import android.os.Parcelable;
++import android.os.PersistableBundle;
+ import android.os.SystemProperties;
+ import android.provider.Settings;
+ import android.telephony.CellInfo;
+ import android.telephony.PhoneNumberUtils;
+ import android.telephony.PhoneStateListener;
++import android.telephony.CarrierConfigManager;
+ import android.telephony.TelephonyManager;
+ import android.text.TextUtils;
+ import android.util.Log;
+@@ -42,7 +44,10 @@ import org.codeaurora.ims.QtiImsException;
+ import org.codeaurora.ims.utils.QtiImsExtUtils;
+ 
+ import com.qualcomm.qti.wfcservice.WifiCallingStatusControl;
++
++import java.util.Date;
+ import java.util.List;
++import java.text.SimpleDateFormat;
+ 
+ public class WifiCallingStatusControl {
+ 
+@@ -70,6 +75,9 @@ public class WifiCallingStatusControl {
+     private static final String ACTION_EXTRA = "preference";
+     private static final String ACTION_RESULT = "result";
+     private static final String TAG = "WifiCallingStatusControl";
++    private static final String KEY_DEVICE_REPORTING_BOOL =
++            "config_enable_device_reporting";
++    //private static final String TAG = "WFCService";
+     private static final boolean DEBUG = true;
+ 
+     private static int WIFI_CALL_PREFERRED_DISENABLED = -1;
+@@ -105,6 +113,7 @@ public class WifiCallingStatusControl {
+     private static int mRegState = WIFI_CALLING_STATE_NOT_REGISTERED;
+     private static String mOldErrorMessage = "";
+     private WifiManager mWifiManager = null;
++    private static boolean isLastSuccessReported = false;
+ 
+     /* QtiImsExtListenerBaseImpl instance to handle call deflection configuration */
+     private QtiImsExtListenerBaseImpl mHoImsInterfaceListener =
+@@ -326,6 +335,93 @@ public class WifiCallingStatusControl {
+         }
+     }
+ 
++    private void doDeviceReportingForReg(String AC, boolean success) {
++        //ignore duplicate message of successful registration
++        if (isLastSuccessReported && success) {
++            Log.i(TAG, "ignore duplicate message of REG success");
++            return;
++        }
++
++        //get time stamp
++        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
++        String timeStamp = simpleDateFormat.format(new Date());
++        //get rssi value of wifi
++        WifiManager wifiManager =
++            (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
++        String RssiValue = String.valueOf(wifiManager.getConnectionInfo().getRssi());
++        StringBuilder extra = new StringBuilder();
++
++        Intent deviceRptIntent = new Intent("com.tmobile.comm.METRIC");
++        extra.append("SVC=REG")
++        .append(";AC=")
++        .append(AC)
++        .append(";RSSI=")
++        .append(RssiValue)
++        .append(";TS=")
++        .append(timeStamp);
++        if (!mWifiCallTurnOn) {
++            extra.append(";MSG=")
++            .append(mContext.getString(R.string.wifi_call_status_disabled))
++            .append(";OK=false");
++            success = false;
++        } else if (success) {
++            extra.append(";MSG=Registration was successful")
++            .append(";OK=true");
++        } else {
++            if (!TextUtils.isEmpty(mWifiCallStatusMsg)) {
++                extra.append(";MSG=")
++                .append(mWifiCallStatusMsg);
++            }
++            extra.append(";OK=false");
++        }
++        extra.append(";BEARER=WiFi");
++
++        deviceRptIntent.putExtra("PARMS", extra.toString());
++        mContext.sendBroadcastAsUser(deviceRptIntent,
++                android.os.Process.myUserHandle(),"com.tmobile.comm.RECEIVE_METRICS");
++        isLastSuccessReported = success;
++    }
++
++    private boolean isDeviceReportingEnabled(){
++         boolean isCarrierSimCard = false;
++         CarrierConfigManager carrierConfigManager =
++                 (CarrierConfigManager) mContext.getSystemService(Context.CARRIER_CONFIG_SERVICE);
++         if (carrierConfigManager != null) {
++              PersistableBundle carrierConfig = carrierConfigManager.getConfig();
++              if(carrierConfig != null) {
++                  isCarrierSimCard = carrierConfig.getBoolean(KEY_DEVICE_REPORTING_BOOL);
++              }
++         }
++         Log.d(TAG, "is home Carrier SIM Card? " + isCarrierSimCard);
++         return isCarrierSimCard;
++    }
++
++    private void doDeviceReporting(Intent intent) {
++        if (isDeviceReportingEnabled()) {
++            return;
++        }
++
++        String action = intent.getAction();
++        if (ACTION_IMS_STATE_CHANGE.equals(action)) {
++            int state = intent.getIntExtra("stateChanged", WIFI_CALLING_STATE_NOT_REGISTERED);
++            //report comm.METRIC except Registering state
++            if (state == WIFI_CALLING_STATE_REGISTERED) {
++                doDeviceReportingForReg("START", true);
++            } else if (state == WIFI_CALLING_STATE_NOT_REGISTERED) {
++                doDeviceReportingForReg("END", false);
++            }
++        } else if (ACTION_WIFI_CALL_TURN_OFF.equals(action)) {
++            //Wifi call turned off
++            doDeviceReportingForReg("END", false);
++        } else if (WifiManager.WIFI_STATE_CHANGED_ACTION.equals(action)) {
++            int wifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 0);
++            if (wifiState != WifiManager.WIFI_STATE_ENABLED) {
++                //Wifi turned off
++                doDeviceReportingForReg("END", false);
++            }
++        }
++    }
++
+     private boolean getCheckErrorMsg(int stringID) {
+         boolean checkErrorMsg = !mWifiTurnOn || !mWifiConnected ||
+                 (mRegState == WIFI_CALLING_STATE_REGISTERED) ||
+@@ -585,6 +681,7 @@ public class WifiCallingStatusControl {
+         }
+ 
+         handleWFCErrorMsg();
++        doDeviceReporting(intent);
+         broadcastWifiCallErrorCode();
+         updateRadioStatus();
+     }
+-- 
+1.8.2.1
+

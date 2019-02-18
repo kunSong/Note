@@ -1,0 +1,31 @@
+From 9c75d06f70c13414ac1f710ac4e8fab2063630c1 Mon Sep 17 00:00:00 2001
+From: Fang Yunong <yunong@codeaurora.org>
+Date: Thu, 22 Sep 2016 14:00:18 +0800
+Subject: [PATCH] CarrierConfig: Add config for Device Reporting by SIM
+
+Add MNC MCC config for Device Reporting intent for T-Mobile
+
+CRs-Fixed: 1039338
+Change-Id: Ic3f71c20a1fa9002b0ae02d030e496427d59f22f
+---
+ device/overlay/packages/apps/CarrierConfig/res/xml/vendor.xml | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/device/overlay/packages/apps/CarrierConfig/res/xml/vendor.xml b/device/overlay/packages/apps/CarrierConfig/res/xml/vendor.xml
+index 77d8ecc..cc591b8 100644
+--- a/device/overlay/packages/apps/CarrierConfig/res/xml/vendor.xml
++++ b/device/overlay/packages/apps/CarrierConfig/res/xml/vendor.xml
+@@ -436,6 +436,10 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.-->
+         <boolean name="config_enable_mms_with_mobile_data_off" value="true" />
+     </carrier_config>
+ 
++    <carrier_config mcc="310" mnc="260">
++         <boolean name="config_enable_device_reporting" value="true" />
++    </carrier_config>
++
+     <carrier_config mcc="310" mnc="280">
+         <boolean name="config_enable_display_14digit_imei" value="true" />
+         <boolean name="config_enable_mms_with_mobile_data_off" value="true" />
+-- 
+1.8.2.1
+

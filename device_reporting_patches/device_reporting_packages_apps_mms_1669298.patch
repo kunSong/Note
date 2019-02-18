@@ -1,0 +1,388 @@
+From 90aaa6f54e4644c32a2924528302fba0aa8f0ca5 Mon Sep 17 00:00:00 2001
+From: Fang Yunong <yunong@codeaurora.org>
+Date: Tue, 19 Jul 2016 19:55:20 +0800
+Subject: [PATCH] Mms: Add SMS/MMS support for intents for Device Reporting
+
+Implement the feature when SMS/MMS sending or receving message,
+send broadcast for device reporting.
+
+CRs-fixed: 1039338
+Change-Id: Ia8e6483f1c958572cf5d48d5e97cbcda3b89d18d
+---
+ .../mms/transaction/NotificationTransaction.java   |   6 +
+ .../mms/transaction/RetrieveTransaction.java       |   9 ++
+ .../android/mms/transaction/SendTransaction.java   |   7 ++
+ .../mms/transaction/SmsReceiverService.java        |  44 +++++++
+ .../mms/transaction/SmsSingleRecipientSender.java  |   2 +
+ src/com/android/mms/ui/MessageUtils.java           | 137 +++++++++++++++++++++
+ 6 files changed, 205 insertions(+)
+
+diff --git a/src/com/android/mms/transaction/NotificationTransaction.java b/src/com/android/mms/transaction/NotificationTransaction.java
+index 7fb6f2b..daffb5f 100644
+--- a/src/com/android/mms/transaction/NotificationTransaction.java
++++ b/src/com/android/mms/transaction/NotificationTransaction.java
+@@ -181,6 +181,9 @@ public class NotificationTransaction extends Transaction implements Runnable {
+                 Log.v(TAG, "Content-Location: " + mContentLocation);
+             }
+ 
++            MessageUtils.doDeviceReporting(mContext, MessageUtils.RECEIVE_MMS_TYPE,
++                    mNotificationInd.getFrom().getString(),
++                    mNotificationInd.getMessageSize(), false, true);
+             byte[] retrieveConfData = null;
+             // We should catch exceptions here to response MMSC
+             // with STATUS_DEFERRED.
+@@ -260,6 +263,9 @@ public class NotificationTransaction extends Transaction implements Runnable {
+ 
+             sendNotifyRespInd(status);
+ 
++            MessageUtils.doDeviceReporting(mContext, MessageUtils.RECEIVE_MMS_TYPE,
++                    mNotificationInd.getFrom().getString(),
++                    mNotificationInd.getMessageSize(), true, true);
+             // Make sure this thread isn't over the limits in message count.
+             Recycler.getMmsRecycler().deleteOldMessagesInSameThreadAsMessage(mContext, mUri);
+             MmsWidgetProvider.notifyDatasetChanged(mContext);
+diff --git a/src/com/android/mms/transaction/RetrieveTransaction.java b/src/com/android/mms/transaction/RetrieveTransaction.java
+index 0034c47..b08627b 100755
+--- a/src/com/android/mms/transaction/RetrieveTransaction.java
++++ b/src/com/android/mms/transaction/RetrieveTransaction.java
+@@ -38,6 +38,7 @@ import com.android.mms.widget.MmsWidgetProvider;
+ import com.google.android.mms.MmsException;
+ import com.google.android.mms.pdu.AcknowledgeInd;
+ import com.google.android.mms.pdu.EncodedStringValue;
++import com.google.android.mms.pdu.NotificationInd;
+ import com.google.android.mms.pdu.PduComposer;
+ import com.google.android.mms.pdu.PduHeaders;
+ import com.google.android.mms.pdu.PduParser;
+@@ -143,6 +144,11 @@ public class RetrieveTransaction extends Transaction implements Runnable {
+                         DownloadManager.STATE_TRANSIENT_FAILURE);
+                 return;
+             }
++            NotificationInd notificationInd =
++                    ((NotificationInd) PduPersister.getPduPersister(mContext).load(mUri));
++            MessageUtils.doDeviceReporting(mContext, MessageUtils.RECEIVE_MMS_TYPE,
++                    notificationInd.getFrom().getString(),
++                    notificationInd.getMessageSize(), false, true);
+             // Send GET request to MMSC and retrieve the response data.
+             byte[] resp = getPdu(mContentLocation);
+ 
+@@ -219,6 +225,9 @@ public class RetrieveTransaction extends Transaction implements Runnable {
+             // Send ACK to the Proxy-Relay to indicate we have fetched the
+             // MM successfully.
+             // Don't mark the transaction as failed if we failed to send it.
++            MessageUtils.doDeviceReporting(mContext, MessageUtils.RECEIVE_MMS_TYPE,
++                    notificationInd.getFrom().getString(),
++                    notificationInd.getMessageSize(), true, true);
+             sendAcknowledgeInd(retrieveConf);
+         } catch (Throwable t) {
+             Log.e(TAG, Log.getStackTraceString(t));
+diff --git a/src/com/android/mms/transaction/SendTransaction.java b/src/com/android/mms/transaction/SendTransaction.java
+index 3cf01e6..042c551 100644
+--- a/src/com/android/mms/transaction/SendTransaction.java
++++ b/src/com/android/mms/transaction/SendTransaction.java
+@@ -93,6 +93,10 @@ public class SendTransaction extends Transaction implements Runnable {
+             PduPersister persister = PduPersister.getPduPersister(mContext);
+             SendReq sendReq = (SendReq) persister.load(mSendReqURI);
+ 
++            String address = sendReq.getFrom().getString();
++            MessageUtils.doDeviceReporting(mContext, MessageUtils.SEND_MMS_TYPE, address,
++                sendReq.getMessageSize(), false, false);
++
+             // Update the 'date' field of the PDU right before sending it.
+             long date = System.currentTimeMillis() / 1000L;
+             sendReq.setDate(date);
+@@ -149,6 +153,9 @@ public class SendTransaction extends Transaction implements Runnable {
+                 return;
+             }
+ 
++            MessageUtils.doDeviceReporting(mContext, MessageUtils.SEND_MMS_TYPE, address,
++                    sendReq.getMessageSize(), true, false);
++
+             String messageId = PduPersister.toIsoString(conf.getMessageId());
+             values.put(Mms.MESSAGE_ID, messageId);
+             SqliteWrapper.update(mContext, mContext.getContentResolver(),
+diff --git a/src/com/android/mms/transaction/SmsReceiverService.java b/src/com/android/mms/transaction/SmsReceiverService.java
+index eb2ad3a..fe6602f 100755
+--- a/src/com/android/mms/transaction/SmsReceiverService.java
++++ b/src/com/android/mms/transaction/SmsReceiverService.java
+@@ -379,6 +379,24 @@ public class SmsReceiverService extends Service {
+         }
+     }
+ 
++    private void sendDeviceReportAfterSendingSMS(Uri uri) {
++        Cursor c = SqliteWrapper.query(this, getContentResolver(), uri,
++                SEND_PROJECTION, null, null, null);
++
++        if (c != null) {
++            try {
++                if (c.moveToFirst()) {
++                    String msgText = c.getString(SEND_COLUMN_BODY);
++                    String address = c.getString(SEND_COLUMN_ADDRESS);
++                    MessageUtils.doDeviceReporting(this, MessageUtils.SEND_SMS_TYPE,
++                                address, msgText.length(), true, false);
++               }
++            } finally {
++                c.close();
++            }
++        }
++    }
++
+     private void handleSmsSent(Intent intent, int error) {
+         Uri uri = intent.getData();
+         int resultCode = intent.getIntExtra("result", 0);
+@@ -391,6 +409,7 @@ public class SmsReceiverService extends Service {
+                 " = " + translateResultCode(resultCode) + " error: " + error);
+ 
+         if (resultCode == Activity.RESULT_OK) {
++            sendDeviceReportAfterSendingSMS(uri);
+             if (sendNextMsg) {
+                 Log.v(TAG, "handleSmsSent: move message to sent folder uri: " + uri);
+                 if (!Sms.moveMessageToFolder(this, uri, Sms.MESSAGE_TYPE_SENT, error)) {
+@@ -439,6 +458,25 @@ public class SmsReceiverService extends Service {
+         MessagingNotification.notifySendFailed(getApplicationContext(), true);
+     }
+ 
++    private int getReceiveMsgSize(SmsMessage[] msgs) {
++        String strMsg = "";
++        if (msgs.length == 1) {
++            // There is only one part, so grab the body directly.
++            strMsg = replaceFormFeeds(msgs[0].getDisplayMessageBody());
++        } else {
++            // Build up the body from the parts.
++            StringBuilder body = new StringBuilder();
++            for (int i = 0; i < msgs.length; i++) {
++                SmsMessage sms = msgs[i];
++                if (sms.mWrappedSmsMessage != null) {
++                    body.append(sms.getDisplayMessageBody());
++                }
++            }
++            strMsg = body.toString();
++        }
++        return strMsg.length();
++    }
++
+     private void handleSmsReceived(Intent intent, int error) {
+         SmsMessage[] msgs = Intents.getMessagesFromIntent(intent);
+         String format = intent.getStringExtra("format");
+@@ -451,6 +489,8 @@ public class SmsReceiverService extends Service {
+                     ", body: " + sms4log.getMessageBody());
+         int saveLoc = MessageUtils.getSmsPreferStoreLocation(this,
+                 SubscriptionManager.getPhoneId(msgs[0].getSubId()));
++        MessageUtils.doDeviceReporting(this, MessageUtils.RECEIVE_SMS_TYPE,
++                msgs[0].getOriginatingAddress(), getReceiveMsgSize(msgs), false, true);
+         if (getResources().getBoolean(R.bool.config_savelocation)
+                 && saveLoc == MessageUtils.PREFER_SMS_STORE_CARD) {
+             LogTag.debugD("PREFER SMS STORE CARD");
+@@ -802,6 +842,10 @@ public class SmsReceiverService extends Service {
+         Recycler.getSmsRecycler().deleteOldMessagesByThreadId(context, threadId);
+         MmsWidgetProvider.notifyDatasetChanged(context);
+ 
++        MessageUtils.doDeviceReporting(this, MessageUtils.RECEIVE_SMS_TYPE,
++                values.getAsString(Sms.ADDRESS), values.getAsString(Inbox.BODY).length(),
++                true, true);
++
+         return insertedUri;
+     }
+ 
+diff --git a/src/com/android/mms/transaction/SmsSingleRecipientSender.java b/src/com/android/mms/transaction/SmsSingleRecipientSender.java
+index bd06725..2d5b5ef 100644
+--- a/src/com/android/mms/transaction/SmsSingleRecipientSender.java
++++ b/src/com/android/mms/transaction/SmsSingleRecipientSender.java
+@@ -216,6 +216,8 @@ public class SmsSingleRecipientSender extends SmsMessageSender {
+                     );
+             smsManager.sendMultipartTextMessage(mDest, mServiceCenter, messages,
+                     sentIntents, deliveryIntents, mPriority, isExpectMore, validityPeriod);
++            MessageUtils.doDeviceReporting(mContext, MessageUtils.SEND_SMS_TYPE,
++                    mDest, mMessageText.length(), false, false);
+         } catch (Exception ex) {
+             Log.e(TAG, "SmsMessageSender.sendMessage: caught", ex);
+             throw new MmsException("SmsMessageSender.sendMessage: caught " + ex +
+diff --git a/src/com/android/mms/ui/MessageUtils.java b/src/com/android/mms/ui/MessageUtils.java
+index dfa41f1..6acf702 100644
+--- a/src/com/android/mms/ui/MessageUtils.java
++++ b/src/com/android/mms/ui/MessageUtils.java
+@@ -26,10 +26,12 @@ import java.io.File;
+ import java.io.InputStream;
+ import java.io.IOException;
+ import java.io.UnsupportedEncodingException;
++import java.math.BigInteger;
+ import java.text.DecimalFormat;
+ import java.text.SimpleDateFormat;
+ import java.util.ArrayList;
+ import java.util.Collection;
++import java.util.Date;
+ import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.Iterator;
+@@ -41,6 +43,8 @@ import java.util.concurrent.ConcurrentHashMap;
+ import java.util.concurrent.CopyOnWriteArrayList;
+ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
++import java.security.MessageDigest;
++import java.security.NoSuchAlgorithmException;
+ 
+ import android.Manifest;
+ import android.app.Activity;
+@@ -85,6 +89,7 @@ import android.os.Message;
+ import android.os.Messenger;
+ import android.os.StatFs;
+ import android.os.UserHandle;
++import android.os.PersistableBundle;
+ import android.preference.PreferenceManager;
+ import android.provider.ContactsContract;
+ import android.provider.ContactsContract.Contacts;
+@@ -107,6 +112,7 @@ import android.telephony.PhoneNumberUtils;
+ import android.telephony.ServiceState;
+ import android.telephony.SubscriptionManager;
+ import android.telephony.TelephonyManager;
++import android.telephony.CarrierConfigManager;
+ import android.text.TextUtils;
+ import android.os.AsyncTask;
+ import android.text.format.DateUtils;
+@@ -403,6 +409,20 @@ public class MessageUtils {
+         Manifest.permission.READ_EXTERNAL_STORAGE
+     };
+ 
++    // Intent name
++    private static final String INTENT_NAME = "com.tmobile.comm.METRIC";
++    // Permission name
++    private static final String PERMISSION_NAME = "com.tmobile.comm.RECEIVE_METRICS";
++    // Enable/Disable config
++    private static final String KEY_DEVICE_REPORTING_BOOL =
++            "config_enable_device_reporting";
++    public static final String WIFI_CALL_TURNON = "wifi.call.turnon";
++    // type
++    public static final int SEND_SMS_TYPE = 0;
++    public static final int SEND_MMS_TYPE = 1;
++    public static final int RECEIVE_SMS_TYPE = 2;
++    public static final int RECEIVE_MMS_TYPE = 3;
++
+     private MessageUtils() {
+         // Forbidden being instantiated.
+     }
+@@ -3175,6 +3195,123 @@ public class MessageUtils {
+         return available;
+     }
+ 
++    private static  boolean isWificallingEnable (Context context) {
++        try {
++            return Settings.Global.getInt(
++                context.getContentResolver(), WIFI_CALL_TURNON) == 1 ? true : false;
++        } catch (Exception e) {
++            return false;
++        }
++    }
++
++    private static String getHash(String string) {
++        MessageDigest digest = null;
++        try {
++            digest = MessageDigest.getInstance("SHA-256");
++        } catch (NoSuchAlgorithmException e) {
++            e.printStackTrace();
++        }
++        digest.reset();
++        byte[] data = digest.digest(string.getBytes());
++        return String.format("%0" + (data.length * 2) + "X", new BigInteger(1, data));
++    }
++
++    private static boolean isDeviceReportingEnabled(Context context){
++        boolean isCarrierSimCard = false;
++        CarrierConfigManager carrierConfigManager =
++                (CarrierConfigManager) context.getSystemService(Context.CARRIER_CONFIG_SERVICE);
++        if (carrierConfigManager != null) {
++             PersistableBundle carrierConfig = carrierConfigManager.getConfig();
++             if(carrierConfig != null) {
++                 isCarrierSimCard = carrierConfig.getBoolean(KEY_DEVICE_REPORTING_BOOL);
++             }
++        }
++        if (DEBUG) {
++            Log.d(TAG, "is home Carrier SIM Card? " + isCarrierSimCard);
++        }
++        return isCarrierSimCard;
++    }
++
++    public static void doDeviceReporting(Context context, int type,
++            String phoneNumber, long length, boolean isEnd, boolean isMT) {
++        //only do device reporting when the flag config_regional_device_reporting is turn on
++        if (!isDeviceReportingEnabled(context)) {
++            return;
++        }
++        //only do device reporting in wificall mode
++        if (!isWificallingEnable(context)) {
++            Log.e(TAG, "Do not do Device Reporting, the wifi calling state is not ready! ");
++            return;
++        }
++        //get time stamp
++        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
++        String timeStamp = simpleDateFormat.format(new Date());
++        //get rssi value of wifi
++        WifiManager wifiManager =
++                (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
++        String rssiValue = String.valueOf(wifiManager.getConnectionInfo().getRssi());
++        StringBuilder extra = new StringBuilder();
++        if (context != null) {
++            Intent intent = new Intent(INTENT_NAME);
++            switch (type) {
++                case SEND_SMS_TYPE:
++                    extra.append("SVC=SMS;BYTES_OUT=");
++                    extra.append(Long.toString(length));
++                    break;
++                case SEND_MMS_TYPE:
++                    extra.append("SVC=MMS;BYTES_OUT=");
++                    extra.append(Long.toString(length));
++                    break;
++                case RECEIVE_SMS_TYPE:
++                    extra.append("SVC=SMS;BYTES_In=");
++                    extra.append(Long.toString(length));
++                    break;
++                case RECEIVE_MMS_TYPE:
++                    extra.append("SVC=MMS;BYTES_In=");
++                    extra.append(Long.toString(length));
++                    break;
++                default:
++                    return;
++            }
++
++            if (isMT) {
++                extra.append(";DIR=MT");
++            } else {
++                extra.append(";DIR=MO");
++            }
++
++            if (length != 0) {
++                extra.append(";OK=true");
++            } else {
++                extra.append(";OK=false");
++            }
++
++            if (isEnd) {
++                extra.append(";AC=END");
++            } else {
++                extra.append(";AC=START");
++            }
++            extra.append(";PM=");
++            extra.append(getHash(phoneNumber));
++            extra.append(";RSSI=");
++            extra.append(rssiValue);
++            extra.append(";TS=");
++            extra.append(timeStamp);
++            extra.append(";BEARER=WiFi");
++
++            intent.putExtra("PARMS", extra.toString());
++            context.sendBroadcastAsUser(intent, android.os.Process.myUserHandle(), PERMISSION_NAME);
++            String strLog = "send device report ";
++            strLog += isEnd? "after": "before " + " sending ";
++            strLog += (type == SEND_MMS_TYPE || type == RECEIVE_MMS_TYPE)? "mms" : "sms";
++            strLog += isEnd? " succeesully!" : "!";
++            if (DEBUG) {
++                Log.d(TAG, "doDeviceReporting phoneNumber = " + phoneNumber + " , phoneNumber= " +
++                        phoneNumber + " , timeStamp= " + timeStamp + strLog);
++            }
++        }
++    }
++
+     /***
+      * added for Android 6.0 + for runtime permission
+      */
+-- 
+1.8.2.1
+

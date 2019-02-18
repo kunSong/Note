@@ -1,0 +1,678 @@
+From 95541e1ea19aeef9c682008b6220a869f780073e Mon Sep 17 00:00:00 2001
+From: Fang Yunong <yunong@codeaurora.org>
+Date: Tue, 12 Jul 2016 21:04:20 +0800
+Subject: [PATCH] Add pdp context state and intents for device reportting
+
+Add call state intents for device reportting
+
+CRs-Fixed: 1039338
+Change-Id: I5657d22d33b945ac9ed66c7ba721093b238c2731
+---
+ .../android/internal/telephony/GsmCdmaCall.java    |  15 ++-
+ .../internal/telephony/GsmCdmaConnection.java      |  35 +++++++
+ .../internal/telephony/TelephonyCapabilities.java  |  97 +++++++++++++++++
+ .../telephony/dataconnection/DcTracker.java        |  61 +++++++++++
+ .../telephony/imsphone/ImsPhoneCallTracker.java    | 116 +++++++++++++++++++++
+ .../telephony/imsphone/ImsPhoneConnection.java     |  30 ++++++
+ 6 files changed, 352 insertions(+), 2 deletions(-)
+
+diff --git a/src/java/com/android/internal/telephony/GsmCdmaCall.java b/src/java/com/android/internal/telephony/GsmCdmaCall.java
+index d671ef0..1f71223 100644
+--- a/src/java/com/android/internal/telephony/GsmCdmaCall.java
++++ b/src/java/com/android/internal/telephony/GsmCdmaCall.java
+@@ -16,6 +16,8 @@
+ 
+ package com.android.internal.telephony;
+ 
++import com.android.internal.telephony.TelephonyCapabilities;
++
+ import java.util.List;
+ 
+ /**
+@@ -144,9 +146,18 @@ public class GsmCdmaCall extends Call {
+     void onHangupLocal() {
+         for (int i = 0, s = mConnections.size(); i < s; i++) {
+             GsmCdmaConnection cn = (GsmCdmaConnection)mConnections.get(i);
+-
++            if (TelephonyCapabilities.isDeviceReportingEnabled(getPhone().getContext())) {
++               try {
++                   TelephonyCapabilities.deviceRerportCallOrPDPState(
++                          TelephonyCapabilities.DEVICE_REPORTTING_CALLSTATE,
++                          getPhone().getContext(),
++                          new Object[]{getPhone().getContext(),cn.getAddress(),
++                          State.DISCONNECTING, 0},"sendDetailedCallState");
++               } catch (Exception e) {
++               }
++            }
+             cn.onHangupLocal();
+         }
+         mState = State.DISCONNECTING;
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/src/java/com/android/internal/telephony/GsmCdmaConnection.java b/src/java/com/android/internal/telephony/GsmCdmaConnection.java
+index a95e490..33d753c 100644
+--- a/src/java/com/android/internal/telephony/GsmCdmaConnection.java
++++ b/src/java/com/android/internal/telephony/GsmCdmaConnection.java
+@@ -30,6 +30,7 @@ import android.telephony.Rlog;
+ import android.telephony.PhoneNumberUtils;
+ import android.telephony.ServiceState;
+ import android.text.TextUtils;
++import android.util.Log;
+ 
+ import com.android.internal.telephony.cdma.CdmaCallWaitingNotification;
+ import com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager;
+@@ -73,6 +74,8 @@ public class GsmCdmaConnection extends Connection {
+ 
+     // The cached delay to be used between DTMF tones fetched from carrier config.
+     private int mDtmfToneDelay = 0;
++    private Call.State mLastSentStatus = Call.State.DISCONNECTED;
++    private int mLastCause = 16;
+ 
+     //***** Event Constants
+     static final int EVENT_DTMF_DONE = 1;
+@@ -140,6 +143,7 @@ public class GsmCdmaConnection extends Connection {
+         mParent.attach(this, dc);
+ 
+         fetchDtmfToneDelay(phone);
++        sendCallStatusIntent();
+     }
+ 
+     /** This is an MO call, created when dialing */
+@@ -198,6 +202,7 @@ public class GsmCdmaConnection extends Connection {
+         }
+ 
+         fetchDtmfToneDelay(phone);
++        sendCallStatusIntent();
+     }
+ 
+     //CDMA
+@@ -690,6 +695,10 @@ public class GsmCdmaConnection extends Connection {
+ 
+         mCause = cause;
+ 
++        if (mCause == DisconnectCause.LOCAL) {
++            sendCallStatusIntent(Call.State.DISCONNECTING);
++        }
++
+         if (!mDisconnected) {
+             doDisconnect();
+ 
+@@ -705,6 +714,7 @@ public class GsmCdmaConnection extends Connection {
+         }
+         clearPostDialListeners();
+         releaseWakeLock();
++        sendCallStatusIntent();
+         return changed;
+     }
+ 
+@@ -796,6 +806,8 @@ public class GsmCdmaConnection extends Connection {
+             onStartedHolding();
+         }
+ 
++        sendCallStatusIntent();
++
+         return changed;
+     }
+ 
+@@ -1233,4 +1245,27 @@ public class GsmCdmaConnection extends Connection {
+ 
+         return false;
+     }
++
++    private void sendCallStatusIntent() {
++        Call.State newState = getState();
++        sendCallStatusIntent(newState);
++    }
++
++    private void sendCallStatusIntent(Call.State newState) {
++        if ( newState != mLastSentStatus || mCause != mLastCause ) {
++            if (TelephonyCapabilities.
++                     isDeviceReportingEnabled(mParent.getPhone().getContext())) {
++                try {
++                    TelephonyCapabilities.deviceRerportCallOrPDPState(
++                            TelephonyCapabilities.DEVICE_REPORTTING_CALLSTATE,
++                            mParent.getPhone().getContext(),
++                            new Object[]{mParent.getPhone().getContext(),
++                            mAddress,newState,Integer.valueOf(mCause)},"sendDetailedCallState");
++                } catch (Exception e) {
++                }
++                mLastSentStatus = newState;
++                mLastCause = mCause;
++            }
++       }
++    }
+ }
+diff --git a/src/java/com/android/internal/telephony/TelephonyCapabilities.java b/src/java/com/android/internal/telephony/TelephonyCapabilities.java
+index b7c68a3..5306846 100644
+--- a/src/java/com/android/internal/telephony/TelephonyCapabilities.java
++++ b/src/java/com/android/internal/telephony/TelephonyCapabilities.java
+@@ -16,20 +16,117 @@
+ 
+ package com.android.internal.telephony;
+ 
++import android.content.Context;
++import android.os.PersistableBundle;
+ import android.telephony.Rlog;
++import android.telephony.CarrierConfigManager;
++import android.util.Log;
+ 
++import com.android.internal.telephony.dataconnection.ApnContext;
+ import com.android.internal.telephony.Phone;
+ 
++
++import dalvik.system.DexClassLoader;
++import java.lang.reflect.Method;
++import java.lang.ClassNotFoundException;
++import java.lang.Exception;
++import java.lang.Class;
++
+ /**
+  * Utilities that check if the phone supports specified capabilities.
+  */
+ public class TelephonyCapabilities {
+     private static final String LOG_TAG = "TelephonyCapabilities";
++    public static final String DEVICE_REPORTTING_CALLSTATE =
++            "com.qualcomm.qti.internal.telephony.QtiCallStateCast";
++    public static final String DEVICE_REPORTTING_PDPSTATE =
++            "com.qualcomm.qti.internal.telephony.QtiPDPStateCast";
++    private static final String KEY_DEVICE_REPORTING_BOOL =
++            "config_enable_device_reporting";
++    public static final String JAR_PATH =
++            "system/framework/qti-telephony-common.jar";
++    public static DexClassLoader mDexClassLoader;
+ 
+     /** This class is never instantiated. */
+     private TelephonyCapabilities() {
+     }
+ 
++    public static boolean isDeviceReportingEnabled(Context context){
++         boolean isCarrierSimCard = false;
++         CarrierConfigManager carrierConfigManager =
++                 (CarrierConfigManager) context.getSystemService(Context.CARRIER_CONFIG_SERVICE);
++         if (carrierConfigManager != null) {
++              PersistableBundle carrierConfig = carrierConfigManager.getConfig();
++              if(carrierConfig != null) {
++                  isCarrierSimCard = carrierConfig.getBoolean(KEY_DEVICE_REPORTING_BOOL);
++              }
++         }
++         Log.d(LOG_TAG, "is home Carrier SIM Card? " + isCarrierSimCard);
++         return isCarrierSimCard;
++    }
++
++    public static Object deviceRerportCallOrPDPState(String classname,Context context,Object[] args,
++            String strmethod) throws Exception{
++        try{
++            Class callStateClass = getClassLoader(context).loadClass(classname);
++            Class[] argsClass = null;
++            if (args != null) {
++                argsClass = new Class[args.length];
++                for (int i = 0, j = args.length; i < j; i++) {
++                    if(i==0) {
++                        argsClass[i] = Context.class;
++                    } else {
++                        argsClass[i] = args[i].getClass();
++                    }
++                }
++            }
++            Method method = callStateClass.getMethod(strmethod,argsClass);
++            return method.invoke(null,args);
++        }catch (ClassNotFoundException e){
++        }
++        return null;
++    }
++
++    public static Object deviceRerportPDPState(String classname,Context context,Object[] args,
++            String strmethod) throws Exception{
++        try{
++            Class callStateClass = getClassLoader(context).loadClass(classname);
++            Class[] argsClass = null;
++            if (args != null) {
++                argsClass = new Class[args.length];
++                argsClass[0] = Context.class;
++                argsClass[1]=ApnContext.class;
++                if(args.length == 3) {
++                    argsClass[2] = args[2].getClass();
++                }
++            }
++            Method method = callStateClass.getMethod(strmethod,argsClass);
++            return method.invoke(null,args);
++        }catch (ClassNotFoundException e){
++        }
++        return null;
++    }
++
++    public static DexClassLoader getClassLoader(Context context){
++        if(mDexClassLoader==null){
++            mDexClassLoader = new DexClassLoader(JAR_PATH,
++                    context.getFilesDir().getAbsolutePath(), null,
++                    context.getClass().getClassLoader());
++        }
++        return mDexClassLoader;
++    }
++
++    public static Object invokeCallOrPDPState(String classname,Context context,String strmethod)
++            throws Exception {
++        try{
++            Class callStateClass = getClassLoader(context).loadClass(classname);
++            Method method = callStateClass.getMethod(strmethod);
++            return method.invoke(null);
++        }catch (ClassNotFoundException e){
++        }
++        return null;
++    }
++
+     /**
+      * Return true if the current phone supports ECM ("Emergency Callback
+      * Mode"), which is a feature where the device goes into a special
+diff --git a/src/java/com/android/internal/telephony/dataconnection/DcTracker.java b/src/java/com/android/internal/telephony/dataconnection/DcTracker.java
+index 8cd7c91..61476c1 100644
+--- a/src/java/com/android/internal/telephony/dataconnection/DcTracker.java
++++ b/src/java/com/android/internal/telephony/dataconnection/DcTracker.java
+@@ -70,6 +70,7 @@ import android.telephony.gsm.GsmCellLocation;
+ import android.text.TextUtils;
+ import android.util.EventLog;
+ import android.util.LocalLog;
++import android.util.Log;
+ import android.util.Pair;
+ import android.util.SparseArray;
+ import android.view.WindowManager;
+@@ -88,6 +89,7 @@ import com.android.internal.telephony.ITelephony;
+ import com.android.internal.telephony.PhoneConstants;
+ import com.android.internal.telephony.RILConstants;
+ import com.android.internal.telephony.SubscriptionController;
++import com.android.internal.telephony.TelephonyCapabilities;
+ import com.android.internal.telephony.TelephonyIntents;
+ import com.android.internal.telephony.uicc.IccRecords;
+ import com.android.internal.telephony.uicc.UiccController;
+@@ -2205,6 +2207,17 @@ public class DcTracker extends Handler {
+         apnContext.setState(DctConstants.State.CONNECTING);
+         mPhone.notifyDataConnection(apnContext.getReason(), apnContext.getApnType());
+ 
++        if (isDeviceReportingEnabled()) {
++            Log.d(LOG_TAG, "Send PDPContextState Requested intent");
++            try {
++                TelephonyCapabilities.deviceRerportPDPState(
++                        TelephonyCapabilities.DEVICE_REPORTTING_PDPSTATE,
++                        mPhone.getContext(),new Object[]{mPhone.getContext(),apnContext},
++                        "sendRequested");
++            } catch (Exception e) {
++            }
++        }
++
+         Message msg = obtainMessage();
+         msg.what = DctConstants.EVENT_DATA_SETUP_COMPLETE;
+         msg.obj = new Pair<ApnContext, Integer>(apnContext, generation);
+@@ -2500,6 +2513,16 @@ public class DcTracker extends Handler {
+             mColdSimDetected = false;
+             mOutOfCreditSimDetected = false;
+         }
++
++        if (isDeviceReportingEnabled()) {
++            try {
++                  TelephonyCapabilities.invokeCallOrPDPState(
++                  TelephonyCapabilities.DEVICE_REPORTTING_PDPSTATE,
++                  mPhone.getContext(),
++                        "enable");
++            } catch (Exception e) {
++            }
++        }
+     }
+ 
+     private void onSimNotReady() {
+@@ -2929,6 +2952,17 @@ public class DcTracker extends Handler {
+         mPhone.notifyDataConnection(apnContext.getReason(), apnContext.getApnType());
+         startNetStatPoll();
+         startDataStallAlarm(DATA_STALL_NOT_SUSPECTED);
++
++        if (isDeviceReportingEnabled()) {
++            Log.d(LOG_TAG, "Send PDPContextState Connected intent");
++            try {
++                TelephonyCapabilities.deviceRerportPDPState(
++                        TelephonyCapabilities.DEVICE_REPORTTING_PDPSTATE,
++                        mPhone.getContext(),new Object[]{mPhone.getContext(),apnContext},
++                        "sendConnected");
++            } catch (Exception e) {
++            }
++        }
+     }
+ 
+     /**
+@@ -3159,6 +3193,17 @@ public class DcTracker extends Handler {
+             mPhone.notifyDataConnection(Phone.REASON_APN_FAILED, apnContext.getApnType());
+             apnContext.setDataConnectionAc(null);
+             log("onDataSetupCompleteError: Stop retrying APNs.");
++            if (isDeviceReportingEnabled()) {
++                Log.d(LOG_TAG, "Send PDPContextState Disconnected intent");
++                try {
++                    TelephonyCapabilities.deviceRerportPDPState(
++                            TelephonyCapabilities.DEVICE_REPORTTING_PDPSTATE,
++                            mPhone.getContext(),new Object[]{mPhone.getContext(),
++                                apnContext,Phone.REASON_APN_FAILED},
++                            "sendDisconnected");
++                } catch (Exception e) {
++                }
++            }
+         }
+     }
+ 
+@@ -3216,6 +3261,18 @@ public class DcTracker extends Handler {
+         ApnContext apnContext = getValidApnContext(ar, "onDisconnectDone");
+         if (apnContext == null) return;
+ 
++        if (isDeviceReportingEnabled()) {
++             Log.d(LOG_TAG, "Send PDPContextState disconnected intent");
++             // Send PDPContextState disconnected intent
++             try {
++                 TelephonyCapabilities.deviceRerportPDPState(
++                     TelephonyCapabilities.DEVICE_REPORTTING_PDPSTATE,
++                     mPhone.getContext(),new Object[]{mPhone.getContext(),apnContext},
++                     "sendDisconnected");
++             } catch (Exception e) {
++             }
++        }
++
+         if(DBG) log("onDisconnectDone: EVENT_DISCONNECT_DONE apnContext=" + apnContext);
+         apnContext.setState(DctConstants.State.IDLE);
+ 
+@@ -4176,6 +4233,7 @@ public class DcTracker extends Handler {
+     public void update() {
+         log("update sub = " + mPhone.getSubId());
+         log("update(): Active DDS, register for all events now!");
++
+         onUpdateIcc();
+ 
+         mUserDataEnabled = getDataEnabled();
+@@ -4964,4 +5022,7 @@ public class DcTracker extends Handler {
+         }
+     }
+ 
++    public boolean isDeviceReportingEnabled() {
++        return TelephonyCapabilities.isDeviceReportingEnabled(mPhone.getContext());
++    }
+ }
+diff --git a/src/java/com/android/internal/telephony/imsphone/ImsPhoneCallTracker.java b/src/java/com/android/internal/telephony/imsphone/ImsPhoneCallTracker.java
+index 39260b8..6472115 100644
+--- a/src/java/com/android/internal/telephony/imsphone/ImsPhoneCallTracker.java
++++ b/src/java/com/android/internal/telephony/imsphone/ImsPhoneCallTracker.java
+@@ -18,8 +18,13 @@ package com.android.internal.telephony.imsphone;
+ 
+ import java.io.FileDescriptor;
+ import java.io.PrintWriter;
++import java.math.BigInteger;
++import java.text.SimpleDateFormat;
+ import java.util.ArrayList;
+ import java.util.List;
++import java.util.Date;
++import java.security.MessageDigest;
++import java.security.NoSuchAlgorithmException;
+ 
+ import android.app.PendingIntent;
+ import android.content.BroadcastReceiver;
+@@ -27,6 +32,7 @@ import android.content.Context;
+ import android.content.Intent;
+ import android.content.IntentFilter;
+ import android.content.SharedPreferences;
++import android.net.wifi.WifiManager;
+ import android.os.AsyncResult;
+ import android.os.Bundle;
+ import android.os.Handler;
+@@ -75,6 +81,7 @@ import com.android.internal.telephony.PhoneConstants;
+ import com.android.internal.telephony.TelephonyEventLog;
+ import com.android.internal.telephony.TelephonyProperties;
+ import com.android.internal.telephony.gsm.SuppServiceNotification;
++import com.android.internal.telephony.TelephonyCapabilities;
+ 
+ /**
+  * {@hide}
+@@ -93,7 +100,12 @@ public class ImsPhoneCallTracker extends CallTracker implements ImsPullCall {
+     private final String[] mImsFeatureStrings = {"VoLTE", "ViLTE", "VoWiFi", "ViWiFi",
+             "UTLTE", "UTWiFi"};
+ 
++    private static final String WIFI_CALL_READY = "wificall.ready";
++
+     private TelephonyEventLog mEventLog;
++    private boolean mIsMT = false;
++    private String LastAC = "END";
++    private String mOutgingNumber = "";
+ 
+     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+         @Override
+@@ -101,6 +113,8 @@ public class ImsPhoneCallTracker extends CallTracker implements ImsPullCall {
+             if (intent.getAction().equals(ImsManager.ACTION_IMS_INCOMING_CALL)) {
+                 if (DBG) log("onReceive : incoming call intent");
+ 
++                mIsMT = true;
++
+                 if (mImsManager == null) return;
+ 
+                 if (mServiceId < 0) return;
+@@ -150,6 +164,7 @@ public class ImsPhoneCallTracker extends CallTracker implements ImsPullCall {
+ 
+                     updatePhoneState();
+                     mPhone.notifyPreciseCallStateChanged();
++                    doDeviceReportingWFC(imsCall, "START", 0);
+                 } catch (ImsException e) {
+                     loge("onReceive : exception " + e);
+                 } catch (RemoteException e) {
+@@ -587,6 +602,8 @@ public class ImsPhoneCallTracker extends CallTracker implements ImsPullCall {
+             mEventLog.writeOnImsCallStart(imsCall.getSession(), callees[0]);
+ 
+             setVideoCallProvider(conn, imsCall);
++            mIsMT = false;
++            doDeviceReportingWFC(null, "START", 0);
+         } catch (ImsException e) {
+             loge("dialInternal : " + e);
+             conn.setDisconnectCause(DisconnectCause.ERROR_UNSPECIFIED);
+@@ -1268,6 +1285,102 @@ public class ImsPhoneCallTracker extends CallTracker implements ImsPullCall {
+         }
+     }
+ 
++    private boolean isWificalling () {
++        try {
++            return Settings.Global.getInt(
++                mPhone.getContext().getContentResolver(), WIFI_CALL_READY) == 1 ? true : false;
++        } catch (Exception e) {
++            return false;
++        }
++    }
++
++    private boolean isWifiCallingEndNormal(int DiscCause) {
++        switch (DiscCause) {
++            case DisconnectCause.LOCAL:
++            case DisconnectCause.NORMAL:
++            case DisconnectCause.INCOMING_REJECTED:
++            case DisconnectCause.INCOMING_MISSED:
++                return true;
++            default:
++                return false;
++        }
++    }
++
++    private String getHash(String string) {
++        MessageDigest digest = null;
++        try {
++            digest = MessageDigest.getInstance("SHA-256");
++        } catch (NoSuchAlgorithmException e) {
++            // TODO Auto-generated catch block
++            e.printStackTrace();
++        }
++        digest.reset();
++        byte[] data = digest.digest(string.getBytes());
++        return String.format("%0" + (data.length*2) + "X", new BigInteger(1, data));
++    }
++
++    private void doDeviceReportingWFC(ImsCall imsCall, String AC, int DiscCause) {
++        if (!TelephonyCapabilities.isDeviceReportingEnabled(mPhone.getContext())) {
++            return;
++        }
++
++        //only do device reporting in wificall mode
++        if (!isWificalling() || AC.equals(LastAC)) {
++            return;
++        }
++
++        StringBuilder extra = new StringBuilder();
++        //get time stamp
++        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
++        String timeStamp = simpleDateFormat.format(new Date());
++        //get rssi value of wifi
++        WifiManager wifiManager =
++                (WifiManager) mPhone.getContext().getSystemService(Context.WIFI_SERVICE);
++        String RssiValue = String.valueOf(wifiManager.getConnectionInfo().getRssi());
++
++        Intent deviceRptIntent = new Intent("com.tmobile.comm.METRIC");
++
++        extra.append("SVC=CALL")
++        .append(";AC=")
++        .append(AC);
++        if(AC.equals("END")){
++            extra.append(";MSG=CAll Ended.");
++        }
++        extra.append(";RSSI=")
++        .append(RssiValue)
++        .append(";TS=")
++        .append(timeStamp);
++        if (mIsMT) {
++            extra.append(";DIR=MT");
++            String number = "";
++            try {
++                if (null != imsCall) {
++                    number = imsCall.getCallExtra(ImsCallProfile.EXTRA_OI);
++                }
++            } catch (Exception e) {
++                loge("error " + e);
++            }
++            extra.append(";PM=")
++            .append(getHash(number));
++        } else {
++            extra.append(";DIR=MO")
++            .append(";PM=")
++            .append(getHash(mOutgingNumber));
++        }
++
++        // check if wifi calling end normal
++        if (!isWifiCallingEndNormal(DiscCause) && AC.equals("END")) {
++            extra.append(";OK=false");
++        } else {
++            extra.append(";OK=true");
++        }
++        extra.append(";BEARER=WiFi");
++        deviceRptIntent.putExtra("PARMS", extra.toString());
++        mPhone.getContext().sendBroadcastAsUser(deviceRptIntent, android.os.Process.myUserHandle(),
++                          "com.tmobile.comm.RECEIVE_METRICS");
++        LastAC = AC;
++    }
++
+     /**
+      * Listen to the IMS call state change
+      */
+@@ -1286,6 +1399,7 @@ public class ImsPhoneCallTracker extends CallTracker implements ImsPullCall {
+         public void onCallStarted(ImsCall imsCall) {
+             if (DBG) log("onCallStarted");
+ 
++            doDeviceReportingWFC(imsCall, "START", 0);
+             mPendingMO = null;
+             processCallStateChange(imsCall, ImsPhoneCall.State.ACTIVE,
+                     DisconnectCause.NOT_DISCONNECTED);
+@@ -1315,6 +1429,7 @@ public class ImsPhoneCallTracker extends CallTracker implements ImsPullCall {
+         public void onCallStartFailed(ImsCall imsCall, ImsReasonInfo reasonInfo) {
+             if (DBG) log("onCallStartFailed reasonCode=" + reasonInfo.getCode());
+ 
++            doDeviceReportingWFC(imsCall, "END", getDisconnectCauseFromReasonInfo(reasonInfo));
+             if (mPendingMO != null) {
+                 // To initiate dialing circuit-switched call
+                 if (reasonInfo.getCode() == ImsReasonInfo.CODE_LOCAL_CALL_CS_RETRY_REQUIRED
+@@ -1369,6 +1484,7 @@ public class ImsPhoneCallTracker extends CallTracker implements ImsPullCall {
+             }
+ 
+             mEventLog.writeOnImsCallTerminated(imsCall.getCallSession(), reasonInfo);
++            doDeviceReportingWFC(imsCall, "END", cause);
+ 
+             processCallStateChange(imsCall, ImsPhoneCall.State.DISCONNECTED, cause);
+             if (mForegroundCall.getState() != ImsPhoneCall.State.ACTIVE) {
+diff --git a/src/java/com/android/internal/telephony/imsphone/ImsPhoneConnection.java b/src/java/com/android/internal/telephony/imsphone/ImsPhoneConnection.java
+index 65afbfa..fc34781 100644
+--- a/src/java/com/android/internal/telephony/imsphone/ImsPhoneConnection.java
++++ b/src/java/com/android/internal/telephony/imsphone/ImsPhoneConnection.java
+@@ -41,6 +41,7 @@ import com.android.internal.telephony.CallStateException;
+ import com.android.internal.telephony.Connection;
+ import com.android.internal.telephony.Phone;
+ import com.android.internal.telephony.PhoneConstants;
++import com.android.internal.telephony.TelephonyCapabilities;
+ import com.android.internal.telephony.TelephonyProperties;
+ import com.android.internal.telephony.UUSInfo;
+ 
+@@ -86,6 +87,8 @@ public class ImsPhoneConnection extends Connection {
+ 
+     // The cached delay to be used between DTMF tones fetched from carrier config.
+     private int mDtmfToneDelay = 0;
++    private ImsPhoneCall.State mLastReportState = ImsPhoneCall.State.DISCONNECTED;
++    private int mLastCause = 16;
+ 
+     private boolean mIsEmergency = false;
+ 
+@@ -180,6 +183,7 @@ public class ImsPhoneConnection extends Connection {
+                 (mIsIncoming? ImsPhoneCall.State.INCOMING: ImsPhoneCall.State.DIALING));
+ 
+         fetchDtmfToneDelay(phone);
++        sendImsCallStateIntent(mCause);
+     }
+ 
+     /** This is an MO call, created when dialing */
+@@ -225,6 +229,7 @@ public class ImsPhoneConnection extends Connection {
+         mIsEmergency = isEmergency;
+ 
+         fetchDtmfToneDelay(phone);
++        sendImsCallStateIntent(mCause);
+     }
+ 
+     public void dispose() {
+@@ -429,6 +434,7 @@ public class ImsPhoneConnection extends Connection {
+             mImsCall = null;
+         }
+         releaseWakeLock();
++        sendImsCallStateIntent(mCause);
+         return changed;
+     }
+ 
+@@ -696,6 +702,7 @@ public class ImsPhoneConnection extends Connection {
+         boolean updateMediaCapabilities = updateMediaCapabilities(imsCall);
+         boolean updateExtras = updateExtras(imsCall);
+ 
++        sendImsCallStateIntent(mCause);
+         return updateParent || updateWifiState || updateAddressDisplay || updateMediaCapabilities
+                 || updateExtras;
+     }
+@@ -1025,4 +1032,27 @@ public class ImsPhoneConnection extends Connection {
+     protected boolean isEmergency() {
+         return mIsEmergency;
+     }
++
++    private void sendImsCallStateIntent(int cause) {
++        ImsPhoneCall.State newState = getState();
++        Rlog.d(LOG_TAG, "newState = " + newState);
++        sendImsCallStateIntent(cause, newState);
++    }
++
++    private void sendImsCallStateIntent(int cause, ImsPhoneCall.State newState){
++        if ( newState != mLastReportState || cause != mLastCause ) {
++            if (TelephonyCapabilities.isDeviceReportingEnabled(mOwner.mPhone.getContext())) {
++                try {
++                    TelephonyCapabilities.deviceRerportCallOrPDPState(
++                            TelephonyCapabilities.DEVICE_REPORTTING_CALLSTATE,
++                            mOwner.mPhone.getContext(),
++                            new Object[]{mOwner.mPhone.getContext(),
++                            mAddress, newState, Integer.valueOf(cause)},"sendDetailedCallState");
++                } catch (Exception e) {
++                }
++            }
++            mLastReportState = newState;
++            mLastCause = cause;
++        }
++    }
+ }
+-- 
+1.8.2.1
+

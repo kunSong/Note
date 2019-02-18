@@ -1,0 +1,646 @@
+From 8b1107bee079a5ee872dbf130d85a1cb0060fd83 Mon Sep 17 00:00:00 2001
+From: Fang Yunong <c_yunong@qti.qualcomm.com>
+Date: Fri, 19 Aug 2016 17:40:31 +0800
+Subject: [PATCH] Call and PDP state relate API interface for device report
+
+Send intent for change in call state
+and pdn connection status change
+
+Change-Id: I4093f0bba2f433c89d529c3704347b2d1f45803a
+CRs-Fixed: 1039338
+---
+ .../qti/internal/telephony/QtiCallStateCast.java   | 164 +++++++++
+ .../qti/internal/telephony/QtiPDPStateCast.java    | 391 +++++++++++++++++++++
+ .../telephony/dataconnection/QtiDcTracker.java     |  26 ++
+ 3 files changed, 581 insertions(+)
+ create mode 100644 opt/telephony/src/java/com/qualcomm/qti/internal/telephony/QtiCallStateCast.java
+ create mode 100644 opt/telephony/src/java/com/qualcomm/qti/internal/telephony/QtiPDPStateCast.java
+
+diff --git a/opt/telephony/src/java/com/qualcomm/qti/internal/telephony/QtiCallStateCast.java b/opt/telephony/src/java/com/qualcomm/qti/internal/telephony/QtiCallStateCast.java
+new file mode 100644
+index 0000000..8d5e192
+--- /dev/null
++++ b/opt/telephony/src/java/com/qualcomm/qti/internal/telephony/QtiCallStateCast.java
+@@ -0,0 +1,164 @@
++/*
++ * Copyright (c) 2016 Qualcomm Technologies, Inc.
++ * All Rights Reserved.
++ * Confidential and Proprietary - Qualcomm Technologies, Inc.
++ */
++
++package com.qualcomm.qti.internal.telephony;
++
++import android.content.Context;
++import android.content.Intent;
++import android.os.Process;
++import android.text.TextUtils;
++import android.util.Log;
++
++import com.android.internal.telephony.Call;
++
++import java.util.HashMap;
++
++public class QtiCallStateCast {
++    private static final String LOG_TAG = "QtiPDPStateCast";
++    private static final boolean DEBUG_LOG = true;
++    private static final String ACTION_QTI_CALL_STATE =
++            "diagandroid.phone.detailedCallState";
++    private static final String PERM_RECEIVE_QTI_CALL_STATE =
++            "diagandroid.phone.receiveDetailedCallState";
++
++    private static final String EXTRA_CALL_STATE = "CallState";
++    private static final String EXTRA_CALL_NUMBER = "CallNumber";
++    private static final String EXTRA_CALL_CODE = "CallCode";
++
++    private static final String CALL_STATE_ATTEMPTING = "ATTEMPTING";
++    private static final String CALL_STATE_HOLDING = "HELD";
++    private static final String CALL_STATE_ESTABLISHED = "ESTABLISHED";
++    private static final String CALL_STATE_CONNECTED = "CONNECTED";
++    private static final String CALL_STATE_DISCONNECTING = "DISCONNECTING";
++    private static final String CALL_STATE_ENDED = "ENDED";
++    private static final String CALL_STATE_FAILED = "FAILED";
++
++    private static final int CAUSE_GSM_RELEASE = 2165;
++    private static final int CAUSE_CDMA_RELEASE = 1001;
++    private static final int CAUSE_ERROR_UNSPECIFIED = 0xffff;
++    private static final int UNOBTAINABLE_NUMBER = 1;
++    private static final int LOCAL = 2;
++    private static final int NO_ROUTE_TO_DESTINAON = 3;
++    private static final int NORMAL_CLEARING = 16;
++
++    private static boolean mEnabled = false;
++
++    public static void enable() {
++        if (DEBUG_LOG) Log.i(LOG_TAG, "enable");
++        mEnabled = true;
++    }
++
++    public static void disable() {
++        if (DEBUG_LOG) Log.i(LOG_TAG, "disable");
++        mEnabled = false;
++    }
++
++    public static void sendCallState(Context context, String number, Call.State state) {
++        if (mEnabled && (context != null) && (state != null)) {
++            if (DEBUG_LOG) Log.i(LOG_TAG, "sendCallState: " + number + ", " + state);
++            sendCallState(context, state.toString(), number);
++        }
++    }
++
++    public static void sendCallDisconnected(Context context, String number, Integer cause) {
++        if (mEnabled && (context != null)) {
++            if (DEBUG_LOG) Log.i(LOG_TAG,
++                    "sendCallDisconnected: " + number + ", " + cause);
++            sendCallStateEnd(context, number, Integer.toString(getFailedCause(cause)));
++        }
++    }
++
++    private static void sendCallState(Context context, String state, String number) {
++        sendCallState(context, state, number, null);
++    }
++
++    private static void sendCallStateEnd(Context context, String number, String extra) {
++        sendCallState(context, CALL_STATE_ENDED, number, extra);
++    }
++
++    private static void sendCallState(Context context, String state, String number, String extra) {
++        if (state != null)
++            broadcast(context, intentFactory(state, number, extra));
++    }
++
++    private static Intent intentFactory(String callState, String number) {
++        return intentFactory(callState, number, null);
++    }
++
++    public static void sendDetailedCallState(
++            Context context, String number, Call.State state, Integer cause) {
++        if (state != null) {
++            switch (state) {
++                case ACTIVE://CONNECTED
++                    broadcast(context, intentFactory(CALL_STATE_CONNECTED, number, null));
++                    break;
++                case HOLDING://HOLDING
++                    broadcast(context, intentFactory(CALL_STATE_HOLDING, number, null));
++                    break;
++                case DIALING://ATTEMPTING
++                case INCOMING:
++                case WAITING:
++                    broadcast(context, intentFactory(CALL_STATE_ATTEMPTING, number, null));
++                    break;
++                case ALERTING://ESTABLISHED
++                    broadcast(context, intentFactory(CALL_STATE_ESTABLISHED, number, null));
++                    break;
++                case DISCONNECTED://END
++                    if (isCallEndNormal(cause)) {
++                        broadcast(context, intentFactory(CALL_STATE_ENDED, number,
++                                Integer.toString(getFailedCause(cause))));
++                    } else {
++                        broadcast(context, intentFactory(CALL_STATE_FAILED, number,
++                                Integer.toString(getFailedCause(cause))));
++                        broadcast(context, intentFactory(CALL_STATE_ENDED, number,
++                                Integer.toString(getFailedCause(cause))));
++                    }
++                    break;
++                case DISCONNECTING://DISCONNECTING / FAILED
++                    broadcast(context, intentFactory(CALL_STATE_DISCONNECTING, number, null));
++                    break;
++                default:
++                    Log.e(LOG_TAG, "Call State error" + state);
++                    break;
++            }
++        }
++    }
++
++    private static boolean isCallEndNormal(int cause) {
++        switch (cause) {
++            case UNOBTAINABLE_NUMBER:
++            case NO_ROUTE_TO_DESTINAON:
++            case NORMAL_CLEARING:
++            case LOCAL:
++                return true;
++            default:
++                return false;
++        }
++    }
++
++    private static Intent intentFactory(String callState, String number, String extra) {
++        Intent intent = new Intent(ACTION_QTI_CALL_STATE);
++        intent.putExtra(EXTRA_CALL_STATE, callState);
++        intent.putExtra(EXTRA_CALL_NUMBER, number);
++        if (!TextUtils.isEmpty(extra))
++            intent.putExtra(EXTRA_CALL_CODE, extra);
++        return intent;
++    }
++
++    private static int getFailedCause(int cause) {
++        if (cause == CAUSE_GSM_RELEASE || cause == CAUSE_CDMA_RELEASE) {
++            return CAUSE_ERROR_UNSPECIFIED;
++        } else {
++            return cause;
++        }
++    }
++
++    private static void broadcast(Context context, Intent intent) {
++        context.sendBroadcastAsUser(
++                intent, Process.myUserHandle(), PERM_RECEIVE_QTI_CALL_STATE);
++    }
++}
++
+diff --git a/opt/telephony/src/java/com/qualcomm/qti/internal/telephony/QtiPDPStateCast.java b/opt/telephony/src/java/com/qualcomm/qti/internal/telephony/QtiPDPStateCast.java
+new file mode 100644
+index 0000000..bb7b43f
+--- /dev/null
++++ b/opt/telephony/src/java/com/qualcomm/qti/internal/telephony/QtiPDPStateCast.java
+@@ -0,0 +1,391 @@
++/*
++ * Copyright (c) 2016 Qualcomm Technologies, Inc.
++ * All Rights Reserved.
++ * Confidential and Proprietary - Qualcomm Technologies, Inc.
++ */
++
++package com.qualcomm.qti.internal.telephony;
++
++import android.content.Context;
++import android.content.Intent;
++import android.net.LinkProperties;
++import android.os.Process;
++import android.text.TextUtils;
++import android.util.Log;
++
++import com.android.internal.telephony.Phone;
++import com.android.internal.telephony.PhoneConstants;
++import com.android.internal.telephony.dataconnection.ApnContext;
++import com.android.internal.telephony.dataconnection.ApnSetting;
++
++import java.net.InetAddress;
++import java.net.Inet4Address;
++import java.net.Inet6Address;
++
++import java.util.Collection;
++import java.util.HashMap;
++import java.util.HashSet;
++
++public class QtiPDPStateCast {
++    private static boolean mEnabled = false;
++    private static final boolean DEBUG_LOG = true;
++    private static final String LOG_TAG = "QtiPDPStateCast";
++    private static Object mMutex = new Object();
++
++    private static final String ACTION_QTI_PDP_STATE = "diagandroid.data.PDPContextState";
++    private static final String PERM_QTI_PDP_STATE = "diagandroid.data.receivePDPContextState";
++
++    private static final String EXTRA_CONTEXT_ID = "ContextID";
++    private static final String EXTRA_CONTEXT_STATE = "ContextState";
++    private static final String EXTRA_CONTEXT_TYPE = "ContextType";
++    private static final String EXTRA_CONTEXT_INITIATOR = "ContextInitiator";
++    private static final String EXTRA_CONTEXT_NSAPI = "ContextNSAPI";
++    private static final String EXTRA_CONTEXT_SAPI = "ContextSAPI";
++    private static final String EXTRA_CONTEXT_APN = "ContextAPN";
++    private static final String EXTRA_CONTEXT_IPV4_ADDR = "ContextIPV4Addr";
++    private static final String EXTRA_CONTEXT_IPV6_ADDR = "ContextIPV6Addr";
++    private static final String EXTRA_CONTEXT_TERM_CODE = "ContextTermCode";
++    private static final String EXTRA_CONTEXT_ERROR_CODE = "ContextErrorCode";
++
++    private static final int DNS_EXTRA_COUNT = 2;
++    private static final String[] EXTRA_CONTEXT_DNS = {"ContextDNS1", "ContextDNS2"};
++    private static final String[] EXTRA_CONTEXT_V6DNS = {"ContextV6DNS1", "ContextV6DNS2"};
++
++    private static final String CONTEXT_STATE_REQUESTED = "REQUEST";
++    private static final String CONTEXT_STATE_CONNECTED = "CONNECTED";
++    private static final String CONTEXT_STATE_DISCONNECTED = "DISCONNECTED";
++
++    private static final String INITIATOR_NETWORK = "NETWORK";
++    private static final String INITIATOR_UE = "USER";
++
++    private static final String CONTEXT_TYPE_PRIMARY = "PRIMARY";
++    private static final String CONTEXT_TYPE_SECONDARY = "SECONDARY";
++
++    private static final String APN_TYPE_PRIMARY = PhoneConstants.APN_TYPE_DEFAULT;
++
++    private static final int IP_ADDRESS_V4_INDEX = 0;
++    private static final int IP_ADDRESS_V6_INDEX = 1;
++    private static final int IP_ADDRESS_TYPE_COUNT = 2;
++
++    private final static HashMap<Integer, HashMap<String, Integer>> mApnIdMap =
++            new HashMap<Integer, HashMap<String, Integer>>();
++    private static int mNextContextId = 1;
++
++    private static final HashMap<String, String> mTermCodeMap =
++        new HashMap<String, String>() {{
++        put(null, "301");
++        put(Phone.REASON_RADIO_TURNED_OFF, "302");
++        put("unknownPdpDisconnect", "303");
++        put("unknown data error", "304");
++        put(Phone.REASON_ROAMING_ON, "305");
++        put(Phone.REASON_ROAMING_OFF, "306");
++        put(Phone.REASON_DATA_DISABLED, "307");
++        put(Phone.REASON_DATA_ENABLED, "308");
++        put(Phone.REASON_DATA_ATTACHED, "309");
++        put(Phone.REASON_DATA_DETACHED, "310");
++        put(Phone.REASON_CDMA_DATA_ATTACHED, "311");
++        put(Phone.REASON_CDMA_DATA_DETACHED, "312");
++        put(Phone.REASON_APN_CHANGED, "313");
++        put(Phone.REASON_APN_SWITCHED, "314");
++        put(Phone.REASON_APN_FAILED, "315");
++        put(Phone.REASON_RESTORE_DEFAULT_APN, "316");
++        put(Phone.REASON_PDP_RESET, "317");
++        put(Phone.REASON_VOICE_CALL_ENDED, "318");
++        put(Phone.REASON_VOICE_CALL_STARTED, "319");
++        put(Phone.REASON_PS_RESTRICT_ENABLED, "320");
++        put(Phone.REASON_PS_RESTRICT_DISABLED, "321");
++        put(Phone.REASON_SIM_LOADED, "322");
++        put("apnTypeDisabled", "323");
++        put("apnTypeEnabled", "324");
++        put("masterDataDisabled", "325");
++        put("masterDataEnabled", "326");
++        put("iccRecordsLoaded", "327");
++        put("cdmaOtaProvisioning", "328");
++        put("defaultDataDisabled", "329");
++        put("defaultDataEnabled", "330");
++        put("radioOn", "331");
++        put("radioOff", "332");
++        put("radioTechnologyChanged", "333");
++        put("networkOrModemDisconnect", "334");
++        put("dataNetworkAttached", "335");
++        put("dataNetworkDetached", "336");
++        put("dataProfileDbChanged", "337");
++        put("cdmaSubscriptionSourceChanged", "338");
++        put("tetheredModeChanged", "339");
++        put("dataConnectionPropertyChanged", "340");
++        put(Phone.REASON_NW_TYPE_CHANGED, "301");
++        put(Phone.REASON_DATA_DEPENDENCY_MET, "301");
++        put(Phone.REASON_DATA_DEPENDENCY_UNMET, "301");
++        put(PhoneConstants.REASON_LINK_PROPERTIES_CHANGED, "301");
++    }};
++
++    public static void enable() {
++        if (DEBUG_LOG) Log.d(LOG_TAG, "enable");
++        synchronized (mMutex) {
++            mEnabled = true;
++        }
++    }
++
++    public static synchronized void disable() {
++        if (DEBUG_LOG) Log.d(LOG_TAG, "disable");
++        synchronized (mMutex) {
++            mEnabled = false;
++        }
++    }
++
++    public static void sendRequested(Context context, ApnContext apnContext) {
++        if (DEBUG_LOG) Log.d(LOG_TAG, "sendRequested: " + apnContext.toString());
++        synchronized (mMutex) {
++            if (validApn(apnContext)) {
++                try {
++                    sendPDPContextRequested(context, apnContext);
++                } catch (Exception e) {
++                    Log.e(LOG_TAG, "sendRequest Exception" + e);
++                }
++            }
++        }
++    }
++
++    public static void sendConnected(Context context, ApnContext apnContext) {
++        if (DEBUG_LOG) Log.d(LOG_TAG, "sendConnected: " + apnContext.toString());
++        synchronized (mMutex) {
++            if  (validApn(apnContext)) {
++                try {
++                    LinkProperties linkProperties = apnContext.getDcAc().getLinkPropertiesSync();
++                    if (linkProperties != null) {
++                        if (DEBUG_LOG) Log.d(LOG_TAG, "have linkProperties");
++                        String[] ipAddresses = {"", ""};
++                        String[] ipv4DNS = {"", ""};
++                        String[] ipv6DNS = {"", ""};
++
++                        processIPAddresses(linkProperties.getAddresses(), ipAddresses);
++                        processDNSAddresses(linkProperties.getDnses(), ipv4DNS, ipv6DNS);
++
++                        sendPDPContextConnected(
++                            context, apnContext, ipAddresses[IP_ADDRESS_V4_INDEX],
++                            ipAddresses[IP_ADDRESS_V6_INDEX], ipv4DNS, ipv6DNS);
++                    }
++                } catch (Exception e) {
++                    Log.e(LOG_TAG, "sendConnected Exception" + e);
++                }
++            }
++        }
++    }
++
++    public static void sendDisconnected(Context context, ApnContext apnContext) {
++        if (DEBUG_LOG) Log.d(LOG_TAG, "sendDisconnected: " + apnContext.toString());
++        synchronized (mMutex) {
++            if (validApn(apnContext)) {
++                try {
++                    sendPDPContextDisconnected(context, apnContext, apnContext.getReason());
++                } catch (Exception e) {
++                    Log.e(LOG_TAG, "sendDisconnected Exception" + e);
++                }
++            }
++        }
++    }
++
++    public static void sendDisconnected(
++            Context context, ApnContext apnContext, String reason) {
++        if (DEBUG_LOG) Log.d(LOG_TAG, "sendDisconnected: " + apnContext.toString());
++        synchronized (mMutex) {
++            if (validApn(apnContext)) {
++                try {
++                    sendPDPContextDisconnected(context, apnContext, reason);
++                } catch (Exception e) {
++                    Log.e(LOG_TAG, "sendDisconnected Exception" + e);
++                }
++            }
++        }
++    }
++
++    private static Integer getContextId(ApnContext apnContext) {
++        Integer result = null;
++        ApnSetting apnSetting = apnContext.getApnSetting();
++        HashMap<String, Integer> apnTypeIdMap = mApnIdMap.get(Integer.valueOf(apnSetting.id));
++        if (apnTypeIdMap != null) {
++            result = apnTypeIdMap.get(apnContext.getApnType());
++        }
++        return result;
++    }
++
++    private static void removeContextId(ApnContext apnContext) {
++        ApnSetting apnSetting = apnContext.getApnSetting();
++        Integer apnIdValue = Integer.valueOf(apnSetting.id);
++        HashMap<String, Integer> apnTypeIdMap = mApnIdMap.get(apnIdValue);
++        if (apnTypeIdMap != null) {
++            apnTypeIdMap.remove(apnContext.getApnType());
++            if (apnTypeIdMap.isEmpty()) {
++                mApnIdMap.remove(apnIdValue);
++            }
++        }
++    }
++
++    private static boolean contextIdInUse(int contextId) {
++        boolean inUse = false;
++        Integer contextIdValue = Integer.valueOf(contextId);
++        for (HashMap<String, Integer> apnTypeIdMap : mApnIdMap.values()) {
++            if (apnTypeIdMap.containsValue(contextIdValue)) {
++                inUse = true;
++                break;
++            }
++        }
++        return inUse;
++     }
++
++    private static int getNextContextId() {
++        int nextId;
++        do {
++            nextId = mNextContextId++;
++            if (mNextContextId > 0xFFFF) {
++                mNextContextId = 1;
++            }
++        } while (contextIdInUse(nextId));
++        return nextId;
++    }
++
++    private static String getContextType(String apnType) {
++        return APN_TYPE_PRIMARY.equals(apnType) ? CONTEXT_TYPE_PRIMARY : CONTEXT_TYPE_SECONDARY;
++    }
++
++    private static void sendPDPContextRequested(Context context, ApnContext apnContext) {
++        ApnSetting apnSetting = apnContext.getApnSetting();
++        int apnId = apnSetting.id;
++        String contextApn = apnSetting.apn;
++        String apnType = apnContext.getApnType();
++        String contextType = getContextType(apnType);
++        Integer apnIdObject = Integer.valueOf(apnId);
++        HashMap<String, Integer> apnTypeIdMap = mApnIdMap.get(apnIdObject);
++        if (apnTypeIdMap == null) {
++            if (DEBUG_LOG) Log.i(LOG_TAG, "apnId " + apnIdObject.toString() + " not already known");
++            apnTypeIdMap = new HashMap<String, Integer>();
++            mApnIdMap.put(apnIdObject, apnTypeIdMap);
++        }
++
++        if (!apnTypeIdMap.containsKey(apnType)) {
++            Integer contextId = Integer.valueOf(getNextContextId());
++            apnTypeIdMap.put(apnType, contextId);
++            Intent intent = intentFactory(CONTEXT_STATE_REQUESTED, contextId);
++            intent.putExtra(EXTRA_CONTEXT_INITIATOR, INITIATOR_UE);
++            intent.putExtra(EXTRA_CONTEXT_TYPE, contextType);
++            intent.putExtra(EXTRA_CONTEXT_NSAPI, Integer.toString(0));
++            intent.putExtra(EXTRA_CONTEXT_SAPI, Integer.toString(0));
++            intent.putExtra(EXTRA_CONTEXT_APN, contextApn);
++            if (DEBUG_LOG) Log.i(LOG_TAG, "sendPDPContextRequested");
++            broadcast(context, intent);
++        }
++    }
++
++    private static void sendPDPContextConnected(
++            Context context, ApnContext apnContext, String ipv4Address,
++            String ipv6Address, String[] ipv4DNS, String[] ipv6DNS) {
++        Integer contextId = getContextId(apnContext);
++        if (contextId != null) {
++            if (DEBUG_LOG) Log.i(LOG_TAG, "sendPDPContextConnected found contextId");
++            Intent intent = intentFactory(CONTEXT_STATE_CONNECTED, contextId );
++            intent.putExtra(EXTRA_CONTEXT_IPV4_ADDR, ipv4Address);
++            intent.putExtra(EXTRA_CONTEXT_IPV6_ADDR, ipv6Address);
++            for (int dnsExtraIndex = 0; dnsExtraIndex < DNS_EXTRA_COUNT; ++dnsExtraIndex) {
++                intent.putExtra(EXTRA_CONTEXT_DNS[dnsExtraIndex], ipv4DNS[dnsExtraIndex]);
++                intent.putExtra(EXTRA_CONTEXT_V6DNS[dnsExtraIndex], ipv6DNS[dnsExtraIndex]);
++            }
++            if (DEBUG_LOG) Log.i(LOG_TAG, "sendPDPContextConnected broadcasting");
++            broadcast(context, intent);
++        }
++    }
++
++    private static void sendPDPContextDisconnected(
++            Context context, ApnContext apnContext, String reason) {
++        Integer contextId = getContextId(apnContext);
++        if (contextId != null) {
++            if (DEBUG_LOG) Log.i(LOG_TAG, "sendPDPContextDisconnected found contextId");
++            removeContextId(apnContext);
++            Intent intent = intentFactory(CONTEXT_STATE_DISCONNECTED, contextId);
++            intent.putExtra(EXTRA_CONTEXT_INITIATOR, INITIATOR_UE);
++            intent.putExtra(EXTRA_CONTEXT_TERM_CODE, getTermCode(reason));
++            intent.putExtra(EXTRA_CONTEXT_ERROR_CODE, Integer.toString(-1));
++            if (DEBUG_LOG) Log.i(LOG_TAG, "sendPDPContextDisconnected");
++            broadcast(context, intent);
++        }
++    }
++
++    private static void processIPAddresses(
++            Collection<InetAddress> addresses, String[] sortedAddresses) {
++        for (InetAddress address : addresses) {
++            if (address instanceof Inet4Address) {
++                assignToArrayElementIfEmpty(
++                        address.getHostAddress(), sortedAddresses, IP_ADDRESS_V4_INDEX);
++            } else if (address instanceof Inet6Address) {
++                assignToArrayElementIfEmpty(
++                        address.getHostAddress(), sortedAddresses, IP_ADDRESS_V6_INDEX);
++            }
++        }
++    }
++
++    private static void processDNSAddresses(
++            Collection<InetAddress> addresses, String[] ipv4DNSes, String[] ipv6DNSes) {
++        String[] targetArray;
++        for (InetAddress address : addresses) {
++            targetArray = null;
++            if (address instanceof Inet4Address) {
++                targetArray = ipv4DNSes;
++            } else if (address instanceof Inet6Address) {
++                targetArray = ipv6DNSes;
++            }
++
++            if (targetArray != null) {
++                assignToEmptyElement(address.getHostAddress(), targetArray);
++            }
++        }
++    }
++
++    private static void assignToEmptyElement(String value, String[] targetArray) {
++        int index = 0;
++        while (!assignToArrayElementIfEmpty(value, targetArray, index++)) {
++            if (index == targetArray.length) {
++                break;
++            }
++        }
++    }
++
++    private static boolean assignToArrayElementIfEmpty(
++            String value, String[] targetArray, int targetIndex) {
++        boolean empty = targetArray[targetIndex].isEmpty();
++        if (empty) {
++            targetArray[targetIndex] = value;
++        }
++        return empty;
++    }
++
++    private static String getTermCode(String reason) {
++        String termCode = mTermCodeMap.get(reason);
++        if (TextUtils.isEmpty(termCode)) {
++            termCode = mTermCodeMap.get(null);
++        }
++        return termCode;
++    }
++
++    private static Intent intentFactory(String contextState, Integer contextId) {
++        Intent intent = new Intent(ACTION_QTI_PDP_STATE);
++        intent.putExtra(EXTRA_CONTEXT_STATE, contextState);
++        intent.putExtra(EXTRA_CONTEXT_ID, contextId.toString());
++        return intent;
++    }
++
++    private static void broadcast(Context context, Intent intent) {
++        context.sendBroadcastAsUser(
++                intent, Process.myUserHandle(), PERM_QTI_PDP_STATE);
++    }
++
++    private static boolean validApn(ApnContext apnContext) {
++        if (mEnabled && apnContext != null) {
++            if (apnContext.getApnSetting() != null &&
++                apnContext.getApnType() != PhoneConstants.APN_TYPE_HIPRI) {
++                if (DEBUG_LOG) Log.i(LOG_TAG, "validApn");
++                return true;
++            }
++        }
++        return false;
++    }
++}
++
+diff --git a/opt/telephony/src/java/com/qualcomm/qti/internal/telephony/dataconnection/QtiDcTracker.java b/opt/telephony/src/java/com/qualcomm/qti/internal/telephony/dataconnection/QtiDcTracker.java
+index 5c3edbd..cc119ec 100644
+--- a/opt/telephony/src/java/com/qualcomm/qti/internal/telephony/dataconnection/QtiDcTracker.java
++++ b/opt/telephony/src/java/com/qualcomm/qti/internal/telephony/dataconnection/QtiDcTracker.java
+@@ -34,6 +34,7 @@ import com.android.internal.telephony.PhoneConstants;
+ import com.android.internal.telephony.uicc.IccRecords;
+ import com.android.internal.util.ArrayUtils;
+ 
++import com.android.internal.telephony.TelephonyCapabilities;
+ import android.telephony.CarrierConfigManager;
+ import android.telephony.Rlog;
+ 
+@@ -45,6 +46,7 @@ import android.database.Cursor;
+ import android.provider.Telephony;
+ import android.telephony.ServiceState;
+ import android.telephony.SubscriptionManager;
++import android.util.Log;
+ 
+ import java.util.ArrayList;
+ import java.util.HashSet;
+@@ -102,6 +104,16 @@ public final class QtiDcTracker extends DcTracker {
+         if (mOmhApt != null) {
+             mOmhApt.unregisterForModemProfileReady(this);
+         }
++
++        if (isDeviceReportingEnabled()) {
++            try {
++                  TelephonyCapabilities.invokeCallOrPDPState(
++                  TelephonyCapabilities.DEVICE_REPORTTING_PDPSTATE,
++                  mPhone.getContext(),
++                        "disable");
++            } catch (Exception e) {
++            }
++        }
+     }
+ 
+     protected void cleanUpConnection(boolean tearDown, ApnContext apnContext) {
+@@ -110,6 +122,20 @@ public final class QtiDcTracker extends DcTracker {
+         if (mOmhApt != null) {
+              mOmhApt.clearActiveApnProfile();
+         }
++
++        if (tearDown) {
++            if (isDeviceReportingEnabled()) {
++                Log.d(LOG_TAG, "Send PDPContextState disconnected intent");
++                // Send PDPContextState disconnected intent
++                try {
++                    TelephonyCapabilities.deviceRerportPDPState(
++                            TelephonyCapabilities.DEVICE_REPORTTING_PDPSTATE,
++                            mPhone.getContext(),new Object[]{mPhone.getContext(),apnContext},
++                            "sendDisconnected");
++                } catch (Exception e) {
++                }
++            }
++        }
+     }
+ 
+     private boolean getConfigItem(String key) {
+-- 
+1.8.2.1
+
