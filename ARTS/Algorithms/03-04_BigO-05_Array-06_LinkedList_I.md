@@ -2,8 +2,8 @@
 04丨复杂度分析（下）：浅析最好、最坏、平均、均摊时间复杂度？
 05丨数组：为什么很多编程语言中数组都从0开始编号？
 
-参见Algorithms_BigO_Array.pptx
+参见03-04_BigO-05_Array.pptx
 
 06丨链表（上）：如何实现LRU缓存淘汰算法？
 
-参见6-LinkedList-I.pdf
+参见06_LinkedList-I.pdf
