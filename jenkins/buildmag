@@ -11,6 +11,7 @@ echo $NEW
 echo $CLEAN
 echo $BUILD
 echo $OTA
+echo $COPY
 
 if [ "$NAME" == "" ] ; then
     
@@ -36,7 +37,7 @@ if [ "$PLAT" == "M" ] ; then
 
     sudo update-alternatives --set java /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java
     
-    CLONE_BODY="git2017/mag37_ALPS-MP-M0.MP1-V2.164.3_MAGC6737M_65_A_M0"
+    CLONE_BODY="git2019/mag37_ALPS-MP-M0.MP1-V2.164.3_MAGC6737M_65_C_M0"
 
 fi
     
@@ -130,4 +131,9 @@ if [ "$OTA" == "true" ] ; then
     
 fi
 
-source copybin.sh
+if [ "$COPY" == "true" ] ; then
+
+    source copybin.sh
+    
+fi
+
