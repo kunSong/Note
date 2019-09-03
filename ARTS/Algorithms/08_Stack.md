@@ -70,6 +70,7 @@ public class LinkedStack {
     public void push(int val) {
         if (head == null) {
             head = new Node(val, null);
+            return;
         }
         temp = head;
         head = new Node(val, temp);
